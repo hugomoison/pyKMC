@@ -209,7 +209,7 @@ class EventSearch() :
         """
         p = Parameters() 
         T = self.search_params['T'] 
-        k0 = self.search_params['k0'] 
+        k0 = self.search_params['k0']
         return k0*((p.kb*T)/p.h)*m.exp(-dE/(p.kb*T))
     
     def add_event_with_reconstruction(self, dfevent_forward, dfevent_backward) : 

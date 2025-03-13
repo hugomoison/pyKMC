@@ -12,7 +12,7 @@ class Parameters :
    #Boltzmann constant
    kb = 8.6173303e-05 #eV.K^-1
    #Planck constant 
-   h = 6.582119e-03 #eV.ps 
+   h = 4.135667696e-03 #eV.ps 
 
 
 
@@ -197,12 +197,14 @@ class SystemConfig :
         except ValueError : 
             pass
         try : 
-            return int(value)
+            if '.' not in value and 'e' not in value and 'E' not in value : 
+                return int(value) 
         except ValueError : 
-            pass 
+            pass
         try : 
-            return float(value) 
+            return float(value)
         except ValueError : 
             pass 
+         
         return value
 
