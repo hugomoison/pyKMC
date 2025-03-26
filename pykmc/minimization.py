@@ -2,7 +2,7 @@ from lammps import lammps
 from ase.io.lammpsdata import write_lammps_data
 import numpy as np 
 from subprocess import run
-from executorlib import Executor
+from executorlib import SingleNodeExecutor
 from .utilities import initialize_default_lammps
 
 class Minimization:
@@ -51,7 +51,7 @@ class Minimization:
         #============================================#
         #Run minimization based on minimization_style#
         #============================================#
-        with Executor(backend=self.backend) as exe :
+        with SingleNodeExecutor() as exe :
             match self.minimization_style : 
                 case "lammps":
                     fs = exe.submit(self.minimize_lammps, resource_dict={"cores": self.nprocs})

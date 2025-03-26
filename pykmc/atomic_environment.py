@@ -2,7 +2,7 @@ from .utilities import modify_lammps_data_2D, initialize_default_lammps
 from ase.io.lammpsdata import write_lammps_data
 import numpy as np
 from lammps import lammps
-from executorlib import Executor
+from executorlib import SingleNodeExecutor
 import pynauty
 from ase.neighborlist import NeighborList
 #from itertools import chain
@@ -67,14 +67,14 @@ class AtomicEnvironment() :
         #==================================================================#
         #Run the atomic environment search base on atomic_environment style# 
         #==================================================================#
-        with Executor(backend =self.backend) as exe : 
+        with SingleNodeExecutor() as exe :
             #Check the atomic environment style
-            match self.atomenv_style : 
+            match self.atomenv_style :
                 case "cna":
                     fs = exe.submit(self.cna, resource_dict={"cores": self.nprocs})
-                case "graph" : 
+                case "graph" :
                     fs = exe.submit(self.graph_nauty, resource_dict={"cores": self.nprocs})
-                case "cna/graph" : 
+                case "cna/graph" :
                     fs = exe.submit(self.cna_graph_nauty, resource_dict={"cores": self.nprocs})
                 case _:
                     self.system.logger.logger.error('ERROR:Atomic environment style unknown')
@@ -267,14 +267,14 @@ class AtomicEnvironment() :
         Returns
         -------
         id : (N,) ndarray of int
-            1D array of atomic index 
+            1D array of atomic index
         cna_array : (N,) ndarray of int
-            1D array of lammps CNA value 
+            1D array of lammps CNA value
         positions : (N,3) ndarray of float
             coordinates of atoms
-        """         
-        #lammps: 
-        lmp = lammps(comm=comm, cmdargs=['-screen', 'none']) 
+        """
+        #lammps:
+        lmp = lammps(comm=comm, cmdargs=['-screen', 'none'])
         #initialization of lammps with default settings
         initialize_default_lammps(self.system, lmp)
 

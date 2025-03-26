@@ -4,7 +4,7 @@ from ase.mep import DimerControl, MinModeAtoms, MinModeTranslate
 from ase.calculators.lammpsrun import LAMMPS
 from ase import Atoms
 from subprocess import run
-from executorlib import Executor
+from executorlib import SingleNodeExecutor
 import pypARTn2
 from scipy.spatial import cKDTree
 import numpy as np
@@ -122,7 +122,7 @@ class EventSearch() :
         #================================================#
         #For each atoms in atom_idx we do an event search#
         #================================================#
-        with Executor(backend=self.backend, max_workers=self.nprocs) as exe : 
+        with SingleNodeExecutor() as exe :
             l_fs = [exe.submit(self.pARTn_search, atom_index, resource_dict={"cores" : 1}) for atom_index in l_atoms]
 
         #=================================================# 
