@@ -60,13 +60,9 @@ class Minimization:
         #======================================#
         #Get result and update system.positions#
         #======================================#
-        if self.nprocs == 1 : 
-            positions = fs
-        else : 
-            positions = fs[0]
         # XXX(rg): Do not preprocess here, localize to where the kdtree is actually used..
-        positions[positions < 0] = 0 #This is because I can have small negative number and it messes up with kdtree
-        self.system.set_positions(positions)
+        fs[fs < 0] = 0 #This is because I can have small negative number and it messes up with kdtree
+        self.system.positions = fs
 
     def minimize_lammps(self) : 
         """
