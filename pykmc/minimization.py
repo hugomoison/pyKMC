@@ -2,7 +2,6 @@ from lammps import lammps
 from ase.io.lammpsdata import write_lammps_data
 import numpy as np 
 from subprocess import run
-from executorlib import SingleNodeExecutor
 from .utilities import initialize_default_lammps
 
 class Minimization:
@@ -51,21 +50,21 @@ class Minimization:
         #============================================#
         #Run minimization based on minimization_style#
         #============================================#
-        with SingleNodeExecutor() as exe :
-            match self.minimization_style : 
-                case "lammps":
-                    fs = exe.submit(self.minimize_lammps, resource_dict={"cores": self.nprocs})
-                case _:
-                    self.system.logger.logger.error('ERROR:Minimization style not known')
-                    raise Exception("Minimization style not known")
+        match self.minimization_style :
+            case "lammps":
+                fs = self.minimize_lammps()
+            case _:
+                self.system.logger.logger.error('ERROR:Minimization style not known')
+                raise Exception("Minimization style not known")
 
         #======================================#
         #Get result and update system.positions#
         #======================================#
         if self.nprocs == 1 : 
-            positions = fs.result()
+            positions = fs
         else : 
-            positions = fs.result()[0]
+            positions = fs[0]
+        # XXX(rg): Do not preprocess here, localize to where the kdtree is actually used..
         positions[positions < 0] = 0 #This is because I can have small negative number and it messes up with kdtree
         self.system.set_positions(positions)
 
@@ -79,12 +78,7 @@ class Minimization:
             positions after the minimization if `rank == 0` else `None`
         """        
 
-        from mpi4py import MPI
-        #MPI : 
-        comm = MPI.COMM_WORLD
-        rank = comm.Get_rank()
-        nprocs = comm.Get_size()
-
+        # TODO(rg): Just take self.comm throughout
         #Initialize lammps :
         lmp = lammps(cmdargs=['-screen', 'none'])
         initialize_default_lammps(self.system, lmp)
@@ -98,12 +92,9 @@ class Minimization:
         #gather all positions 
         positions = lmp.gather_atoms("x", 1, 3)
 
-        if rank == 0 : 
-            #convert ctype positions into a numpy array
-            positions = np.ctypeslib.as_array(positions)
-            positions = np.reshape(positions, (-1, 3))
-            #clean files
-            run('mv log.lammps log.minimize_lammps', shell=True)
-            return positions 
-        else : 
-            return None
+        #convert ctype positions into a numpy array
+        positions = np.ctypeslib.as_array(positions)
+        positions = np.reshape(positions, (-1, 3))
+        #clean files
+        # run('mv log.lammps log.minimize_lammps', shell=True)
+        return positions
