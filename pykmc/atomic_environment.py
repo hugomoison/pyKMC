@@ -287,14 +287,16 @@ class AtomicEnvironment() :
         #Extract cna
         cna_array = lmp.numpy.extract_compute("c1", 1,1)
 
-        #Lammps does not sort by atom index so we extract them too
-        id = lmp.numpy.extract_atom("id")
-        id = id-1 #Lammps index start at 1
+        # Lammps does not sort by atom index so we extract them too
+        nlocal = lmp.extract_setting("nlocal")
+        atom_id = lmp.extract_atom("id")
+        # Adjusting since LAMMPS starts at 1 and this is an index helper
+        lmpid = np.asarray(atom_id[0:nlocal]) - 1
 
         #Get positions, when using cna and graph
         positions = lmp.gather_atoms("x", 1, 3)
 
-        return id, cna_array, positions
+        return lmpid, cna_array, positions
 
 def make_graph(atoms, list_id, rnei, rcut) : 
     """
