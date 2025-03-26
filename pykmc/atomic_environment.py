@@ -80,20 +80,14 @@ class AtomicEnvironment() :
         #=========================================#
         #Get results and update system.environment#
         #=========================================#
-        if self.nprocs == 1 : 
-            list_env = fs
-        else : 
-            list_env = fs[0]
+        diff_env = set(fs)
 
         #From list of atomic environment we create a dictionary, and update system.environment
-        diff_env = set(list_env)
-        diff_env = list(diff_env) 
-
-        #List of dictionnaries of different Topo ID 
+        #List of dictionnaries of different Topo ID
         dict_env = []
         for ID in diff_env : 
             #index with same ID : 
-            indexsame = [i for i,e in enumerate(list_env) if e == ID]
+            indexsame = [i for i,e in enumerate(fs) if e == ID]
             tmp = {"ID" : ID, 
                    "atom index" : indexsame}
             dict_env.append(tmp)
@@ -109,29 +103,32 @@ class AtomicEnvironment() :
         """
         # TODO(rg): Again, just pass a single global communicator..
         #compute cna
-        id, cna_array, _  = self._lammps_cna()
+        lmpid, cna_array, _  = self._lammps_cna()
 
         #Gather values
-        result = np.column_stack((id, cna_array)) 
-        global_result = comm.gather(result, root=0)
+        result = np.column_stack((lmpid, cna_array))
 
-        if rank == 0 : 
-            #flaten arrays 
-            global_result = np.concatenate(global_result)
-            #sort by atom index 
-            global_result = global_result[global_result[:,0].argsort()]
-            list_topo = [] 
-            for element in global_result[:,1] : 
-                if int(element) == 5 : 
-                    list_topo.append('noncrystal') 
-                else : 
-                    list_topo.append('crystal')
-            #Deal with log file
-            run('mv log.lammps log.atomicenvironment_lammps', shell=True)
-            return list_topo
-        else : 
-            return None
-    
+        # Sort the combined array based on the atom ID (lmpid, the first column)
+        # This ensures the final list_topo corresponds to atom IDs 0, 1, 2,...
+        sorted_result = result[result[:, 0].argsort()]
+
+        # Process the sorted CNA results
+        list_topo = []
+        for element in sorted_result[:, 1]:
+            if int(element) == 5:
+                list_topo.append('noncrystal')
+            else:
+                # Other values (1:FCC, 2:HCP, 3:BCC, 4:Icosahedral) are considered crystalline
+                list_topo.append('crystal')
+
+        # Deal with log file (assuming this is still desired)
+        try:
+            run('mv log.lammps log.atomicenvironment_lammps', shell=True, check=True)
+        except Exception as e:
+            print(f"Warning: Could not rename log file 'log.lammps': {e}")
+
+        return list_topo
+
 
     def graph_nauty(self) :
         """
@@ -146,26 +143,12 @@ class AtomicEnvironment() :
         rnei = self.atomenv_params['rnei']
         rcut = self.atomenv_params['rcut']
 
-        #Split index atoms in approximatively even number sublist
-        split = np.array_split(range(self.system.get_global_number_of_atoms()), 1)
-        local_index = split[rank] 
+        all_indices = range(self.system.get_global_number_of_atoms())
+        list_g = make_graph(self.system, all_indices, rnei, rcut)
+        # Compute certificates for all graphs
+        list_topo = [pynauty.certificate(g) for g in list_g]
+        return list_topo
 
-        #Create graphs, can use other commented functions that we tested (see commented make_graph functions) 
-        #Here, need diagonal cell for box_size in k-d tree
-        list_g = make_graph(self.system, local_index, rnei, rcut)
-        list_topo = [] 
-        for g in list_g : 
-            #compute certificate
-            list_topo.append(pynauty.certificate(g))
-        #gather list_topo : 
-        list_topo = comm.gather(list_topo, root=0)
-        #flatten list_topo : 
-        if rank == 0 : 
-            list_topo = [gcertificate for e in list_topo for gcertificate in e]
-            return list_topo
-        else : 
-            return None
-    
 
     def cna_graph_nauty(self) : 
         """Compute atomic environment ID based on CNA results, for non crystalline atoms, compute the graph certificate
