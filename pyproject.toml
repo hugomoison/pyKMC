@@ -3,6 +3,7 @@ name = "pykmc"
 version = "0.0.1"
 authors = [
   { name="Hugo Moison" },
+  { name="Rohit Goswami" },
 ]
 description = "test kmc and python"
 readme = "README.md"
