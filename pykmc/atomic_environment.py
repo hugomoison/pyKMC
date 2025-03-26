@@ -2,7 +2,6 @@ from .utilities import modify_lammps_data_2D, initialize_default_lammps
 from ase.io.lammpsdata import write_lammps_data
 import numpy as np
 from lammps import lammps
-from executorlib import SingleNodeExecutor
 import pynauty
 from ase.neighborlist import NeighborList
 #from itertools import chain
@@ -67,26 +66,24 @@ class AtomicEnvironment() :
         #==================================================================#
         #Run the atomic environment search base on atomic_environment style# 
         #==================================================================#
-        with SingleNodeExecutor() as exe :
-            #Check the atomic environment style
-            match self.atomenv_style :
-                case "cna":
-                    fs = exe.submit(self.cna, resource_dict={"cores": self.nprocs})
-                case "graph" :
-                    fs = exe.submit(self.graph_nauty, resource_dict={"cores": self.nprocs})
-                case "cna/graph" :
-                    fs = exe.submit(self.cna_graph_nauty, resource_dict={"cores": self.nprocs})
-                case _:
-                    self.system.logger.logger.error('ERROR:Atomic environment style unknown')
-                    raise Exception("Atomic environment style unknown")
+        match self.atomenv_style :
+            case "cna":
+                fs = self.cna()
+            case "graph" :
+                fs = self.graph_nauty()
+            case "cna/graph" :
+                fs = self.cna_graph_nauty()
+            case _:
+                self.system.logger.logger.error('ERROR:Atomic environment style unknown')
+                raise Exception("Atomic environment style unknown")
 
         #=========================================#
         #Get results and update system.environment#
         #=========================================#
         if self.nprocs == 1 : 
-            list_env = fs.result()
+            list_env = fs
         else : 
-            list_env = fs.result()[0]
+            list_env = fs[0]
 
         #From list of atomic environment we create a dictionary, and update system.environment
         diff_env = set(list_env)
@@ -110,15 +107,9 @@ class AtomicEnvironment() :
         List[str]
             list of ID, "crystal" if the atom has a crystalline environment and "noncrystal" if not
         """
-        from mpi4py import MPI
-
-        #for MPI : 
-        comm = MPI.COMM_WORLD
-        rank = comm.Get_rank()
-        nprocs = comm.Get_size()
-
-        #compute cna 
-        id, cna_array, _  = self._lammps_cna(comm=comm)
+        # TODO(rg): Again, just pass a single global communicator..
+        #compute cna
+        id, cna_array, _  = self._lammps_cna()
 
         #Gather values
         result = np.column_stack((id, cna_array)) 
@@ -155,14 +146,8 @@ class AtomicEnvironment() :
         rnei = self.atomenv_params['rnei']
         rcut = self.atomenv_params['rcut']
 
-        from mpi4py import MPI
-        #MPI
-        comm = MPI.COMM_WORLD
-        rank = comm.Get_rank()
-        nprocs = comm.Get_size()
-
         #Split index atoms in approximatively even number sublist
-        split = np.array_split(range(self.system.get_global_number_of_atoms()), nprocs)
+        split = np.array_split(range(self.system.get_global_number_of_atoms()), 1)
         local_index = split[rank] 
 
         #Create graphs, can use other commented functions that we tested (see commented make_graph functions) 
@@ -192,16 +177,10 @@ class AtomicEnvironment() :
 
         """        
 
-        from mpi4py import MPI
-        #for MPI : 
-        comm = MPI.COMM_WORLD
-        rank = comm.Get_rank()
-        nprocs = comm.Get_size()
-
         #Compute CNA
-        id, cna_array, positions  = self._lammps_cna(comm=comm)
+        lmpid, cna_array, positions  = self._lammps_cna()
         #Gather values
-        result = np.column_stack((id, cna_array)) 
+        result = np.column_stack((lmpid, cna_array))
         global_result = comm.gather(result, root=0)
 
         if rank == 0 : 
@@ -215,13 +194,13 @@ class AtomicEnvironment() :
             #convert ctype positions into a numpy array
             positions = np.ctypeslib.as_array(positions)
             positions = np.reshape(positions, (-1, 3))
-            neighbors = [] 
+            neighbors = []
             ind = np.linspace(0, self.system.get_global_number_of_atoms()-1, self.system.get_global_number_of_atoms()).astype(int)
-            for at_idx in noncrist_atom_index : 
+            for at_idx in noncrist_atom_index :
                 dist = self.system.get_distances(at_idx, ind, mic=True)
                 #IF we want to add atoms at distance < radd_cna from non crystalline atoms
                 neighbors += np.where(dist <= self.atomenv_params['radd_cna'])[0].tolist()
-            noncrist_atom_index += neighbors 
+            noncrist_atom_index += neighbors
             noncrist_atom_index = list(set(noncrist_atom_index)) #remove duplicate
 
             #Split index atoms in approximatively even number sublist
@@ -256,17 +235,17 @@ class AtomicEnvironment() :
             return None
         
 
-    def _lammps_cna(self, comm) : 
+    def _lammps_cna(self) :
         """Compute CNA using Lammps
 
         Parameters
         ----------
         comm : MPI_Comm
-            MPI Communicator provided by mpi4py 
+            MPI Communicator provlmpided by mpi4py
 
         Returns
         -------
-        id : (N,) ndarray of int
+        lmpid : (N,) ndarray of int
             1D array of atomic index
         cna_array : (N,) ndarray of int
             1D array of lammps CNA value
@@ -274,7 +253,7 @@ class AtomicEnvironment() :
             coordinates of atoms
         """
         #lammps:
-        lmp = lammps(comm=comm, cmdargs=['-screen', 'none'])
+        lmp = lammps(cmdargs=['-screen', 'none'])
         #initialization of lammps with default settings
         initialize_default_lammps(self.system, lmp)
 
