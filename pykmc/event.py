@@ -4,7 +4,6 @@ from ase.mep import DimerControl, MinModeAtoms, MinModeTranslate
 from ase.calculators.lammpsrun import LAMMPS
 from ase import Atoms
 from subprocess import run
-from executorlib import SingleNodeExecutor
 import pypARTn2
 from scipy.spatial import cKDTree
 import numpy as np
@@ -39,7 +38,7 @@ class EventSearch() :
         dimension of the system, by default 3
     nprocs : int, optional
         number of procs available, by default 1
-    backend : str, optional
+    backend : str, optional [deprecated]
         parameter used by Executorlib, can be 'local', 'slurm_allocation', 'slurm_submission', by default 'local'
 
     Methods 
@@ -122,16 +121,15 @@ class EventSearch() :
         #================================================#
         #For each atoms in atom_idx we do an event search#
         #================================================#
-        with SingleNodeExecutor() as exe :
-            l_fs = [exe.submit(self.pARTn_search, atom_index, resource_dict={"cores" : 1}) for atom_index in l_atoms]
+        l_fs = [self.pARTn_search(atom_index) for atom_index in l_atoms]
 
         #=================================================# 
         #For each results, we add the event to the catalog#
         #=================================================# 
         for fs in l_fs : 
-            if fs.result() is not None : 
-                dfevent_forward = fs.result()[0]
-                dfevent_backward = fs.result()[1]
+            if fs is not None :
+                dfevent_forward = fs[0]
+                dfevent_backward = fs[1]
                 energy_barrier = min(dfevent_forward['energy_barrier'], dfevent_backward['energy_barrier'])
                 if self.search_params['emin_event'] < energy_barrier < self.search_params['emax_event'] : 
                     #Check if already in catalog : 
@@ -156,15 +154,14 @@ class EventSearch() :
         #==================================#
         #Launch len(l_atoms) event searches#
         #==================================#
-        with Executor(backend=self.backend, max_workers=self.nprocs) as exe : 
-            l_fs = [exe.submit(self.pARTn_search, atom_index, resource_dict={"cores" : 1}) for atom_index in l_atoms]
+        l_fs = [self.pARTn_search(atom_index) for atom_index in l_atoms]
 
         #===================================================# 
         #Loop over list results and add event to the catalog#
         #===================================================# 
         for i,fs in enumerate(l_fs) : 
-            if fs.result() is not None : 
-                dfevent = fs.result()
+            if fs is not None :
+                dfevent = fs
                 if self.search_params['emin_event'] < dfevent['energy_barrier'] < self.search_params['emax_event'] : 
                     #Check if event already in catalog : 
                     if len(self.system.catalog) > 0 : 
@@ -434,15 +431,8 @@ class EventSearch() :
         #Logs
         logging.basicConfig(filename='pykmc.log', filemode='a', level=logging.DEBUG, format='%(message)s')
 
-        from mpi4py import MPI 
-
-        #MPI
-        comm = MPI.COMM_WORLD
-        rank = comm.Get_rank()
-        nprocs = comm.Get_size()
-
-        #Setup Lammps : 
-        lmp = lammps(comm=comm,cmdargs=['-screen', 'none'])
+        #Setup Lammps :
+        lmp = lammps(cmdargs=['-screen', 'none'])
         artn = pypARTn2.artn(engine='lmp')
         initialize_default_lammps(self.system, lmp)
 
