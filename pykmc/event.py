@@ -473,7 +473,7 @@ class EventSearch() :
         artn.set('nperp', self.search_params['partn_nperp'])
 
         #Run
-        lmp.command("minimize 1e-3 1e-3 1000 1000")
+        lmp.command("minimize 0 1e-3 1000 1000")
 
         #Need to extract min 1, min 2, saddle positions and energy barrier
         err = artn.get_runparam("error_message")
