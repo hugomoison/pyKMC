@@ -462,6 +462,8 @@ class EventSearch() :
         artn.set('nsmooth',  self.search_params['partn_nsmooth'])
         artn.set('nperp', self.search_params['partn_nperp'])
 
+        lmp.command('comm_style tiled')
+        lmp.command('balance 1.1 rcb')
         #Run
         lmp.command("minimize 0 1e-3 1000 1000")
 
