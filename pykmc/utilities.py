@@ -46,7 +46,7 @@ def initialize_default_lammps(atoms, lmp_instance) :
     lmp_instance.command('atom_style atomic')
     lmp_instance.command('dimension 3') 
     lmp_instance.command('boundary p p p')
-    lmp_instance.command('atom_modify sort 0 0.0')
+    lmp_instance.command('atom_modify sort 0 1')
     lmp_instance.command('region box block 0.0 {} 0.0 {} 0.0 {}'.format(xhi, yhi, zhi))
     lmp_instance.command('create_box {} box'.format(len(map_type)))
     lmp_instance.create_atoms(natoms, ind,type, x)
