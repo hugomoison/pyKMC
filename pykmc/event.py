@@ -121,9 +121,11 @@ class EventSearch() :
         #================================================#
         #For each atoms in atom_idx we do an event search#
         #================================================#
-        l_fs = [self.pARTn_search(atom_index) for atom_index in l_atoms]
+        l_fs = []
+        while len(l_fs) == 0:
+            l_fs = [self.pARTn_search(atom_index) for atom_index in l_atoms]
 
-        #=================================================# 
+        #=================================================#
         #For each results, we add the event to the catalog#
         #=================================================# 
         for fs in l_fs : 
