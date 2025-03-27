@@ -110,9 +110,9 @@ class EventSearch() :
         #List of atom index on witch we will perform an event search#
         #===========================================================#
         l_atoms = []
-        for id in l_new_environement :
+        for lmpid in l_new_environement :
             #list of atoms that have id in l_new_environment : 
-            atom_idx =  [dict['atom index'] for dict in self.system.environment if dict['ID'] == id][0]
+            atom_idx =  [dict['atom index'] for dict in self.system.environment if dict['ID'] == lmpid][0]
             #We select nsearch atoms randomly in this atom_idx 
             atom_idx = [random.choice(atom_idx) for _i in range(self.search_params['nsearch'])]
             #extend total list of atoms on which we gonna do an event search
