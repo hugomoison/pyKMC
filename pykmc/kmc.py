@@ -129,6 +129,16 @@ class KMC:
                 )
                 self._close()
 
+            ################################
+            #CONTRUCT CURRENT ACTIVE EVENTS#
+            ################################
+            active_table = self.refinement() 
+            ###############################
+            #SELECT EVENT IN ACTIVE TABLE # 
+            ###############################
+            idx_selected_event, delta_t = self._select_event(active_table)
+
+            
             # == Refinement ==
             ##=>Subset of reference_event_table with generic event that can be apply to the current step (ie event_id in atomic environment)
             subset_reference_event_table = self.reference_table.has_id_subset_table(
