@@ -414,6 +414,8 @@ class ReferenceEventTable:
                     "move_atom_idx",
                     "sym_matrix",
                     "sym_perm",
+                    'backward_event',           
+                    'backward_energy_barrier'
                 ]
             )
 

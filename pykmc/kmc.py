@@ -34,6 +34,7 @@ from .info_simulation import (
 from .eventsearch import EventSearch
 from .refinement import Refinement
 from .log import Colors
+from basin import Basin
 
 
 # TODO fix reconstruction = False
@@ -137,7 +138,7 @@ class KMC:
             #SELECT EVENT IN ACTIVE TABLE # 
             ###############################
             idx_selected_event, delta_t = self._select_event(active_table)
-
+            
             
             # == Refinement ==
             ##=>Subset of reference_event_table with generic event that can be apply to the current step (ie event_id in atomic environment)

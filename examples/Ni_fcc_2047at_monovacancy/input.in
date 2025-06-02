@@ -1,4 +1,10 @@
 [Control] 
+config_file = ./initial_config.xyz 
+output_file = ./trajkmc.xyz
+nkmc_steps = 10
+#catalog = ./catalog.pickle
+nprocs = 8
+reconstruction = True
 initial_config = ./initial_config.xyz 
 n_steps = 1
 engine = lammps
