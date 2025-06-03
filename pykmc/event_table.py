@@ -367,6 +367,8 @@ class ReferenceEventTable:
                 "move_atom_idx": np.where(neighbor_list_forwward == index_move)[0][0],
                 "sym_matrix": sym_matrix,
                 "sym_perm": sym_perm,
+                'backward_event_id' : -1,                                          
+                'backward_energy_barrier' : dE_backward
             }
         )
 
@@ -388,6 +390,8 @@ class ReferenceEventTable:
                 "move_atom_idx": np.where(neighbor_list_backward == index_move)[0][0],
                 "sym_matrix": sym_matrix,
                 "sym_perm": sym_perm,
+                'backward_event_id' : -1,                                         
+                'backward_energy_barrier' : dE_forward
             }
         )
 
@@ -457,6 +461,7 @@ class ActiveEventTable:
                 "energy_barrier": pd.Series(dtype="float64"),
                 "k": pd.Series(dtype="float64"),
                 "num_reference_event": pd.Series(dtype="int64"),
+                "backward_energy_barrier": pd.Series(dtype="float64")
             }
             self.table = pd.DataFrame(columns)
 
@@ -536,6 +541,7 @@ class ActiveEventTable:
                 "energy_barrier": event_search_output.dE_forward,
                 "k": compute_rate_Eyring(event_search_output.dE_forward, self.config),
                 "num_reference_event": event_search_output.num_reference_event,
+                "backward_energy_barrier": event_search_output.dE_backward
             }
         )
         return dfactive
