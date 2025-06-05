@@ -36,3 +36,6 @@ T = 300.0
 [PSR] 
 style = ira 
 [IRA]
+
+[Basin]
+energy_thr = 1.5

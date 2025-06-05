@@ -66,6 +66,11 @@ class ControlConfig(BaseModel):
         description="Which E/F Engine to use. Note : Only lammps is implemented.",
     )
 
+    basin: Optional[str] = Field(
+        default=None,
+        description="Basin mode"
+    )
+
     verbosity: Optional[int] = Field(
         default=1, description="Controls the level of detail in the simulation output."
     )
@@ -129,6 +134,11 @@ class EventSearchConfig(BaseModel):
         description="Maximumallowed difference (in eV) between a reference event's initial barrier energy and its refined barrier energy.",
     )
     
+class Basin(BaseModel):
+    energy_thr: float = Field(
+    default = 0.1,
+    description="Energy threshold"    
+    )
 
 
 class PartnConfig(BaseModel):
