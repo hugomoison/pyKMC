@@ -1,5 +1,5 @@
 import pandas as pd
-from pykmc import NeighborsList, AtomicEnvironment, System
+from pykmc import NeighborsList, AtomicEnvironment, PointSetRegistration, System
 
 
 
@@ -36,10 +36,10 @@ class Basin() :
 
         self.initialize(initial_system, config)
 
+        # ---> Implémenter quelque chose de similaire au test à partir du point #1
 
-       # while (set(self.visited_states) != set(self.states_to_visit)) :
-        #    remaining = list(set(self.states_to_visit).difference(set(self.visited_states))) [0]
-         #   self.apply_generic_event(config, self.reference_table) 
+
+
 
 
 
@@ -139,7 +139,26 @@ class Basin() :
 
 
 
-   # def apply_generic_event(self, idx_selected_event, reference_table) :
+
+
+    def apply_generic_event(self, config, initial_system, state, idx_selected_event, reference_table) :
+
+        while (set(self.visited_states) != set(self.states_to_visit)) :
+            to_visit = list(set(self.states_to_visit).difference(set(self.visited_states))) [0]
+
+            #Need to go to final point applying PSR : 
+            psr_output = PointSetRegistration(config, initial_system,  neighbors_list, 0, atom_index).run()
+
+
+
+            self.visited_states.append(to_visit)
+            print('roar')
+         #   self.apply_generic_event(config, self.reference_table) 
+
+
+
+
+
     #    new_positions = reference_table.table.loc[idx_selected_event].at['final_positions']
      #   self.system.update_positions(new_positions) 
 

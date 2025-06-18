@@ -1,0 +1,51 @@
+[Control] 
+initial_config = ./initial_config.xyz 
+n_steps = 1
+engine = lammps
+verbosity = 2
+reference_table = reference_table.pickle
+
+[Potential] 
+file = ./Ni_v6_2.0_LKBeland2016.eam
+pair_style = eam/alloy 
+pair_coeff = * * ${file} Ni
+
+[Minimization] 
+style = lammps
+min_style = cg
+etol = 1.0e-6
+ftol = 1.0e-8
+maxiter = 1000
+maxeval = 1000
+
+[Lammps] 
+pair_style = eam/alloy 
+pair_coeff = * * ./Ni_v6_2.0_LKBeland2016.eam Ni
+
+[AtomicEnvironment] 
+style = cna/graph
+rnei = 3.01
+rcut = 6.5
+
+[EventSearch] 
+style = partn
+nsearch = 3
+emax_event = 5.0
+emin_event = 0.0
+
+[pARTn] 
+path_artnso = /root/programs/artn-plugin/lib/libartn-lmp.so
+
+[RateConstant] 
+style = constant
+k0 = 1e12
+T = 300.0
+
+[PSR] 
+style = ira 
+
+[IRA]
+kmax_factor = 2.0
+
+[Basin]
+energy_thr = 1.5

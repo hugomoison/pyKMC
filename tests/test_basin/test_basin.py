@@ -3,8 +3,9 @@ from pykmc import geometry
 from ase import Atoms
 from ase.io import write 
 
-config = Config.from_file('input.in')
 
+
+config = Config.from_file('input.in')
 system = System.create_from_file('initial_config.xyz') 
 neighbors_list = NeighborsList(system, config) 
 atomic_environment = AtomicEnvironment(config, neighbors_list.neighbors_list['rnei'], neighbors_list.neighbors_list['rcut']) 
@@ -49,8 +50,6 @@ if psr_output.is_ok():
         #Move system do final positions
         system.update_positions(final_positions, atom_idx = neighbors)
        
-
-        ### Pourquoi on met atom_idx = neighbours??  self.system.update_positions(saddle_positions, atom_idx = neighbors) ### 
    
     else : 
         print("PSR found a match but matching score is above acceptance threshold")
@@ -62,11 +61,6 @@ else:
 
 
 #5. Ecrire dans un fichier les configurations pour voir si c'est ok. -> utiliser ase.io.write
-#atoms1 = Atoms(symbols = system.types, positions = system_initial_positions, cell = system.cell, pbc = True) 
-#atoms2 = Atoms(symbols = system.types, positions = system.positions, cell = system.cell, pbc = True)
-#traj = [atoms1, atoms2] 
-#write('psrtest.xyz', traj)
-
 atoms1 = Atoms(symbols = system.types, positions = system_initial_positions, cell = system.cell, pbc = True) 
 atoms2 = Atoms(symbols = system.types, positions = system.positions, cell = system.cell, pbc = True)
 traj = [atoms1, atoms2] 
