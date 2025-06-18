@@ -7,3 +7,12 @@ pandas>=2.2.3
 pynauty>=2.8.8.1
 PyYAML>=6.0.2
 scipy>=1.13.1
+pydantic==2.11.7
+
+[dev]
+mkdocs
+mkdocs-material
+mdx_include
+pymdown-extensions
+mkdocstrings[python]
+mkdocs-jupyter

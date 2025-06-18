@@ -18,6 +18,14 @@ Requires-Dist: pandas>=2.2.3
 Requires-Dist: pynauty>=2.8.8.1
 Requires-Dist: PyYAML>=6.0.2
 Requires-Dist: scipy>=1.13.1
+Requires-Dist: pydantic==2.11.7
+Provides-Extra: dev
+Requires-Dist: mkdocs; extra == "dev"
+Requires-Dist: mkdocs-material; extra == "dev"
+Requires-Dist: mdx_include; extra == "dev"
+Requires-Dist: pymdown-extensions; extra == "dev"
+Requires-Dist: mkdocstrings[python]; extra == "dev"
+Requires-Dist: mkdocs-jupyter; extra == "dev"
 
 # pyKMC
 
