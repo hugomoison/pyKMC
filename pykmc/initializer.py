@@ -15,6 +15,7 @@ from .neighbors_list import NeighborsList
 from .atomic_environment import AtomicEnvironment
 from .event_table import ReferenceEventTable
 import pickle
+from .basin import Basin
 
 
 class Initializer:
@@ -40,6 +41,7 @@ class Initializer:
         self.initialize_atomic_environments()
         self.initialize_reference_table()
         self._initialize_visited_environments()
+        self._initialize_basin()
 
         self.kmc.loggers.new_line("log")
         self.kmc.loggers.info("log", "===========================")
@@ -134,3 +136,5 @@ class Initializer:
                 "log",
                 "Visited environments are read from file while no reference table was provided",
             )
+    def _initialize_basin(self) -> None:
+        self.kmc.basin = Basin(reference_table = self.kmc.reference_table)

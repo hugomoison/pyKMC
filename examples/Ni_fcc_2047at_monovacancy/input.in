@@ -9,6 +9,7 @@ initial_config = ./initial_config.xyz
 n_steps = 1
 engine = lammps
 verbosity = 2
+basin = True
 
 [Lammps] 
 pair_style = eam/alloy 

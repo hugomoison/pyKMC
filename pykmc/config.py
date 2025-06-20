@@ -66,8 +66,8 @@ class ControlConfig(BaseModel):
         description="Which E/F Engine to use. Note : Only lammps is implemented.",
     )
 
-    basin: Optional[str] = Field(
-        default=None,
+    basin: Optional[bool] = Field(
+        default=False,
         description="Basin mode"
     )
 
@@ -134,7 +134,7 @@ class EventSearchConfig(BaseModel):
         description="Maximumallowed difference (in eV) between a reference event's initial barrier energy and its refined barrier energy.",
     )
     
-class Basin(BaseModel):
+class BasinConfig(BaseModel):
     energy_thr: float = Field(
     default = 0.1,
     description="Energy threshold"    
@@ -314,6 +314,8 @@ class Config(BaseModel):
 
     ira: Optional[IraConfig] = Field(default=None, description="IRA parameters.")
 
+    basin: Optional[BasinConfig] = Field(default=None, description="Basin parameters")
+
     @classmethod
     def from_ini_file(cls, ini_path: str) -> Config:
         """Load and validates simulation configuration from an INI file.
@@ -399,6 +401,7 @@ class Config(BaseModel):
             ("control.engine", "lammps"): ["lammps"],
             ("eventsearch.style", "partn"): ["partn"],
             ("psr.style", "ira"): ["ira"],
+            ("control.basin", True): ["basin"]
         }
 
         for (field_path, condition_value), required_fields in validation_rules.items():

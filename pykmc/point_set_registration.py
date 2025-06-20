@@ -75,7 +75,7 @@ class PointSetRegistration:
         ira = ira_mod.IRA()
 
         # Event informations :
-        coords2 = self.dfevent.at["initial_positions"]
+        coords2 = self.dfevent["initial_positions"]
         nat2 = len(coords2)
 
         # atom in the rcutevent around the central atom
