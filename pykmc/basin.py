@@ -2,6 +2,18 @@ import pandas as pd
 from pykmc import NeighborsList, AtomicEnvironment, PointSetRegistration, System
 from .utils import geometry
 import copy
+import numpy as np
+from scipy.spatial import cKDTree
+
+
+# Set global options to always display the full DataFrame
+pd.set_option('display.max_rows', None)
+pd.set_option('display.max_columns', None)
+pd.set_option('display.width', None)
+pd.set_option('display.max_colwidth', None)
+
+
+
 
 
 class Basin() : 
@@ -38,7 +50,6 @@ class Basin() :
     def execute(self, initial_system, config, reference_table) : 
 
         self.initialize(initial_system, config)
-
         self.apply_generic_event(config, reference_table)
 
         #self.update()
@@ -51,15 +62,15 @@ class Basin() :
     def initialize(self, system, config) :
         #Initialiser attribute avec info pour state de départ (0)
         self.states = [0]
-        self.states_to_visit = [0]          # ??? Est-ce que on peut l'initialiser comme ça ici?
         self.state_system = [system]
+        self.states_to_visit = []
         self.state_environment = []
         self.connexion_table = pd.DataFrame(columns=['state', 
                                                      'state_connexion', 
                                                      'event_connexion',
                                                      'central_atom', 
                                                      'transition', ])    
-        self.update(0, config )
+        self.update(0, config)
 
 
 
@@ -72,11 +83,16 @@ class Basin() :
 
 
 
-    def update_state_environment(self, system, config) :  
+    def update_state_environment(self, system, config, state_index = None) :  
         neighbors_list = NeighborsList(system, config.atomicenvironment.rnei, config.atomicenvironment.rcut)  
         atomic_environment = AtomicEnvironment(config.atomicenvironment.style, neighbors_list.neighbors_list['rnei'], neighbors_list.neighbors_list['rcut'], config.atomicenvironment.neighbors_add)
-        self.state_environment.append(atomic_environment.atomic_environment_list.copy())
-        self.state_neighbors_list.append(neighbors_list)
+        if state_index is None:
+            self.state_environment.append(atomic_environment.atomic_environment_list.copy())
+            self.state_neighbors_list.append(neighbors_list)
+        else:
+            self.state_environment[state_index] = atomic_environment.atomic_environment_list.copy()
+            self.state_neighbors_list[state_index] = neighbors_list
+
         return neighbors_list
 
 
@@ -104,7 +120,7 @@ class Basin() :
         if state == 0 :
             state_connexion = 1
         else :
-            state_connexion = self.connexion_table.tail(1)['state_connexion'] + 1     # find value of last state connexion in connexion_table
+            state_connexion = int(self.connexion_table.tail(1)['state_connexion'] + 1)     # find value of last state connexion in connexion_table
 
         # for all applicable events
         for idx_table, dfevent in self.applicable_events_df.iterrows() :
@@ -121,18 +137,15 @@ class Basin() :
                                                    'transition' : is_transition}])
         
 
-                
                 self.connexion_table = pd.concat([self.connexion_table, applicable_events], ignore_index=True)
 
-
+                # Only visit the transition states
                 if is_transition == True :
                     self.states_to_visit.append(state_connexion)
 
                 state_connexion += 1
 
-
                 self.states.append(state_connexion)
-
        
         self.visited_states.append(state)
         
@@ -143,58 +156,123 @@ class Basin() :
 
     def apply_generic_event(self, config, reference_table) :
 
-        while (set(self.visited_states) != set(self.states_to_visit)) :
+        while len(self.states_to_visit) != 0 :
+
             to_visit = list(set(self.states_to_visit).difference(set(self.visited_states))) [0]
 
             row = self.connexion_table.loc[self.connexion_table['state_connexion'] == to_visit]
             atom_index = row.iloc[0]['central_atom']
             from_state = row.iloc[0]['state']
+            event_idx = row.iloc[0]['event_connexion']
+
+            
+            # Get generic event from reference_table
+            ref_event = reference_table.table.loc[event_idx]
+
+            self.update_state_environment(self.state_system[from_state], config, state_index = from_state)
 
 
-            #Need to go to final point applying PSR :
-            psr_output = PointSetRegistration(config, self.state_system[from_state], reference_table.table.loc[0], self.state_neighbors_list[from_state], atom_index).match()
+            # Get neighbors
+            neighbors = self.state_neighbors_list[from_state].get_neighbors('rcut', atom_index)
+            
 
+            # Go to final point applying PSR
+            psr_output = PointSetRegistration(config, self.state_system[from_state], ref_event, self.state_neighbors_list[from_state], atom_index).match()
+            verification_system = self.state_system[from_state]
 
             if psr_output.is_ok():
                 psr_output = psr_output.ok_value()
 
-                #2. Checker si Point Set Registration est ok  -> Si dh < 0.3
+                # Check if PointSetRegistration finds a match
                 if psr_output.matching_score < 0.3 :
-
-
-                    #3. Appliquer le Point Set Registration a reference_table.table.loc[0].at['final_positions'] --> donne new_positions  (utiliser np.matmul ou operateur python @) 
-                    #Apply PSR to generic event
-
+ 
+                    # Apply PSR to generic event
                     final_positions = reference_table.table.loc[0].at['final_positions']
                     final_positions = geometry.transform_positions(final_positions, psr_output.rotation_matrix, psr_output.translation_matrix, psr_output.permutation_matrix)
 
-                    #Get atomic environment atoms
-                    neighbors = self.update_state_environment(self.state_system[from_state], config).get_neighbors('rcut', atom_index)
 
-                    
-
-
-
-                    #4. Changer les positions de l'environment atomique de l'atom atom_index avec celles de new positions. --> utilise system.update_position(new_positions, atom_idx =[list atom dans l'environment atomique de l'atom central atom_index])
-                    #Move system do final positions
+                    # Move system do final positions
                     new_system = copy.deepcopy(self.state_system[from_state])
-
                     new_system.update_positions(final_positions, atom_idx = neighbors)
 
-                    self.state_system.append(new_system)
+
+                    # Check if the state added in state_connexion has already been given another number in connexion_table
+                    existing_state_index = self.find_existing_state(new_system)
+
+                    if existing_state_index is not None:
+                        print("State", to_visit, "is already known as state", existing_state_index)
+
+                        # Update connexion_table to reflect this match
+                        self.connexion_table.loc[self.connexion_table["state_connexion"] == to_visit, "state_connexion"] = existing_state_index
+
+                        self.state_system.append(self.state_system[existing_state_index])
+                        self.update_state_environment(self.state_system[existing_state_index], config)
+
+                    else:
+                        # Register the new state
+                        self.state_system.append(new_system)
+                        self.update_state_environment(new_system, config)
+                        self.update_connexion_table(to_visit, config)
+
+
+                    # Remove to_visit from states_to_visit
+                    ind =  [i for i, e in enumerate (self.states_to_visit) if e == to_visit] [0]
+                    self.states_to_visit.pop(ind)                                                             # ??? bon?
+
+
+
+                    self.debug_tables(to_visit)
 
                     self.visited_states.append(to_visit)    
 
+            
+
+
 
                 else : 
+                    self.states_to_visit = []
                     print("PSR found a match but matching score is above acceptance threshold")
 
 
             else:
                 print("Registration failed:", psr_output.err_value())
-                
-        print("123soleil")
+               
+        
 
+
+    def are_structures_equivalent(self, pos1, pos2, tol = 0.1):
+        """
+        Compare two sets of atomic positions, ignoring atom order.
+        """
+        if len(pos1) != len(pos2):
+            return False/1
+        tree1 = cKDTree(pos1)
+        tree2 = cKDTree(pos2)
+
+        # Pour chaque point de pos1, trouver son plus proche voisin dans pos2
+        distances1, _ = tree2.query(pos1, k=1)
+        distances2, _ = tree1.query(pos2, k=1)
+
+        max_dist1 = np.max(distances1)
+        max_dist2 = np.max(distances2)
+
+        return max(max_dist1, max_dist2) < tol
+
+
+
+
+    def find_existing_state(self, system, tolerance = 0.1):
+        candidate_pos = system.positions
+
+        for i, existing_system in enumerate(self.state_system):
+            existing_pos = existing_system.positions
+
+            if self.are_structures_equivalent(candidate_pos, existing_pos, tol = tolerance):
+                print("✅ Match found with state", i)
+                return i
+
+        return None
+        
 
 
 
@@ -202,14 +280,8 @@ class Basin() :
         print("\n=== Connexion Table ===")
         print(self.connexion_table)
 
-        print("\n=== Applicable Generic Events ===")
-        print(self.get_applicable_generic_event(state))
-
-
-
-
-
-
+       # print("\n=== Applicable Generic Events ===")
+       # print(self.get_applicable_generic_event(state))
 
 
 
