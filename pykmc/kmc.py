@@ -151,7 +151,7 @@ class KMC:
             # Ckeck if the event selected is in a basin
             if self.config.control.basin == True:
                 if self.basin.detectin(active_table.table.iloc[idx_selected_event], self.config.basin.energy_thr):
-                    self.basin.execute(self.system, self.config, self.reference_table)
+                    self.basin.execute(self.system, self.config, self.reference_table, self.engine)
 
             time += delta_t * 10**-12  # time is in seconds
 

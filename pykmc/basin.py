@@ -1,5 +1,5 @@
 import pandas as pd
-from pykmc import NeighborsList, AtomicEnvironment, PointSetRegistration, System
+from pykmc import NeighborsList, AtomicEnvironment, PointSetRegistration, System, Engine
 from .utils import geometry
 import copy
 import numpy as np
@@ -28,33 +28,45 @@ class Basin() :
         self.state_environment : list[list[str|bytes]] = []
         self.state_neighbors_list: list = []
         self.applicable_events_df: list = []
+        self.states_to_check: list[int] = None
+        self.checked_states: list[int] = []
         
-
+      
+    # CHANGER LA MANIÈRE DE DÉTECTER LES BASSINS POUR QUE CE SOIT COHÉRENT AVEC LE NOUVEAU CODE DE HUGO 
 
     def detectin(self, selected_active_event_series, energy_threshold) : 
 
         dE_forward = selected_active_event_series['energy_barrier']
-        dE_backward = selected_active_event_series['backward_energy_barrier']
+        # dE_backward = selected_active_event_series['backward_energy_barrier']
 
-        if dE_forward > energy_threshold  and dE_backward > energy_threshold  : 
+        if dE_forward > energy_threshold : 
             print ('Basin not detected')
             return False
         
-        else : #event is symmetrical and energy barriers are low
-            print('Basin detected')
-            return True
+        else : # Forward energy barrier is low 
+            forward_id_final = selected_active_event_series["id_final"]
+            forward_id_initial = selected_active_event_series["event_id"]
+
+            # Get row of the potential backward event
+            backward_id_initial =  self.reference_table[self.reference_table["event_id"] == forward_id_final]
+
+            if not backward_id_initial.empty and backward_id_initial.iloc[0]["id_final"] == selected_active_event_series["event_id"] :
+                dE_backward = backward_id_initial.iloc[0]["energy_barrier"]
+
+
+            if dE_backward < energy_threshold :
+                print('Basin detected')
+                return True
+            else :
+                return False
 
 
 
 
-    def execute(self, initial_system, config, reference_table) : 
+    def execute(self, initial_system, config, reference_table, engine) : 
 
         self.initialize(initial_system, config)
-        self.apply_generic_event(config, reference_table)
-
-        #self.update()
-
-
+        self.apply_generic_event(config, reference_table, engine)
 
 
 
@@ -65,6 +77,7 @@ class Basin() :
         self.state_system = [system]
         self.states_to_visit = []
         self.state_environment = []
+        self.states_to_check = []
         self.connexion_table = pd.DataFrame(columns=['state', 
                                                      'state_connexion', 
                                                      'event_connexion',
@@ -76,17 +89,21 @@ class Basin() :
 
 
     def update(self, state , config) :
-        self.update_state_environment(self.state_system[state], config)   
+        self.update_state_environment(self.state_system[state], config, state)   
         self.get_applicable_generic_event(state)
         self.update_connexion_table(state, config)
         self.debug_tables(state)
 
 
 
-    def update_state_environment(self, system, config, state_index = None) :  
+
+    def update_state_environment(self, system, config, state, state_index = None) :  
         neighbors_list = NeighborsList(system, config.atomicenvironment.rnei, config.atomicenvironment.rcut)  
         atomic_environment = AtomicEnvironment(config.atomicenvironment.style, neighbors_list.neighbors_list['rnei'], neighbors_list.neighbors_list['rcut'], config.atomicenvironment.neighbors_add)
         if state_index is None:
+            #while state > len(self.state_environment) :
+            #    self.state_environment.append([0]) 
+
             self.state_environment.append(atomic_environment.atomic_environment_list.copy())
             self.state_neighbors_list.append(neighbors_list)
         else:
@@ -96,11 +113,14 @@ class Basin() :
         return neighbors_list
 
 
+
+
     def get_applicable_generic_event(self, state) :
         self.atomic_events_id = self.get_atomic_environment(state)
         df = self.reference_table.table
         applicable_generic_events = df[df['event_id'].isin(self.atomic_events_id)]
         return applicable_generic_events    # returns sub DataFrame of reference_table with events that have an ID in AtomicEnvironment_list
+
 
 
     
@@ -139,13 +159,16 @@ class Basin() :
 
                 self.connexion_table = pd.concat([self.connexion_table, applicable_events], ignore_index=True)
 
+                # Check all states
+                self.states_to_check.append(state_connexion)
+
                 # Only visit the transition states
                 if is_transition == True :
-                    self.states_to_visit.append(state_connexion)
-
-                state_connexion += 1
+                    self.states_to_visit.append(state_connexion) 
 
                 self.states.append(state_connexion)
+
+                state_connexion += 1
        
         self.visited_states.append(state)
         
@@ -154,11 +177,11 @@ class Basin() :
 
 
 
-    def apply_generic_event(self, config, reference_table) :
+    def apply_generic_event(self, config, reference_table, engine) :
 
-        while len(self.states_to_visit) != 0 :
+        while len(self.states_to_check) != 0 :
 
-            to_visit = list(set(self.states_to_visit).difference(set(self.visited_states))) [0]
+            to_visit = next(s for s in self.states_to_check if s not in self.checked_states)
 
             row = self.connexion_table.loc[self.connexion_table['state_connexion'] == to_visit]
             atom_index = row.iloc[0]['central_atom']
@@ -169,7 +192,7 @@ class Basin() :
             # Get generic event from reference_table
             ref_event = reference_table.table.loc[event_idx]
 
-            self.update_state_environment(self.state_system[from_state], config, state_index = from_state)
+            self.update_state_environment(self.state_system[from_state], config, to_visit, state_index = from_state)
 
 
             # Get neighbors
@@ -196,6 +219,11 @@ class Basin() :
                     new_system.update_positions(final_positions, atom_idx = neighbors)
 
 
+                    # Minimize after moving the system
+                    new_positions, total_energy = engine.minimize(new_system)
+                    new_system.update_positions(new_positions)
+
+
                     # Check if the state added in state_connexion has already been given another number in connexion_table
                     existing_state_index = self.find_existing_state(new_system)
 
@@ -206,27 +234,30 @@ class Basin() :
                         self.connexion_table.loc[self.connexion_table["state_connexion"] == to_visit, "state_connexion"] = existing_state_index
 
                         self.state_system.append(self.state_system[existing_state_index])
-                        self.update_state_environment(self.state_system[existing_state_index], config)
+                        self.update_state_environment(self.state_system[existing_state_index], config, existing_state_index)
 
                     else:
                         # Register the new state
                         self.state_system.append(new_system)
-                        self.update_state_environment(new_system, config)
-                        self.update_connexion_table(to_visit, config)
+                        self.update_state_environment(new_system, config, to_visit)
+
+                        if to_visit in self.states_to_visit :
+                            self.update_connexion_table(to_visit, config)     # Update the connexion_table only if the state is a transient state
+                        
 
 
                     # Remove to_visit from states_to_visit
-                    ind =  [i for i, e in enumerate (self.states_to_visit) if e == to_visit] [0]
-                    self.states_to_visit.pop(ind)                                                             # ??? bon?
+                    if to_visit in self.states_to_visit :
+                        ind =  [i for i, e in enumerate (self.states_to_visit) if e == to_visit] [0]
+                        self.states_to_visit.pop(ind)                                                            
 
-
+                    # Update the states to check
+                    self.checked_states.append(to_visit)
+                    self.states_to_check.pop(0)
 
                     self.debug_tables(to_visit)
 
-                    self.visited_states.append(to_visit)    
-
-            
-
+                     
 
 
                 else : 
@@ -240,14 +271,15 @@ class Basin() :
         
 
 
-    def are_structures_equivalent(self, pos1, pos2, tol = 0.1):
+    def are_structures_equivalent(self, pos1, pos2, system, tol = 0.1):
         """
         Compare two sets of atomic positions, ignoring atom order.
         """
         if len(pos1) != len(pos2):
-            return False/1
-        tree1 = cKDTree(pos1)
-        tree2 = cKDTree(pos2)
+            return False
+        box = [system.cell[0][0], system.cell[1][1], system.cell[2][2]]
+        tree1 = cKDTree(pos1, boxsize = box)    
+        tree2 = cKDTree(pos2, boxsize = box)
 
         # Pour chaque point de pos1, trouver son plus proche voisin dans pos2
         distances1, _ = tree2.query(pos1, k=1)
@@ -261,13 +293,13 @@ class Basin() :
 
 
 
-    def find_existing_state(self, system, tolerance = 0.1):
-        candidate_pos = system.positions
+    def find_existing_state(self, system, tolerance = 0.1):      
+        candidate_pos = system.positions                         
 
         for i, existing_system in enumerate(self.state_system):
             existing_pos = existing_system.positions
 
-            if self.are_structures_equivalent(candidate_pos, existing_pos, tol = tolerance):
+            if self.are_structures_equivalent(candidate_pos, existing_pos, system, tol = tolerance):
                 print("✅ Match found with state", i)
                 return i
 
