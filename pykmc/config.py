@@ -6,7 +6,7 @@ all input parameters required for running PyKMC simulations
 
 from __future__ import annotations
 from typing import Optional
-from pydantic import BaseModel, Field, model_validator, ValidationError
+from pydantic import BaseModel, Field, model_validator, ValidationError, field_validator
 import configparser
 from typing import Any, Literal
 from dataclasses import dataclass
@@ -17,7 +17,7 @@ class PhysicalConstants:
     """Store physical constants."""
 
     kb = 8.6173303e-05  # eV.K^-1
-    h = 6.5822119e-3  # eV.ps
+    h = 4.135667e-3  # eV.ps
 
 
 class ControlConfig(BaseModel):
@@ -133,37 +133,38 @@ class EventSearchConfig(BaseModel):
         default=0.2,
         description="Maximumallowed difference (in eV) between a reference event's initial barrier energy and its refined barrier energy.",
     )
-    
+
+    delr_thr: float = Field(
+        default=0.5,
+        description="delr threshold between one minima and the intial configuration to consider the event valid.",
+    )
+
+
 class BasinConfig(BaseModel):
     energy_thr: float = Field(
     default = 0.1,
     description="Energy threshold"    
     )
-
+    
 
 class PartnConfig(BaseModel):
     """pARTn parameters."""
 
+    #Control 
     verbosity: int = Field(default=2, description="pARTn verbosity")
 
-    ninit: int = Field(
-        default=2,
-        description="Specify the minimal number of pushes with the initial push vector.",
+    delr_thr: float = Field(
+        default=0.1, 
+        description="Threshold at which an atom is considered to have moved. This threshold affects the npart parameter in the artn.out output."
     )
 
-    forc_thr: float = Field(
-        default=0.001,
-        description="The configuration has converged to either a saddle point, or a minimum, when the sum of the parallel and perpendicular components of the atomic forces is lower than this value.",
+    #Exploration
+    zseed: int = Field(
+        default=0, 
+        description="The value of zseed is used to seed the random number generator. If the value equals 0, a new radom seed gets geenrated. The exact zseed value of each research is written in file zseed.dat, which can be useful for debugging, or re-running exact same pARTn runs."
     )
 
-    push_over: float = Field(
-        default=1.0,
-        description="Factor that scales the displacement vector used to push the system from the saddle point towards a local energy minimum. "
-        "\n"
-        "$$ \\text{displacement} = \\text{push_factor} \\times v_0 \\times \\text{eigen_step_size} \\times \\text{push_over} \\times 0.8 $$"
-        "\n",
-    )
-
+    #Initial push
     push_mode: Literal["list", "rad"] = Field(
         default="rad",
         description="Determines how the initial atomic displacement (push) is generated around the central atom "
@@ -183,9 +184,21 @@ class PartnConfig(BaseModel):
         default=0.4,
         description="Maximum size of a component in the initial displacement vector.",
     )
-    eigen_step_size: float = Field(
-        default=0.2,
-        description="The limit to the maximum size of the displacement with eigenvector.",
+
+    ninit: int = Field(
+        default=2,
+        description="Specify the minimal number of pushes with the initial push vector.",
+    )
+
+    #Lanczos 
+    lanczos_min_size: float = Field(
+        default=10, 
+        description="Enforce Lanczos to always do at least this number of iterations."
+    )
+
+    lanczos_max_size: float = Field(
+        default=20, 
+        description="Maximum number of Lanczos iterations."
     )
 
     lanczos_disp: float = Field(
@@ -193,18 +206,77 @@ class PartnConfig(BaseModel):
         description="Scaling factor for displacement during the Lanczos algorithm",
     )
 
+    lanczos_eval_conv_thr: float = Field(
+        default=0.01, 
+        description="Threshold for convergence of eigenvalue in Lanczos. Once convergence is reached, the Lanczos scheme exits."
+    )
+
+    #Eigenvector push 
+    eigval_thr: float = Field(
+        default=-0.01, 
+        description="Threshold for eigenvalue, which determines when to start following the eigenvector"
+    )
+
+    eigen_step_size: float = Field(
+        default=0.2,
+        description="The limit to the maximum size of the displacement with eigenvector.",
+    )
+    
     nsmooth: int = Field(
         default=3,
         description="Number of smoothing steps from initial displacement to eigenvector.",
     )
-
-    nperp: int = Field(default=3, description="Control the perpendicular relaxation.")
-
-    delr_thr: float = Field(
-        default=0.5,
-        description="delr threshold between one minima and the intial configuration to consider the event valid.",
+    
+    neigen: int = Field(
+        default=1, 
+        description="Number of pushes along the eignevector before starting a perpendicular relax."
     )
 
+    alpha_mix_cr: float = Field(
+        default=0.2, 
+        description="This is the mixing coefficient used to create the push vector when the system enters into a convex region, i.e. when the negative curvature is lost. ",
+        ge=0.0, 
+        le=1.0
+    )
+
+    nnewchance: int = Field(
+        default=0, 
+        description="Number of times a research is allowed to cross a convex region (without counting the starting convex region)."
+    )
+
+    #Perpendicular relaxation
+    nperp: int = Field(default=3, description="Control the perpendicular relaxation.")
+    nperp_limitation: list[int] = Field( 
+        default=[ 4, 8, 12, 16, -1 ], 
+        description="Limit of perpendicular relaxation steps for each ARTn step. More ARTn goes far from the basin more perpendicular relaxation are needed. This option allows the user to customize the number of perp relax. The value -1 means no limitation and -2 represent NULL."
+    )
+    #Convergence 
+    forc_thr: float = Field(
+        default=0.001,
+        description="The configuration has converged to either a saddle point, or a minimum, when the sum of the parallel and perpendicular components of the atomic forces is lower than this value.",
+    )
+    
+    convergence_property: Literal["maxval", "norm"] = Field(
+        default="maxval", 
+        description="Specify how to test convergence of the forces. 'maxval': the convergence will be tested by MAXVAL( ABS( force ) ); 'norm' the convergence will be tested by NORM2( force )."
+    )
+
+    nevalf_max: int = Field(
+        default=9999, 
+        description="Stop an artn search before end when the number of force evaluations by the force engine is greater to nevalf_max"
+    )
+
+    #Final push
+
+    push_over: float = Field(
+        default=1.0,
+        description="Factor that scales the displacement vector used to push the system from the saddle point towards a local energy minimum. "
+        "\n"
+        "$$ \\text{displacement} = \\text{push_factor} \\times v_0 \\times \\text{eigen_step_size} \\times \\text{push_over} \\times 0.8 $$"
+        "\n",
+    )
+
+    #Lammps 
     dmax: float = Field(
         default=6.0,
         description="dmax parameter used in fix ID all artn dmax value lammps command. should be higher than push_step_size.",
@@ -215,6 +287,122 @@ class PartnConfig(BaseModel):
         description="Path to use to load the plugin with lammps command 'plugin load /path/to/artn-plugin/libartn.so'",
     )
 
+#################
+#Refinement part#
+#################
+
+    #Initial_push 
+    r_push_mode: Literal["list", "rad"] = Field(
+        default="list",
+        description="Determines how the initial atomic displacement (push) is generated around the central atom "
+        "of the currently explored environment:\n"
+        "- **'list'**: The push is applied *only* to the central atom.\n"
+        "- **'rad'**: The push is applied to *all atoms* within a specified radial distance (`push_dist_thr`) "
+        "from the central atom.",
+    )
+
+    r_push_dist_thr: float = Field(
+        default=1.0,
+        description="If `push_mode` is **'rad'**, this defines the radial cutoff (in Angstrom) from the central atom "
+        "within which all atoms receive an initial displacement.",
+    )
+
+    r_push_step_size: float = Field(
+        default=0.0001,
+        description="Maximum size of a component in the initial displacement vector.",
+    )
+
+    r_ninit: int = Field(
+        default=0,
+        description="Refinement: Specify the minimal number of pushes with the initial push vector.",
+    )
+
+    #Lanczos
+    r_lanczos_min_size: float = Field(
+        default=20, 
+        description="Refinement: Enforce Lanczos to always do at least this number of iterations."
+    )
+
+    r_lanczos_max_size: float = Field(
+        default=50, 
+        description="Refinement: Maximum number of Lanczos iterations."
+    )
+
+    r_lanczos_disp: float = Field(
+        default=0.0005,
+        description="Refinement: Scaling factor for displacement during the Lanczos algorithm",
+    )
+
+    r_lanczos_eval_conv_thr: float = Field(
+        default=0.01, 
+        description="Threshold for convergence of eigenvalue in Lanczos. Once convergence is reached, the Lanczos scheme exits."
+    )
+
+    #Eigenvector push
+    r_eigval_thr: float = Field(
+        default=-0.01, 
+        description="Refinement: threshold for eigenvalue, which determines when to start following the eigenvector"
+    )
+
+    r_eigen_step_size: float = Field(
+        default=0.005,
+        description="Refinement: The limit to the maximum size of the displacement with eigenvector.",
+    )
+
+    r_nsmooth: int = Field(
+        default=0,
+        description="Refinement: Number of smoothing steps from initial displacement to eigenvector.",
+    )
+    
+    r_neigen: int = Field(
+        default=1, 
+        description="Refinement: Number of pushes along the eignevector before starting a perpendicular relax."
+    )
+
+    r_alpha_mix_cr: float = Field(
+        default=0.2, 
+        description="Refinement: This is the mixing coefficient used to create the push vector when the system enters into a convex region, i.e. when the negative curvature is lost. ",
+        ge=0.0, 
+        le=1.0
+    )
+
+    r_nnewchance: int = Field(
+        default=0, 
+        description="Refinement: Number of times a research is allowed to cross a convex region (without counting the starting convex region)."
+    )
+
+
+    #Perpendicular relaxation 
+    r_nperp: int = Field(default=3, description="Refinement: Control the perpendicular relaxation.")
+    r_nperp_limitation: list[int] = Field( 
+        default=[100], 
+        description="Refinement: Limit of perpendicular relaxation steps for each ARTn step. More ARTn goes far from the basin more perpendicular relaxation are needed. This option allows the user to customize the number of perp relax. The value -1 means no limitation and -2 represent NULL."
+    )
+
+
+    #Convergence
+    r_forc_thr: float = Field(
+        default=0.001,
+        description="Refinement: The configuration has converged to either a saddle point, or a minimum, when the sum of the parallel and perpendicular components of the atomic forces is lower than this value.",
+    )
+
+    #Lammps
+    r_dmax: float = Field(
+        default=1.0,
+        description="Refinement: dmax parameter used in fix ID all artn dmax value lammps command. should be higher than push_step_size.",
+    )
+    
+    #To deal with list
+    @field_validator("nperp_limitation", "r_nperp_limitation", mode="before")
+    @classmethod
+    def parse_list_of_ints(cls, v):
+        if isinstance(v, str):
+            v = v.strip("[]")
+            try:
+                return [int(x.strip()) for x in v.split(",") if x.strip()]
+            except ValueError:
+                raise ValueError(f"Invalid list of integers: {v}")
+        return v
 
 class RateConstantConfig(BaseModel):
     """Rate constant computation parameters."""
@@ -345,6 +533,7 @@ class Config(BaseModel):
 
         """
         parser = configparser.ConfigParser()
+        parser.optionxform = str
         parser.read(ini_path)
 
         config_dict: dict[str, dict[str, Any]] = {
@@ -371,6 +560,9 @@ class Config(BaseModel):
             raise ValueError(
                 f"Error while reading configuration file :\n{user_msg}"
             ) from None
+
+    
+
 
     @model_validator(mode="after")
     def validate_dependencies(self) -> Config:
@@ -401,7 +593,6 @@ class Config(BaseModel):
             ("control.engine", "lammps"): ["lammps"],
             ("eventsearch.style", "partn"): ["partn"],
             ("psr.style", "ira"): ["ira"],
-            ("control.basin", True): ["basin"]
         }
 
         for (field_path, condition_value), required_fields in validation_rules.items():

@@ -159,30 +159,24 @@ class EventRefinementOutput:
     ----------
     central_atom_index : int
         Index of the atom around which the event was refined.
-    min1_positions : np.ndarray
-        Refined atomic positions of the initial minimum.
     saddle_positions : np.ndarray
         Refined saddle point atomic positions.
     min2_positions : np.ndarray
-        Refined atomic positions of the final minimum.
-    dE_forward : float
-        Refined forward energy barrier.
-    dE_backward : float
-        Refined backward energy barrier.
-    move_atom_index : int
-        Index of the atom that moved the most during the transition.
+        Refined atomic positions of the final minimum (if matched)
+    E_saddle : float 
+        Potential energy at the saddle point.
+    dE_forward : Optional[float]
+        Refined forward energy barrier (if matched).
     num_reference_event : Optional[int]
         Index of the corresponding reference event (if matched).
 
     """
 
     central_atom_index: int
-    min1_positions: np.ndarray
     saddle_positions: np.ndarray
-    min2_positions: np.ndarray
-    dE_forward: float
-    dE_backward: float
-    move_atom_index: int
+    E_saddle: float
+    min2_positions: Optional[np.ndarray] = None
+    dE_forward: Optional[float] = None
     num_reference_event: Optional[int] = None
 
 

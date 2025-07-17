@@ -134,6 +134,7 @@ class Refinement:
             # Apply symmetries :
 
             current_positions = self.system.positions.copy()
+            initial_potential_energy = self.engine.compute_potential_energy(self.system)
             for sym_matrix, perm_matrix in zip(
                 dfevent.at["sym_matrix"], dfevent.at["sym_perm"], strict=False
             ):
@@ -156,15 +157,19 @@ class Refinement:
                 self.loggers.progress_bar("progress", count, total_refinements)
 
                 if result_refine.is_ok():
+                    #Update Result : 
+                        #Apply psr to generic final positions
+                    final_positions = dfevent.at["final_positions"] + new_displacement
+                    new_positions = geometry.transform_positions(final_positions, output_psr.rotation_matrix, output_psr.translation_matrix, output_psr.permutation_matrix)
+                    self.system.update_positions(new_positions, atom_idx=neighbors )
+                    result_refine.ok_value().min2_positions = self.system.positions 
+                        #Compute dE 
+                    result_refine.ok_value().dE_forward = result_refine.ok_value().E_saddle - initial_potential_energy  
+
                     result_refine.ok_value().num_reference_event = cat_idx
-                    result_refine = self.check_refinement_minima(
-                        result_refine.ok_value(),
-                        current_positions,
-                        at_idx,
-                        self.config.eventsearch.refined_minimum_delr_thr,
-                    )
-                    if result_refine.is_ok():
-                        result_refine = self.check_refinement_energy(
+
+                        #Check if energy barrier consistent with generic one
+                    result_refine = self.check_refinement_energy(
                             result_refine,
                             abs(
                                 result_refine.ok_value().dE_forward
@@ -176,65 +181,7 @@ class Refinement:
                 all_results.append(result_refine)
             return all_results
 
-    def check_refinement_minima(
-        self,
-        result_refine: EventRefinementOutput,
-        current_positions: np.ndarray,
-        at_idx: int,
-        minimum_delr_thr: float,
-    ) -> Result[EventRefinementOutput, ErrorInfo]:
-        """Find if which of the first or second minimum correspond to the current positions of the system.
 
-        It compare the distance between the central atom in the current positions and its positions in the first and second minima.
-
-        Parameters
-        ----------
-        result_refine : EventRefinementOutput
-            dataclass with information from the refinement procedure.
-        current_positions : np.ndarray
-            current positions of the system.
-        at_idx : int
-            index of the central atom.
-        minimum_delr_thr : float
-            maximum distance to consider the event valid, ie that one minima correspond to the current positions.
-
-        Returns
-        -------
-        Result[EventRefinementOutput, ErrorInfo]
-            List of results of the procedure.
-
-        """
-        # To deal with pbc problem and lammps slighlty over/under box positions
-        dr1_vec, _ = ase.geometry.find_mic(
-            current_positions[at_idx] - result_refine.min1_positions[at_idx],
-            cell=self.system.cell,
-            pbc=self.system.pbc,
-        )
-        dr2_vec, _ = ase.geometry.find_mic(
-            current_positions[at_idx] - result_refine.min2_positions[at_idx],
-            cell=self.system.cell,
-            pbc=self.system.pbc,
-        )
-        # compare only atom that move
-        dr1 = np.sum(np.abs(dr1_vec))
-        dr2 = np.sum(np.abs(dr2_vec))
-
-        if dr1 > minimum_delr_thr and dr2 > minimum_delr_thr:
-            return Err(
-                ErrorInfo(
-                    type=ErrorType.REFINEMENT_INVALID_MINIMA,
-                    message="Mismatch between current positions and minima positions of the refined event.",
-                )
-            )
-
-        elif dr1 < dr2:
-            return Ok(result_refine)
-        else:
-            result_refine.min1_positions, result_refine.min2_positions = (
-                result_refine.min2_positions,
-                result_refine.min1_positions,
-            )
-            return Ok(result_refine)
 
     def check_refinement_energy(
         self,

@@ -205,7 +205,7 @@ class LammpsEngine:
             The potential energy of the system.
 
         """
-        lmp = lammps()
+        lmp = lammps(cmdargs=["-screen", "none"])
         self._initialize_default(system, lmp)
         self._initialize_potential(lmp)
 

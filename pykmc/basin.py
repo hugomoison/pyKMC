@@ -32,30 +32,40 @@ class Basin() :
         self.checked_states: list[int] = []
         
       
-    # CHANGER LA MANIÈRE DE DÉTECTER LES BASSINS POUR QUE CE SOIT COHÉRENT AVEC LE NOUVEAU CODE DE HUGO 
+    
 
-    def detectin(self, selected_active_event_series, energy_threshold) : 
+    def detectin(self, selected_active_event_series, energy_threshold, index_event = None) : 
 
-        dE_forward = selected_active_event_series['energy_barrier']
-        # dE_backward = selected_active_event_series['backward_energy_barrier']
+        dE_forward = selected_active_event_series["energy_barrier"]
 
         if dE_forward > energy_threshold : 
             print ('Basin not detected')
             return False
         
         else : # Forward energy barrier is low 
-            forward_id_final = selected_active_event_series["id_final"]
-            forward_id_initial = selected_active_event_series["event_id"]
+
+            # Get row of forward event
+            if index_event != None :
+                num_reference_event = index_event
+
+            else :
+                num_reference_event = selected_active_event_series["num_reference_event"].item()
+
+            forward_event_row = self.reference_table.table.iloc[num_reference_event]
+
+            forward_id_final = forward_event_row["id_final"]   
+            forward_id_initial = forward_event_row["event_id"]
+
 
             # Get row of the potential backward event
-            backward_id_initial =  self.reference_table[self.reference_table["event_id"] == forward_id_final]
+            backward_event_row =  self.reference_table.table[self.reference_table.table["event_id"] == forward_id_final]
 
-            if not backward_id_initial.empty and backward_id_initial.iloc[0]["id_final"] == selected_active_event_series["event_id"] :
-                dE_backward = backward_id_initial.iloc[0]["energy_barrier"]
+            if not backward_event_row.empty and backward_event_row.iloc[0]["id_final"] == forward_id_initial :
+                dE_backward = backward_event_row.iloc[0]["energy_barrier"]
 
 
             if dE_backward < energy_threshold :
-                print('Basin detected')
+                print("Basin detected")
                 return True
             else :
                 return False
@@ -77,7 +87,8 @@ class Basin() :
         self.state_system = [system]
         self.states_to_visit = []
         self.state_environment = []
-        self.states_to_check = []
+        self.states_to_check = []  
+        self.checked_states = [0]   # ??
         self.connexion_table = pd.DataFrame(columns=['state', 
                                                      'state_connexion', 
                                                      'event_connexion',
@@ -91,7 +102,7 @@ class Basin() :
     def update(self, state , config) :
         self.update_state_environment(self.state_system[state], config, state)   
         self.get_applicable_generic_event(state)
-        self.update_connexion_table(state, config)
+        self.update_connexion_table(state, config, True)
         self.debug_tables(state)
 
 
@@ -129,48 +140,53 @@ class Basin() :
         
     
 
-    def update_connexion_table(self, state, config) :
-        
-        # search for events applicable to the state
-        self.applicable_events_df = self.get_applicable_generic_event(state)  
-
-        ### applicable_event_ids = set(applicable_events_df['event_id'])
+    def update_connexion_table(self, state, config, transition = False) :
 
         #Initialize state_connexion
         if state == 0 :
             state_connexion = 1
         else :
             state_connexion = int(self.connexion_table.tail(1)['state_connexion'] + 1)     # find value of last state connexion in connexion_table
-
-        # for all applicable events
-        for idx_table, dfevent in self.applicable_events_df.iterrows() :
-            # search atoms on which we can apply the event
-            l_atom_index = [atom_idx for atom_idx, atom_id in enumerate(self.get_atomic_environment(state)) if atom_id == dfevent['event_id']]
-
-            is_transition = self.detectin(dfevent, config.basin.energy_thr)
-
-            for atom_idx in l_atom_index :
-                applicable_events = pd.DataFrame([{'state' : state, 
-                                                   'state_connexion' : state_connexion, 
-                                                   'event_connexion' : idx_table,
-                                                   'central_atom' : atom_idx, 
-                                                   'transition' : is_transition}])
         
-
-                self.connexion_table = pd.concat([self.connexion_table, applicable_events], ignore_index=True)
-
-                # Check all states
+        if not transition :
+            if not state_connexion in self.states_to_check :
                 self.states_to_check.append(state_connexion)
 
-                # Only visit the transition states
-                if is_transition == True :
-                    self.states_to_visit.append(state_connexion) 
+        else :    
 
-                self.states.append(state_connexion)
+            # search for events applicable to the state
+            self.applicable_events_df = self.get_applicable_generic_event(state)  
 
-                state_connexion += 1
-       
-        self.visited_states.append(state)
+
+            # for all applicable events
+            for idx_table, dfevent in self.applicable_events_df.iterrows() :
+                # search atoms on which we can apply the event
+                l_atom_index = [atom_idx for atom_idx, atom_id in enumerate(self.get_atomic_environment(state)) if atom_id == dfevent['event_id']]
+
+                is_transition = self.detectin(dfevent, config.basin.energy_thr, dfevent.name)
+
+                for atom_idx in l_atom_index :
+                    applicable_events = pd.DataFrame([{'state' : state, 
+                                                    'state_connexion' : state_connexion, 
+                                                    'event_connexion' : idx_table,
+                                                    'central_atom' : atom_idx, 
+                                                    'transition' : is_transition}])
+            
+
+                    self.connexion_table = pd.concat([self.connexion_table, applicable_events], ignore_index=True)
+
+                    # Check transition states
+                    self.states_to_check.append(state_connexion)
+
+                    # Only visit the transition states
+                    if is_transition == True :
+                        self.states_to_visit.append(state_connexion) 
+
+                    self.states.append(state_connexion)
+
+                    state_connexion += 1
+        
+            self.visited_states.append(state)
         
 
 
@@ -192,7 +208,7 @@ class Basin() :
             # Get generic event from reference_table
             ref_event = reference_table.table.loc[event_idx]
 
-            self.update_state_environment(self.state_system[from_state], config, to_visit, state_index = from_state)
+            self.update_state_environment(self.state_system[from_state], config, to_visit, state_index = from_state)     #???????
 
 
             # Get neighbors
@@ -210,7 +226,7 @@ class Basin() :
                 if psr_output.matching_score < 0.3 :
  
                     # Apply PSR to generic event
-                    final_positions = reference_table.table.loc[0].at['final_positions']
+                    final_positions = reference_table.table.loc[event_idx].at['final_positions']
                     final_positions = geometry.transform_positions(final_positions, psr_output.rotation_matrix, psr_output.translation_matrix, psr_output.permutation_matrix)
 
 
@@ -241,8 +257,8 @@ class Basin() :
                         self.state_system.append(new_system)
                         self.update_state_environment(new_system, config, to_visit)
 
-                        if to_visit in self.states_to_visit :
-                            self.update_connexion_table(to_visit, config)     # Update the connexion_table only if the state is a transient state
+                        
+                        self.update_connexion_table(to_visit, config, to_visit in self.states_to_visit)     # Update the connexion_table only if the state is a transient state
                         
 
 

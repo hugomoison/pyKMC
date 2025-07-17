@@ -52,8 +52,7 @@ class ReferenceEventTable:
         results_is_valid_events = []
         # Check if the event is valid based on is_valid_new_event conditions
         for ev in events:
-            results_is_valid_events.append(
-                self.is_valid_new_event(
+            res = self.is_valid_new_event(
                     min1_positions=ev.min1_positions,
                     saddle_positions=ev.saddle_positions,
                     min2_positions=ev.min2_positions,
@@ -62,10 +61,19 @@ class ReferenceEventTable:
                     dE_backward=ev.dE_backward,
                     cell=ev.cell,
                 )
-            )
-        df_valid_events = self.get_valid_events(results_is_valid_events)
-        for df in df_valid_events:
-            self.add(df)
+            results_is_valid_events.append(res)
+            if res.is_ok() : 
+                self.add(res.ok_value()) 
+        #df_valid_events = self.get_valid_events(results_is_valid_events)
+
+
+        #Check if events in results are not the same : 
+
+
+
+
+        #for df in df_valid_events:
+        #    self.add(df)
 
         return results_is_valid_events
 
@@ -367,8 +375,6 @@ class ReferenceEventTable:
                 "move_atom_idx": np.where(neighbor_list_forwward == index_move)[0][0],
                 "sym_matrix": sym_matrix,
                 "sym_perm": sym_perm,
-                'backward_event_id' : -1,                                          
-                'backward_energy_barrier' : dE_backward
             }
         )
 
@@ -390,8 +396,6 @@ class ReferenceEventTable:
                 "move_atom_idx": np.where(neighbor_list_backward == index_move)[0][0],
                 "sym_matrix": sym_matrix,
                 "sym_perm": sym_perm,
-                'backward_event_id' : -1,                                         
-                'backward_energy_barrier' : dE_forward
             }
         )
 
@@ -418,8 +422,6 @@ class ReferenceEventTable:
                     "move_atom_idx",
                     "sym_matrix",
                     "sym_perm",
-                    'backward_event',           
-                    'backward_energy_barrier'
                 ]
             )
 
@@ -461,7 +463,6 @@ class ActiveEventTable:
                 "energy_barrier": pd.Series(dtype="float64"),
                 "k": pd.Series(dtype="float64"),
                 "num_reference_event": pd.Series(dtype="int64"),
-                "backward_energy_barrier": pd.Series(dtype="float64")
             }
             self.table = pd.DataFrame(columns)
 
@@ -541,7 +542,6 @@ class ActiveEventTable:
                 "energy_barrier": event_search_output.dE_forward,
                 "k": compute_rate_Eyring(event_search_output.dE_forward, self.config),
                 "num_reference_event": event_search_output.num_reference_event,
-                "backward_energy_barrier": event_search_output.dE_backward
             }
         )
         return dfactive

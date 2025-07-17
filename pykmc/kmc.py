@@ -82,7 +82,6 @@ class KMC:
         self.reference_table = None
         self.visited_environments = None
         self.total_energy = None
-        self.basin = None
 
     def run(self) -> None:
         """Run the simulation."""
@@ -130,14 +129,12 @@ class KMC:
                     "No events have been found, empty reference events table. \n \tTry to increase nsearch or saddle point search algorithm's parameters. \n \tClosing the simulation.",
                 )
                 self._close()
-            
-            
+
             # == Refinement ==
             ##=>Subset of reference_event_table with generic event that can be apply to the current step (ie event_id in atomic environment)
             subset_reference_event_table = self.reference_table.has_id_subset_table(
                 self.atomic_environment.atomic_environment_list
             )
-
             ##=>Refines all event in subset
             refinement = self.execute_refinements(subset_reference_event_table)
 
@@ -152,6 +149,8 @@ class KMC:
             if self.config.control.basin == True:
                 if self.basin.detectin(active_table.table.iloc[idx_selected_event], self.config.basin.energy_thr):
                     self.basin.execute(self.system, self.config, self.reference_table, self.engine)
+
+
 
             time += delta_t * 10**-12  # time is in seconds
 
