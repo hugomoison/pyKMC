@@ -30,7 +30,7 @@ class Basin() :
         self.applicable_events_df: list = []
         self.states_to_check: list[int] = None
         self.checked_states: list[int] = []
-        
+        self.explored_environments: set[str|bytes] = None
       
     
 
@@ -73,8 +73,8 @@ class Basin() :
 
 
 
-    def execute(self, initial_system, config, reference_table, engine) : 
-
+    def execute(self, initial_system, config, reference_table, engine, explored_environments) : 
+        self.explored_environments = explored_environments
         self.initialize(initial_system, config)
         self.apply_generic_event(config, reference_table, engine)
 
@@ -112,8 +112,6 @@ class Basin() :
         neighbors_list = NeighborsList(system, config.atomicenvironment.rnei, config.atomicenvironment.rcut)  
         atomic_environment = AtomicEnvironment(config.atomicenvironment.style, neighbors_list.neighbors_list['rnei'], neighbors_list.neighbors_list['rcut'], config.atomicenvironment.neighbors_add)
         if state_index is None:
-            #while state > len(self.state_environment) :
-            #    self.state_environment.append([0]) 
 
             self.state_environment.append(atomic_environment.atomic_environment_list.copy())
             self.state_neighbors_list.append(neighbors_list)
@@ -197,7 +195,8 @@ class Basin() :
 
         while len(self.states_to_check) != 0 :
 
-            to_visit = next(s for s in self.states_to_check if s not in self.checked_states)
+            #to_visit = next(s for s in self.states_to_check if s not in self.checked_states)
+            to_visit = self.states_to_check[0]
 
             row = self.connexion_table.loc[self.connexion_table['state_connexion'] == to_visit]
             atom_index = row.iloc[0]['central_atom']
@@ -208,10 +207,9 @@ class Basin() :
             # Get generic event from reference_table
             ref_event = reference_table.table.loc[event_idx]
 
-            self.update_state_environment(self.state_system[from_state], config, to_visit, state_index = from_state)     #???????
 
-
-            # Get neighbors
+            # Get neighbors and update state_environment
+            self.update_state_environment(self.state_system[from_state], config, to_visit, state_index = from_state)     #?
             neighbors = self.state_neighbors_list[from_state].get_neighbors('rcut', atom_index)
             
 
@@ -239,11 +237,15 @@ class Basin() :
                     new_positions, total_energy = engine.minimize(new_system)
                     new_system.update_positions(new_positions)
 
+                    # Update state_environment for new state
+                    self.update_state_environment(new_system, config, to_visit)
+
 
                     # Check if the state added in state_connexion has already been given another number in connexion_table
                     existing_state_index = self.find_existing_state(new_system)
 
-                    if existing_state_index is not None:
+
+                    if existing_state_index is not None :
                         print("State", to_visit, "is already known as state", existing_state_index)
 
                         # Update connexion_table to reflect this match
@@ -252,12 +254,16 @@ class Basin() :
                         self.state_system.append(self.state_system[existing_state_index])
                         self.update_state_environment(self.state_system[existing_state_index], config, existing_state_index)
 
-                    else:
+
+                    elif set(self.state_environment[to_visit]).difference(self.explored_environments) != set() :
+                        hihi = list(set(self.state_environment[to_visit]).difference(self.explored_environments))
+                        self.connexion_table.loc[self.connexion_table['state_connexion'] == to_visit, 'transition'] = False
+
+
+                    else :
                         # Register the new state
                         self.state_system.append(new_system)
                         self.update_state_environment(new_system, config, to_visit)
-
-                        
                         self.update_connexion_table(to_visit, config, to_visit in self.states_to_visit)     # Update the connexion_table only if the state is a transient state
                         
 

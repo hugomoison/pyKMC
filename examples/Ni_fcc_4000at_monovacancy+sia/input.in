@@ -3,8 +3,9 @@ initial_config = ./initial_config.xyz
 n_steps = 200
 engine = lammps
 verbosity = 2
-#reference_table = reference_table.pickle
-#visited_environments = visited_environments.pickle
+reference_table = reference_table.pickle
+visited_environments = visited_environments.pickle
+basin = True
 
 [Lammps] 
 pair_style = eam/alloy 
@@ -37,3 +38,6 @@ style = ira
 
 [IRA]
 kmax_factor = 2.0
+
+[Basin]
+energy_thr = 0.5

@@ -129,6 +129,12 @@ class KMC:
                     "No events have been found, empty reference events table. \n \tTry to increase nsearch or saddle point search algorithm's parameters. \n \tClosing the simulation.",
                 )
                 self._close()
+                
+
+            l_ids = list(set(self.atomic_environment.atomic_environment_list))
+            self.visited_environments.update(
+                set(l_ids).difference(self.visited_environments)
+            )    
 
             # == Refinement ==
             ##=>Subset of reference_event_table with generic event that can be apply to the current step (ie event_id in atomic environment)
@@ -142,13 +148,16 @@ class KMC:
             active_table = self.add_active_events(refinement.get_successes_results())
 
             # == Update System ==
+
+            # rajouter une boucle pour bassins locaux
+
             ##=>Select event
             idx_selected_event, delta_t, ktot = self._select_event(active_table)
 
             # Ckeck if the event selected is in a basin
             if self.config.control.basin == True:
                 if self.basin.detectin(active_table.table.iloc[idx_selected_event], self.config.basin.energy_thr):
-                    self.basin.execute(self.system, self.config, self.reference_table, self.engine)
+                    self.basin.execute(self.system, self.config, self.reference_table, self.engine, self.visited_environments)
 
 
 
@@ -193,10 +202,7 @@ class KMC:
             )
 
             # == Update variables ==
-            l_ids = list(set(self.atomic_environment.atomic_environment_list))
-            self.visited_environments.update(
-                set(l_ids).difference(self.visited_environments)
-            )
+            
             self.neighbors_list = NeighborsList(
                 self.system,
                 self.config.atomicenvironment.rnei,
