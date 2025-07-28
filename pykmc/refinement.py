@@ -248,3 +248,8 @@ class Refinement:
 
         """
         return [e.ok_value() for e in self.results if e.is_ok()]
+
+    def _close(self) -> None:
+        """Close the simulation.
+        """
+        self.engine._close()

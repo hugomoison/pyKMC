@@ -34,6 +34,7 @@ from .info_simulation import (
 from .eventsearch import EventSearch
 from .refinement import Refinement
 from .log import Colors
+from mpi4py import MPI
 
 
 # TODO fix reconstruction = False
@@ -513,4 +514,6 @@ class KMC:
     def _close(self) -> None:
         """Close the simulation."""
         self.loggers.info("log", ":=> End of simulation")
+        self.refinement._close()
+        MPI.Finalize()
         sys.exit()

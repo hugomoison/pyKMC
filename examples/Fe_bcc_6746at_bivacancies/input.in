@@ -1,6 +1,6 @@
 [Control] 
 initial_config = ./initial_config.xyz 
-n_steps = 20
+n_steps = 10
 engine = lammps
 verbosity = 2
 
@@ -23,7 +23,7 @@ emax_event = 5.0
 emin_event = 0.0
 
 [pARTn] 
-path_artnso = /root/programs/artn-plugin/lib/libartn-lmp.so
+path_artnso = /home/lpmsmyth/artn-plugin/lib/libartn-lmp.so
 
 [RateConstant] 
 style = constant

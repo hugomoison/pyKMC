@@ -239,13 +239,13 @@ def pARTn_refine_event(
 
     # RUN
     lmp.command("minimize 1e-6 1e-8 1000 1000")
+    lmp.command("unfix 10")
 
     # EXTRACT DATA
     err = artn.get_runparam("error_message")
     if not err:
         E_sad = artn.extract("etot_sad")
         saddlepositions = artn.extract("tau_sad")
-
         return Ok(
             EventRefinementOutput(
                 central_atom_index=central_atom_idx,

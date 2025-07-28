@@ -179,3 +179,8 @@ class Engine:
 
         """
         self.engine.neighbors(system)
+
+    def _close(self) -> None:
+        """Close the simulation.
+        """
+        self.engine._close()
