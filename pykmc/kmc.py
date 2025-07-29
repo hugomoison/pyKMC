@@ -87,8 +87,10 @@ class KMC:
         """Run the simulation."""
         # Initialize the simulation, KMC attributes and minimize the system
         self._initialize()
-        # Write initial step to file
-        self._append_snapshot_to_trajectory()
+
+        # Write initial step to file, unless in restart mode
+        if self.config.control.restart == False:
+            self._append_snapshot_to_trajectory()
 
         # LOOP KMC PARAMETERS
         nkmc_steps = self.config.control.n_steps
@@ -100,7 +102,7 @@ class KMC:
             self.loggers.info(
                 "log",
                 "{}{}Step : {}{}".format(
-                    Colors.BOLD.value, Colors.YELLOW.value, step, Colors.RESET.value
+                    Colors.BOLD.value, Colors.YELLOW.value, self.prev_step + step, Colors.RESET.value
                 ),
             )
 
@@ -164,7 +166,7 @@ class KMC:
             )
             refinements_info = self.get_info_refinements(refinement.results)
             kmc_loop_info = KMCLoopInfo(
-                step=step,
+                step=self.prev_step + step,
                 atomic_environment_info=atomic_environment_info,
                 reference_event_searches_info=reference_event_searches_info,
                 valid_event_info=is_valid_events_info,
@@ -174,16 +176,15 @@ class KMC:
 
             self.loggers.table_line_info_kmc(
                 "output",
-                step + 1,
+                self.prev_step + step + 1,
                 delta_t * 10**-12,
-                time,
+                self.prev_time + time,
                 active_table.table.loc[idx_selected_event].at["num_reference_event"],
                 active_table.table.loc[idx_selected_event].at["energy_barrier"],
                 active_table.table.loc[idx_selected_event].at["k"],
                 ktot,
                 self.total_energy,
             )
-
             # == Update variables ==
             l_ids = list(set(self.atomic_environment.atomic_environment_list))
             self.visited_environments.update(
@@ -204,6 +205,7 @@ class KMC:
             # == Save Reference Table and List visited environment :
             self._save()
             self._append_snapshot_to_trajectory()
+
 
             # == Check if only cristalline environments ==
             if set(list(self.atomic_environment.atomic_environment_list)) == {
@@ -494,6 +496,7 @@ class KMC:
 
         """
         Initializer(self).initialize()
+        self.prev_step, self.prev_time = Initializer(self).get_previous_values()
 
     def _append_snapshot_to_trajectory(self) -> None:
         """Append the configurations positions to the trajectory file."""

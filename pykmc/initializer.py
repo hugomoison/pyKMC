@@ -41,33 +41,52 @@ class Initializer:
         self.initialize_reference_table()
         self._initialize_visited_environments()
 
-        self.kmc.loggers.new_line("log")
-        self.kmc.loggers.info("log", "===========================")
-        self.kmc.loggers.info("log", "= Starting KMC simulation =")
-        self.kmc.loggers.info("log", "===========================")
+        if self.kmc.config.control.restart == False:
+            self.kmc.loggers.new_line("log")
+            self.kmc.loggers.info("log", "===========================")
+            self.kmc.loggers.info("log", "= Starting KMC simulation =")
+            self.kmc.loggers.info("log", "===========================")
+            self.kmc.loggers.table_line_info_kmc(
+                "output", 0, 0.0, 0.0, None, None, None, None, self.kmc.total_energy
+            )
+        else:
+            self.kmc.loggers.new_line("log")
+            self.kmc.loggers.info("log", "===========================")
+            self.kmc.loggers.info("log", "= Restarting KMC simulation =")
+            self.kmc.loggers.info("log", "===========================")
 
-        self.kmc.loggers.table_line_info_kmc(
-            "output", 0, 0.0, 0.0, None, None, None, None, self.kmc.total_energy
-        )
+
 
     def initialize_loggers(self) -> None:
         """Initialize the loggers and create their files."""
         self.kmc.loggers = LogKMC(LOGGING_CONFIG)
-        self.kmc.loggers.title("log")
-        self.kmc.loggers.write_parameters("log", self.kmc.config)
-        self.kmc.loggers.output_file_header("output")
+        if self.kmc.config.control.restart == False:
+            self.kmc.loggers.title("log")
+            self.kmc.loggers.write_parameters("log", self.kmc.config)
+            self.kmc.loggers.output_file_header("output")
 
     def initialize_system(self) -> None:
         """Read and initialize the system from the intial configuration file."""
-        self.kmc.loggers.info(
-            "log",
-            ":=> Reading initial configuration file : {}".format(
+        if self.kmc.config.control.restart == False:
+            self.kmc.loggers.info(
+                "log",
+                ":=> Reading initial configuration file : {}".format(
+                    self.kmc.config.control.initial_config
+                ),
+            )
+            self.kmc.system = System.create_from_file(
                 self.kmc.config.control.initial_config
-            ),
-        )
-        self.kmc.system = System.create_from_file(
-            self.kmc.config.control.initial_config
-        )
+            )
+        else:
+            self.kmc.loggers.info(
+                "log",
+                ":=> Restarting simulation from file : {}".format(
+                        self.kmc.config.control.restart_file
+                ),
+            )
+            self.kmc.system = System.create_from_file(
+                self.kmc.config.control.restart_file
+            )
 
     def initialize_engine(self) -> None:
         """Initialize the engine based on the Config."""
@@ -134,3 +153,20 @@ class Initializer:
                 "log",
                 "Visited environments are read from file while no reference table was provided",
             )
+    def get_previous_values(self) -> tuple[int, float]:
+        with open("./pykmc.out", "r") as f:
+            lines = f.readlines()
+            # Iterate from the bottom up
+            for line in reversed(lines):
+                columns = line.strip().split()
+                if not columns:
+                    continue  # Skip empty lines
+                try:
+                    step = int(columns[0])
+                    if step != 0:
+                        time = float(columns[2])
+                        return step, time
+                except (ValueError, IndexError):
+                    continue  # Skip malformed lines
+            # Fallback if nothing found
+            return 0, 0.0

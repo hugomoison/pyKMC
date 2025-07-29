@@ -70,6 +70,17 @@ class ControlConfig(BaseModel):
         default=1, description="Controls the level of detail in the simulation output."
     )
 
+    restart: Optional[bool] = Field(
+        default=False, description="Controls if simulation will be restarted from a previous configuration."
+    )
+
+    restart_file: Optional[str] = Field(
+        default="None", description="File from which to restart the simulation"
+    )
+
+    if restart == True:
+        trajectory_output = restart_file
+
 
 class AtomicEnvironmentConfig(BaseModel):
     """Atomic environments parameters."""

@@ -10,16 +10,12 @@ from .partn import pARTn_search, pARTn_refine_event
 from ..system import System
 from ..result import Result, EventSearchOutput, EventRefinementOutput, ErrorInfo
 
+
 class LammpsEngine:
     """Backend class to interface with the LAMMPS atomistic simulation engine.
 
     This class encapsulates all LAMMPS-specific logic required for performing
     simulation tasks. It is intended to be used internally by the `Engine`.
-
-    Liam Smyth (July 24th, 2025)
-    Initializes 2 lammps instances.
-    First is used as 'Big Lammps', runs minimization, energy calculations
-    Second is 'Small Lammps', runs partn processes
 
     Parameters
     ----------
@@ -30,16 +26,6 @@ class LammpsEngine:
 
     def __init__(self, config: Config) -> None:
         self.config = config
-
-        # MPI :
-        from mpi4py import MPI
-
-        self.comm = MPI.COMM_WORLD
-        self.rank = self.comm.Get_rank()
-        self.size = self.comm.Get_size()
-
-        self.lmp_mpi=lammps(comm=self.comm, cmdargs=["-screen", "none"])
-        self.lmp=lammps(cmdargs=["-screen", "none"])
 
     def _initialize_default(self, system: System, lmp_instance: lammps) -> None:
         """Lammps initialization. Based on the system it initalize the simulation box, positions, pbc, masses.
@@ -105,7 +91,6 @@ class LammpsEngine:
         lmp_instance.command("pair_style {}".format(pair_style))
         lmp_instance.command("pair_coeff {}".format(pair_coeff))
 
-
     def minimize(self, system: System) -> tuple[np.ndarray, float]:
         """Minimize the system based on the config min_stayle and minimize command.
 
@@ -122,25 +107,35 @@ class LammpsEngine:
             - Total energy of the minimized system.
 
         """
+        from mpi4py import MPI
+
+        # MPI :
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+        # nprocs = comm.Get_size()
+        lmp = lammps(comm=comm, cmdargs=["-screen", "none"])
 
         # Lammps default parameters
-        self._initialize_default(system, self.lmp_mpi)
+        self._initialize_default(system, lmp)
         # Initialize potential
-        self._initialize_potential(self.lmp_mpi)
+        self._initialize_potential(lmp)
         # Minimization
-        self.lmp_mpi.command("min_style {}".format(self.config.lammps.min_style))   #Convert to using instance instead of initiating
-        self.lmp_mpi.command("minimize {}".format(self.config.lammps.minimize))
-        positions = self.lmp_mpi.gather_atoms("x", 1, 3)
-        total_energy = self.lmp_mpi.get_thermo("etotal")
-
-        self._reset(system, self.lmp_mpi)
-
-        if self.rank == 0:
-             # convert ctype positions into a numpy array
-             positions = np.ctypeslib.as_array(positions)
-             positions = np.reshape(positions, (-1, 3))
-             return positions, total_energy
+        # lmp.command('min_style {}'.format(min_style))
+        # lmp.command('minimize {} {} {} {}'.format(etol, ftol, maxiter, maxeval))
+        lmp.command("min_style {}".format(self.config.lammps.min_style))
+        lmp.command("minimize {}".format(self.config.lammps.minimize))
+        # gather all positions
+        # id = lmp.numpy.extract_atom("id")
+        positions = lmp.gather_atoms("x", 1, 3)
+        total_energy = lmp.get_thermo("etotal")
+        if rank == 0:
+            # convert ctype positions into a numpy array
+            positions = np.ctypeslib.as_array(positions)
+            positions = np.reshape(positions, (-1, 3))
+            lmp.close()
+            return positions, total_energy
         else:
+            lmp.close()
             return None
 
     def pARTn(
@@ -162,17 +157,17 @@ class LammpsEngine:
 
         """
         # Parameters
+
+        lmp = lammps(cmdargs=["-screen", "none"])
         # Lammps default parameters :
-        self._initialize_default(system, self.lmp)
+        self._initialize_default(system, lmp)
         # Initialize potential
-        self._initialize_potential(self.lmp)
+        self._initialize_potential(lmp)
         # pARTn search :
-        result = pARTn_search(self.lmp, self.config, central_atom)
-
-        self._reset(system, self.lmp)
-
+        result = pARTn_search(lmp, self.config, central_atom)
         if result.is_ok():
             result.ok_value().cell = system.cell
+        lmp.close()
         return result
 
     def pARTn_refine_event(
@@ -193,11 +188,11 @@ class LammpsEngine:
             The result of the event refinement.
 
         """
-        self._initialize_default(system, self.lmp)
-        self._initialize_potential(self.lmp)
-        result = pARTn_refine_event(self.lmp, self.config, central_atom)
-        self._reset(system, self.lmp)
-
+        lmp = lammps(cmdargs=["-screen", "none"])
+        self._initialize_default(system, lmp)
+        self._initialize_potential(lmp)
+        result = pARTn_refine_event(lmp, self.config, central_atom)
+        lmp.close()
         return result
 
     def compute_potential_energy(self, system: System) -> float:
@@ -214,29 +209,15 @@ class LammpsEngine:
             The potential energy of the system.
 
         """
-        self._initialize_default(system, self.lmp_mpi)
-        self._initialize_potential(self.lmp_mpi)
+        lmp = lammps(cmdargs=["-screen", "none"])
+        self._initialize_default(system, lmp)
+        self._initialize_potential(lmp)
 
-        self.lmp_mpi.command("compute c1 all pe")
-        self.lmp_mpi.command("run 0")
-        potential_energy = self.lmp_mpi.extract_compute("c1", 0, 0)
-
-        self._reset(system, self.lmp_mpi)
+        lmp.command("compute c1 all pe")
+        lmp.command("run 0")
+        potential_energy = lmp.extract_compute("c1", 0, 0)
+        lmp.close()
         return potential_energy
-
-    def _reset(self, system: System, lmp_instance: lammps) -> None:
-        """Resets LAMMPS instance to original configuration
-
-                Parameters
-                ----------
-                system : System
-                    The atomic system.
-
-                lmp_instance : lammps
-                    The lammps instance.
-
-                """
-        lmp_instance.command("clear")
 
     def compute_distances(self, system: System) -> None:
         """Define a future operation to be implemented.
@@ -259,8 +240,3 @@ class LammpsEngine:
 
         """
         pass
-    def _close(self) -> None:
-        """ Closes all instances of lammps
-        """
-        self.lmp.close()
-        self.lmp_mpi.finalize()
