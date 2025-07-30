@@ -43,6 +43,16 @@ class ControlConfig(BaseModel):
         description="File path where the list of atomic environments that have been explored will be sore in pickle format."
     )
 
+    displacements_output: Optional[str] = Field(
+        default=None,
+        description="File path where the unwrapped cartesian displacements of atom positions between each kmc step are stored in plain text format."
+    )
+
+    sd_output: Optional[str] = Field(
+        default=None,
+        description="File path where the squared displacement of the entire system is saved to after post-simulation calculations in plain text format. Requires a displacement output file path to be declared."
+    )
+
     reference_table: Optional[str] = Field(
         default=None,
         description="Path to a reference table generated from a previous simulation."

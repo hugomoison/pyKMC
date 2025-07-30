@@ -103,6 +103,9 @@ class KMC:
                 ),
             )
 
+            # == Save initial atom positions for getting displacements
+            initial_positions = self.system.positions
+
             # == Find Current atomic environments that has not been visited ==
             new_environments = self.get_new_environments()
 
@@ -199,6 +202,10 @@ class KMC:
                 self.neighbors_list.neighbors_list["rcut"],
                 self.config.atomicenvironment.neighbors_add,
             )
+
+            # == Save Atom Position Displacements :
+            if self.config.control.displacements_output is not None:
+                self._append_dimension_displacements(initial_positions)
 
             # == Save Reference Table and List visited environment :
             self._save()
@@ -493,6 +500,30 @@ class KMC:
 
         """
         Initializer(self).initialize()
+
+    def _append_dimension_displacements(self, initial_positions) -> None:
+        """Unwrap the cartesian displacements of every atom in the system,
+
+        Append them to the output file in plain text format.
+
+        Parameters
+        ----------
+        initial_positions : list (Natom, 3)
+            The positions of every atom in the system before the next kmc step takes place.
+
+        """
+        displacements = self.system.positions - initial_positions
+        cell = self.system.cell
+
+        for dim in range(3):
+            cell_side_length = cell[dim, dim]
+            displacements[:, dim] -= cell_side_length * np.round(
+                displacements[:, dim] / cell_side_length)
+
+        with open (self.config.control.displacements_output, "a") as file:
+            for disp in displacements:
+                line = " ".join(f"{x:14.6e}" for x in disp)
+                file.write(line + "\n")
 
     def _append_snapshot_to_trajectory(self) -> None:
         """Append the configurations positions to the trajectory file."""

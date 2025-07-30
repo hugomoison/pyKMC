@@ -40,6 +40,7 @@ class Initializer:
         self.initialize_atomic_environments()
         self.initialize_reference_table()
         self._initialize_visited_environments()
+        self._initialize_displacements()
 
         self.kmc.loggers.new_line("log")
         self.kmc.loggers.info("log", "===========================")
@@ -134,3 +135,14 @@ class Initializer:
                 "log",
                 "Visited environments are read from file while no reference table was provided",
             )
+
+    def _initialize_displacements(self) -> None:
+        """Initialize the displacements output file."""
+        if self.kmc.config.control.displacements_output is not None:
+            self.kmc.loggers.info(
+                "log",
+                ":=> Initializing displacement output file")
+            with open(self.kmc.config.control.displacements_output, "w") as file:
+                file.write("# Unwrapped per-step cartesian displacements (Å) \n")
+                file.write("-" * 48 + "\n")
+                file.write("  dx             dy             dz \n")
