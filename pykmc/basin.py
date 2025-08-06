@@ -4,6 +4,9 @@ from .utils import geometry
 import copy
 import numpy as np
 from scipy.spatial import cKDTree
+from .config import Config
+from .symmetries import unique_symmetries
+from scipy.linalg import expm
 
 
 # Set global options to always display the full DataFrame
@@ -21,15 +24,15 @@ class Basin() :
     def __init__(self, reference_table):                                    
         self.connexion_table : pd.DataFrame = None
         self.states :  list[int] = []
-        self.visited_states : list[int] = []
-        self.states_to_visit : list[int] = None
+        self.explored_states : list[int] = []
+        self.states_to_explore : list[int] = None
         self.reference_table = reference_table
         self.state_system : list = None 
         self.state_environment : list[list[str|bytes]] = []
         self.state_neighbors_list: list = []
         self.applicable_events_df: list = []
-        self.states_to_check: list[int] = None
-        self.checked_states: list[int] = []
+        self.states_to_visit: list[int] = None
+        self.visited_states: list[int] = []
         self.explored_environments: set[str|bytes] = None
       
     
@@ -38,7 +41,7 @@ class Basin() :
 
         dE_forward = selected_active_event_series["energy_barrier"]
 
-        if dE_forward > energy_threshold : 
+        if dE_forward >= energy_threshold : 
             print ('Basin not detected')
             return False
         
@@ -77,23 +80,23 @@ class Basin() :
         self.explored_environments = explored_environments
         self.initialize(initial_system, config)
         self.apply_generic_event(config, reference_table, engine)
-
-
+        self.temp = config.rateconstant.T   # Absolute temperature
 
 
     def initialize(self, system, config) :
         #Initialiser attribute avec info pour state de départ (0)
         self.states = [0]
         self.state_system = [system]
-        self.states_to_visit = []
+        self.states_to_explore = []
         self.state_environment = []
-        self.states_to_check = []  
-        self.checked_states = [0]   # ??
+        self.states_to_visit = []  
+        self.visited_states = [0]   # ??
         self.connexion_table = pd.DataFrame(columns=['state', 
                                                      'state_connexion', 
                                                      'event_connexion',
                                                      'central_atom', 
-                                                     'transition', ])    
+                                                     'sym',
+                                                     'transient'])    
         self.update(0, config)
 
 
@@ -138,7 +141,7 @@ class Basin() :
         
     
 
-    def update_connexion_table(self, state, config, transition = False) :
+    def update_connexion_table(self, state, config, transient = False) :
 
         #Initialize state_connexion
         if state == 0 :
@@ -146,9 +149,9 @@ class Basin() :
         else :
             state_connexion = int(self.connexion_table.tail(1)['state_connexion'] + 1)     # find value of last state connexion in connexion_table
         
-        if not transition :
-            if not state_connexion in self.states_to_check :
-                self.states_to_check.append(state_connexion)
+        if not transient :
+            if not state_connexion in self.states_to_visit :
+                self.states_to_visit.append(state_connexion)
 
         else :    
 
@@ -158,33 +161,54 @@ class Basin() :
 
             # for all applicable events
             for idx_table, dfevent in self.applicable_events_df.iterrows() :
+
+                energy_barrier = dfevent['energy_barrier']
+
                 # search atoms on which we can apply the event
                 l_atom_index = [atom_idx for atom_idx, atom_id in enumerate(self.get_atomic_environment(state)) if atom_id == dfevent['event_id']]
 
-                is_transition = self.detectin(dfevent, config.basin.energy_thr, dfevent.name)
+                is_transient = self.detectin(dfevent, config.basin.energy_thr, dfevent.name)
 
                 for atom_idx in l_atom_index :
                     applicable_events = pd.DataFrame([{'state' : state, 
                                                     'state_connexion' : state_connexion, 
                                                     'event_connexion' : idx_table,
                                                     'central_atom' : atom_idx, 
-                                                    'transition' : is_transition}])
+                                                    'sym' : None,
+                                                    'energy_barrier' : energy_barrier,
+                                                    'transient' : is_transient}])
             
+                    # symmetries
+                    for idx in range(len(dfevent['sym_matrix'])) :
+                        if idx == 0 :
+                            applicable_events.at[idx, 'sym'] = idx 
+                        else :
+                            events_symmetries = pd.DataFrame([{'state' : state, 
+                                                               'state_connexion' : state_connexion + idx, 
+                                                               'event_connexion' : idx_table,
+                                                               'central_atom' : atom_idx, 
+                                                               'sym' : idx,
+                                                               'energy_barrier' : energy_barrier,
+                                                               'transient' : is_transient}])
+                            
+                            applicable_events = pd.concat([applicable_events, events_symmetries], ignore_index=True)
+
+
 
                     self.connexion_table = pd.concat([self.connexion_table, applicable_events], ignore_index=True)
 
-                    # Check transition states
-                    self.states_to_check.append(state_connexion)
+                    # Check transient states
+                    self.states_to_visit.append(state_connexion)
 
-                    # Only visit the transition states
-                    if is_transition == True :
-                        self.states_to_visit.append(state_connexion) 
+                    # Only visit the transient states
+                    if is_transient == True :
+                        self.states_to_explore.append(state_connexion) 
 
                     self.states.append(state_connexion)
 
                     state_connexion += 1
         
-            self.visited_states.append(state)
+            self.explored_states.append(state)
         
 
 
@@ -193,15 +217,16 @@ class Basin() :
 
     def apply_generic_event(self, config, reference_table, engine) :
 
-        while len(self.states_to_check) != 0 :
+        while len(self.states_to_visit) != 0 :
 
-            #to_visit = next(s for s in self.states_to_check if s not in self.checked_states)
-            to_visit = self.states_to_check[0]
+            #to_visit = next(s for s in self.states_to_visit if s not in self.visited_states)
+            to_visit = self.states_to_visit[0]
 
             row = self.connexion_table.loc[self.connexion_table['state_connexion'] == to_visit]
             atom_index = row.iloc[0]['central_atom']
             from_state = row.iloc[0]['state']
             event_idx = row.iloc[0]['event_connexion']
+            sym = row.iloc[0]['sym']
 
             
             # Get generic event from reference_table
@@ -211,7 +236,7 @@ class Basin() :
             # Get neighbors and update state_environment
             self.update_state_environment(self.state_system[from_state], config, to_visit, state_index = from_state)     #?
             neighbors = self.state_neighbors_list[from_state].get_neighbors('rcut', atom_index)
-            
+
 
             # Go to final point applying PSR
             psr_output = PointSetRegistration(config, self.state_system[from_state], ref_event, self.state_neighbors_list[from_state], atom_index).match()
@@ -224,8 +249,15 @@ class Basin() :
                 if psr_output.matching_score < 0.3 :
  
                     # Apply PSR to generic event
-                    final_positions = reference_table.table.loc[event_idx].at['final_positions']
+                    final_positions = ref_event.at['final_positions']
                     final_positions = geometry.transform_positions(final_positions, psr_output.rotation_matrix, psr_output.translation_matrix, psr_output.permutation_matrix)
+
+
+                    # Apply symmetry matrix if sym != 0
+                    if sym != 0 :
+                        sym_matrices = ref_event.iloc[0]['sym_matrix']
+                        sym_matrix = sym_matrices[sym]
+                        final_positions = geometry.transform_positions(final_positions, sym_matrix)
 
 
                     # Move system do final positions
@@ -256,34 +288,32 @@ class Basin() :
 
 
                     elif set(self.state_environment[to_visit]).difference(self.explored_environments) != set() :
-                        hihi = list(set(self.state_environment[to_visit]).difference(self.explored_environments))
-                        self.connexion_table.loc[self.connexion_table['state_connexion'] == to_visit, 'transition'] = False
+                        self.connexion_table.loc[self.connexion_table['state_connexion'] == to_visit, 'transient'] = False
 
 
                     else :
                         # Register the new state
                         self.state_system.append(new_system)
                         self.update_state_environment(new_system, config, to_visit)
-                        self.update_connexion_table(to_visit, config, to_visit in self.states_to_visit)     # Update the connexion_table only if the state is a transient state
+                        self.update_connexion_table(to_visit, config, to_visit in self.states_to_explore)     # Update the connexion_table only if the state is a transient state
                         
 
 
                     # Remove to_visit from states_to_visit
-                    if to_visit in self.states_to_visit :
-                        ind =  [i for i, e in enumerate (self.states_to_visit) if e == to_visit] [0]
-                        self.states_to_visit.pop(ind)                                                            
+                    if to_visit in self.states_to_explore :
+                        ind =  [i for i, e in enumerate (self.states_to_explore) if e == to_visit] [0]
+                        self.states_to_explore.pop(ind)                                                            
 
                     # Update the states to check
-                    self.checked_states.append(to_visit)
-                    self.states_to_check.pop(0)
+                    self.visited_states.append(to_visit)
+                    self.states_to_visit.pop(0)
 
                     self.debug_tables(to_visit)
 
                      
-
-
+                     
                 else : 
-                    self.states_to_visit = []
+                    self.states_to_explore = []
                     print("PSR found a match but matching score is above acceptance threshold")
 
 
@@ -338,8 +368,208 @@ class Basin() :
        # print(self.get_applicable_generic_event(state))
 
 
-
-
-
     def reset() : 
         pass 
+
+
+
+
+# IMPLÉMENTER LA MÉTHODE FPTA
+
+    def compute_jump_rate(self, energy_barrier) :
+        jump_frequency = 10 ** 13 # idk
+        boltzmann_constant = 1.380649 * 10 ** -23
+        jump_rate = jump_frequency * np.exp( -energy_barrier / (boltzmann_constant * self.temp))
+
+    
+
+    def build_transition_matrix(self) :
+        self.connexion_table['jump_rate'] = self.connexion_table['energy_barrier'].apply(self.compute_jump_rate)
+
+        self.transient_states = self.explored_states
+        self.absorbing_states = list(set(self.visited_states).difference(set(self.explored_states))) # à voir si y'a un problème pour un state déjà connu sous un autre nom
+        self.transition_matrix = None
+        self.occupation_probabilities = None
+
+        print("Transient states:" , len(self.transient_states))
+        print("Absorbing states:" , len(self.absorbing_states))
+
+
+        # Construction de la matrice M pour tous les états (transitoires + absorbants)
+        all_states = self.transient_states + self.absorbing_states
+        n_total = len(all_states)
+        n_transient = len(self.transient_states)
+        
+        # Mapping état -> index
+        state_to_idx = {state: i for i, state in enumerate(all_states)}
+        
+        # Initialisation de la matrice M
+        M = np.zeros((n_total, n_total))
+
+
+        # Remplissage de la matrice selon l'équation (A4)
+        for _, row in self.connexion_table.iterrows():
+            state_i = row['state']
+            state_j = row['state_connexion']
+            rate = row['jump_rate']
+            
+            if state_i in state_to_idx and state_j in state_to_idx:
+                i = state_to_idx[state_i]
+                j = state_to_idx[state_j]
+                
+                # Mij = -Rj->i si i ≠ j
+                if i != j:
+                    M[j, i] = -rate
+
+
+        # Diagonale : Mii = ∑k Ri->k 
+        for i in range(n_total):
+            # Calculer la somme des taux sortants pour l'état i
+            outgoing_rates = 0
+            state_i = all_states[i]
+            
+            # Parcourir la connexion_table pour trouver tous les taux sortants
+            for _, row in self.connexion_table.iterrows():
+                if row['state'] == state_i :
+                    outgoing_rates += row['jump_rate']
+            
+            M[i, i] = outgoing_rates
+        
+        self.M_matrix = M
+        return M            
+    
+
+
+
+    def build_reduced_matrix(self): 
+        # Construit la matrice M réduite en considérant tous les états absorbants comme un seul
+        n_transient = len(self.transient_states)
+        M_reduced = np.zeros((n_transient + 1, n_transient + 1))
+        
+        # Copier la partie transitoire
+        M_reduced[:n_transient, :n_transient] = self.M_matrix[:n_transient, :n_transient]
+        
+        # Sommer les transitions vers les états absorbants
+        for i in range(n_transient):
+            state_i = self.transient_states[i]
+            rate_to_absorbing = 0
+            
+            # Sommer tous les taux vers les états absorbants
+            for _, row in self.connexion_table.iterrows():
+                if row['state'] == state_i and row['state_connexion'] in self.absorbing_states:
+                    rate_to_absorbing += row['jump_rate']
+
+
+
+            # Transition vers l'état absorbant fusionné (colonne n_transient)
+            M_reduced[n_transient, i] = -rate_to_absorbing  # M[j,i] = -R(i->j)
+            
+            # Recalculer la diagonale (somme des taux sortants de l'état i)
+            total_absorbing_rate = rate_to_absorbing  # vers états absorbants
+            
+            # Ajouter les taux vers autres états transitoires
+            for j in range(n_transient):
+                if i != j:
+                    # Trouver le taux i -> j
+                    for _, row in self.connexion_table.iterrows():
+                        if (row['state'] == state_i and 
+                            row['state_connexion'] == self.transient_states[j]):
+                            total_absorbing_rate += row['jump_rate']
+                            break
+            
+            M_reduced[i, i] = total_absorbing_rate   
+
+        return M_reduced
+
+
+
+
+    def run_fpta_step(self, current_state):
+        # Exécute une étape complète de FPTA
+        initial_state_idx = self.transient_states.index(current_state)
+        n_transient = len(self.transient_states)
+        
+        # Construire la matrice de taux
+        self.build_rate_matrix()
+        
+        # Matrice réduite (états absorbants fusionnés)
+        M_reduced = self.build_reduced_matrix()
+
+        # Vecteur initial P̄(0)
+        initial_vector = np.zeros(n_transient + 1)
+        initial_vector[initial_state_idx] = 1.0
+        
+        # Nombre aléatoire r pour probabilité de sortie
+        random_r = np.random.random()
+
+        # Temps initial t₀
+        initial_time = 1.0 / np.sum(np.diag(self.M_matrix))  # basé sur ce qu'ils ont utilisé dans l'article
+        
+        # Bissection pour trouver texit
+        t_min, t_max = 0.0, initial_time
+        tolerance = 1e-5   # basé sur ce qu'ils ont utilisé dans l'article
+
+
+        # Étendre la recherche si le chiffre random r est plus grand que la probabilité d'absorption
+        while True :
+            prob_vector = expm(-t_max * M_reduced) @ initial_vector
+            prob_absorbing = prob_vector[-1]
+            
+            if prob_absorbing > random_r:
+                break
+            t_max *= 2
+        
+        # Bissection
+        while True :
+            t_mid = (t_min + t_max) / 2
+            prob_vector = expm(-t_mid * M_reduced) @ initial_vector
+            prob_absorbing = prob_vector[-1]
+            
+            if abs(t_max - t_min) / ((t_max + t_min) / 2) < tolerance:
+                break
+            
+            if prob_absorbing < random_r:
+                t_min = t_mid
+            else:
+                t_max = t_mid
+        
+        exit_time = t_mid
+        print("Temps de sortie texit =" , exit_time)
+        
+
+        # Probabilités individuelles des états absorbants
+        n_total = len(self.transient_states) + len(self.absorbing_states)
+        initial_vector_full = np.zeros(n_total)
+        initial_vector_full[initial_state_idx] = 1.0
+        
+        prob_vector_full = expm(-exit_time * self.M_matrix) @ initial_vector_full
+        absorbing_probs = prob_vector_full[n_transient:]
+        
+
+        # Normalisation  ??? 
+        total_absorbing_prob = np.sum(absorbing_probs)
+        if total_absorbing_prob > 0:
+            absorbing_probs = absorbing_probs / total_absorbing_prob
+        
+        print("Probabilités des états absorbants:" , absorbing_probs)
+        
+
+        # Sélection de l'état final
+        random_s = np.random.random()
+        
+        cumulative_prob = 0
+        selected_state = None
+        for i, prob in enumerate(absorbing_probs):
+            cumulative_prob += prob
+            if random_s <= cumulative_prob:
+                selected_state = self.absorbing_states[i]
+                break
+        
+        if selected_state is None:
+            selected_state = self.absorbing_states[-1]
+        
+        print("État sélectionné:" , selected_state)
+        
+        return selected_state, exit_time    
+
+         
