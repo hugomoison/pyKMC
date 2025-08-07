@@ -7,7 +7,6 @@ from scipy.spatial import cKDTree
 from .config import Config
 from .symmetries import unique_symmetries
 from scipy.linalg import expm
-from pprint import pprint
 
 
 # Set global options to always display the full DataFrame
@@ -582,20 +581,26 @@ class Basin() :
     
 
 
+
+    # Dans l'article il est écrit qu'un state doit être visité 10 fois avant qu'on lui applique fpta. Est-ce que c'est applicable à nous?? Ou est-ce qu'on
+    # calcule seulement le temps de sortie selon l'état qui nous à amené dans le bassin soit l'état 0??
+
+
+
+
     def run_fpta(self) :
 
-        # Last explored state
-        last_row = self.connexion_table.tail(1)
-        current_state = last_row.loc['state']
+        total_exit_time = 0
+        simulation_results = []
 
-        # Execute fpta step
-        next_state, exit_time = self.run_fpta_step(current_state)   # Je sais pas on est supposé appliquer ftpa à partir de quel state???
+        # Execute 10 fpta steps
+        for step in range(10) :
+            next_state, exit_time = self.run_fpta_step(0)   # Je sais pas on est supposé appliquer ftpa à partir de quel state???
+            total_exit_time += exit_time
 
+            # Simulation results
+            simulation_results.append(next_state)
 
-        # Simulation results
-        simulation_results = {'next_state_outside_basin': next_state,
-                              'exit_time': exit_time }
-
-        pprint(simulation_results)
+        print(simulation_results, total_exit_time)
         
-        return simulation_results 
+        return simulation_results, total_exit_time
