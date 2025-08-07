@@ -7,6 +7,7 @@ from scipy.spatial import cKDTree
 from .config import Config
 from .symmetries import unique_symmetries
 from scipy.linalg import expm
+from pprint import pprint
 
 
 # Set global options to always display the full DataFrame
@@ -80,11 +81,20 @@ class Basin() :
         self.explored_environments = explored_environments
         self.initialize(initial_system, config)
         self.apply_generic_event(config, reference_table, engine)
-        self.temp = config.rateconstant.T   # Absolute temperature
+
+        # Identify transient and absorbing states
+        self.transient_states = self.explored_states
+        self.absorbing_states = list(set(self.visited_states).difference(set(self.explored_states))) # à voir si y'a un problème pour un state déjà connu sous un autre nom
+
+        # Apply fpta method
+        if len(self.transient_states) > 0 and len(self.absorbing_states) > 0 :
+            self.run_fpta()
+        
 
 
     def initialize(self, system, config) :
         #Initialiser attribute avec info pour state de départ (0)
+        self.temp = config.rateconstant.T   # Absolute temperature
         self.states = [0]
         self.state_system = [system]
         self.states_to_explore = []
@@ -380,14 +390,13 @@ class Basin() :
         jump_frequency = 10 ** 13 # idk
         boltzmann_constant = 1.380649 * 10 ** -23
         jump_rate = jump_frequency * np.exp( -energy_barrier / (boltzmann_constant * self.temp))
+        return jump_rate
 
     
 
-    def build_transition_matrix(self) :
+    def build_rate_matrix(self) :
         self.connexion_table['jump_rate'] = self.connexion_table['energy_barrier'].apply(self.compute_jump_rate)
 
-        self.transient_states = self.explored_states
-        self.absorbing_states = list(set(self.visited_states).difference(set(self.explored_states))) # à voir si y'a un problème pour un state déjà connu sous un autre nom
         self.transition_matrix = None
         self.occupation_probabilities = None
 
@@ -398,7 +407,6 @@ class Basin() :
         # Construction de la matrice M pour tous les états (transitoires + absorbants)
         all_states = self.transient_states + self.absorbing_states
         n_total = len(all_states)
-        n_transient = len(self.transient_states)
         
         # Mapping état -> index
         state_to_idx = {state: i for i, state in enumerate(all_states)}
@@ -571,5 +579,23 @@ class Basin() :
         print("État sélectionné:" , selected_state)
         
         return selected_state, exit_time    
+    
 
-         
+
+    def run_fpta(self) :
+
+        # Last explored state
+        last_row = self.connexion_table.tail(1)
+        current_state = last_row.loc['state']
+
+        # Execute fpta step
+        next_state, exit_time = self.run_fpta_step(current_state)   # Je sais pas on est supposé appliquer ftpa à partir de quel state???
+
+
+        # Simulation results
+        simulation_results = {'next_state_outside_basin': next_state,
+                              'exit_time': exit_time }
+
+        pprint(simulation_results)
+        
+        return simulation_results 
