@@ -377,7 +377,7 @@ class Basin() :
        # print(self.get_applicable_generic_event(state))
 
 
-    def reset() : 
+    def reset() :  
         pass 
 
 
@@ -388,7 +388,9 @@ class Basin() :
     def compute_jump_rate(self, energy_barrier) :
         jump_frequency = 10 ** 13 # idk
         boltzmann_constant = 1.380649 * 10 ** -23
-        jump_rate = jump_frequency * np.exp( -energy_barrier / (boltzmann_constant * self.temp))
+        energy_barrier_j = energy_barrier * 1.602176634e-19 # Convertir eV en J 
+        jump_rate = jump_frequency * np.exp( -energy_barrier_j / (boltzmann_constant * self.temp))
+
         return jump_rate
 
     
@@ -403,18 +405,18 @@ class Basin() :
         print("Absorbing states:" , len(self.absorbing_states))
 
 
-        # Construction de la matrice M pour tous les états (transitoires + absorbants)
-        all_states = self.transient_states + self.absorbing_states
-        n_total = len(all_states)
+        # Build the M matrix of all states (transient + absorbing)
+        all_states = sorted(self.transient_states + self.absorbing_states)
+        self.n_total = len(all_states)
         
-        # Mapping état -> index
-        state_to_idx = {state: i for i, state in enumerate(all_states)}
+        # Mapping state -> index
+        state_to_idx = {state: i for i, state in enumerate(self.transient_states)} | {state: i + len(self.transient_states) for i, state in enumerate(self.absorbing_states)}
         
-        # Initialisation de la matrice M
-        M = np.zeros((n_total, n_total))
+        # Initialize the matrix
+        M = np.zeros((self.n_total, self.n_total))
 
 
-        # Remplissage de la matrice selon l'équation (A4)
+        # Fill out the matrix
         for _, row in self.connexion_table.iterrows():
             state_i = row['state']
             state_j = row['state_connexion']
@@ -424,20 +426,20 @@ class Basin() :
                 i = state_to_idx[state_i]
                 j = state_to_idx[state_j]
                 
-                # Mij = -Rj->i si i ≠ j
+                # Mij = -Rj->i if i ≠ j
                 if i != j:
                     M[j, i] = -rate
 
 
-        # Diagonale : Mii = ∑k Ri->k 
-        for i in range(n_total):
-            # Calculer la somme des taux sortants pour l'état i
+        # Diagonal : Mii = ∑k Ri->k 
+        for i in range(self.n_total):
+
+            # Calculate the sum of all outgoing rates for state i
             outgoing_rates = 0
             state_i = all_states[i]
             
-            # Parcourir la connexion_table pour trouver tous les taux sortants
             for _, row in self.connexion_table.iterrows():
-                if row['state'] == state_i :
+                if row['state_connexion'] == state_i :
                     outgoing_rates += row['jump_rate']
             
             M[i, i] = outgoing_rates
@@ -449,42 +451,21 @@ class Basin() :
 
 
     def build_reduced_matrix(self): 
-        # Construit la matrice M réduite en considérant tous les états absorbants comme un seul
+        # Build reduce matrix M considering all absorbing states as one
         n_transient = len(self.transient_states)
         M_reduced = np.zeros((n_transient + 1, n_transient + 1))
         
-        # Copier la partie transitoire
+        # Copy the transient part
         M_reduced[:n_transient, :n_transient] = self.M_matrix[:n_transient, :n_transient]
         
-        # Sommer les transitions vers les états absorbants
-        for i in range(n_transient):
-            state_i = self.transient_states[i]
-            rate_to_absorbing = 0
-            
-            # Sommer tous les taux vers les états absorbants
-            for _, row in self.connexion_table.iterrows():
-                if row['state'] == state_i and row['state_connexion'] in self.absorbing_states:
-                    rate_to_absorbing += row['jump_rate']
-
-
-
-            # Transition vers l'état absorbant fusionné (colonne n_transient)
-            M_reduced[n_transient, i] = -rate_to_absorbing  # M[j,i] = -R(i->j)
-            
-            # Recalculer la diagonale (somme des taux sortants de l'état i)
-            total_absorbing_rate = rate_to_absorbing  # vers états absorbants
-            
-            # Ajouter les taux vers autres états transitoires
+        # Sum the rates of absorbing states
+        for i in range(n_transient, self.n_total) :
             for j in range(n_transient):
-                if i != j:
-                    # Trouver le taux i -> j
-                    for _, row in self.connexion_table.iterrows():
-                        if (row['state'] == state_i and 
-                            row['state_connexion'] == self.transient_states[j]):
-                            total_absorbing_rate += row['jump_rate']
-                            break
-            
-            M_reduced[i, i] = total_absorbing_rate   
+                
+                M_reduced[i, j] = self.M_matrix[i:, j].sum()
+
+        # Recalculate the last term of the diagonal
+        M_reduced[-1, -1] = abs(M_reduced[-1, :].sum())
 
         return M_reduced
 
@@ -492,32 +473,32 @@ class Basin() :
 
 
     def run_fpta_step(self, current_state):
-        # Exécute une étape complète de FPTA
+        
         initial_state_idx = self.transient_states.index(current_state)
         n_transient = len(self.transient_states)
         
-        # Construire la matrice de taux
+        # Build rate matrix M
         self.build_rate_matrix()
         
-        # Matrice réduite (états absorbants fusionnés)
+        # Build reduce matrix (with combined absorbing states)
         M_reduced = self.build_reduced_matrix()
 
-        # Vecteur initial P̄(0)
+        # Initial vector P̄(0)
         initial_vector = np.zeros(n_transient + 1)
         initial_vector[initial_state_idx] = 1.0
         
-        # Nombre aléatoire r pour probabilité de sortie
+        # Pick random number between [0,1) representing the probability of being in an absorbing states after time t
         random_r = np.random.random()
 
-        # Temps initial t₀
-        initial_time = 1.0 / np.sum(np.diag(self.M_matrix))  # basé sur ce qu'ils ont utilisé dans l'article
+        # Initial time t₀
+        initial_time = 1.0 / np.sum(np.diag(self.M_matrix))  # basé sur ce qu'ils ont utilisé dans l'article ***
         
-        # Bissection pour trouver texit
+        # Bisection method to find texit
         t_min, t_max = 0.0, initial_time
-        tolerance = 1e-5   # basé sur ce qu'ils ont utilisé dans l'article
+        tolerance = 1e-5   # basé sur ce qu'ils ont utilisé dans l'article ***
 
 
-        # Étendre la recherche si le chiffre random r est plus grand que la probabilité d'absorption
+        # Extend search if random number r is higher than the probability of being in an absorbing state
         while True :
             prob_vector = expm(-t_max * M_reduced) @ initial_vector
             prob_absorbing = prob_vector[-1]
@@ -526,7 +507,7 @@ class Basin() :
                 break
             t_max *= 2
         
-        # Bissection
+     
         while True :
             t_mid = (t_min + t_max) / 2
             prob_vector = expm(-t_mid * M_reduced) @ initial_vector
@@ -544,7 +525,7 @@ class Basin() :
         print("Temps de sortie texit =" , exit_time)
         
 
-        # Probabilités individuelles des états absorbants
+        # individual probability of absorbing states
         n_total = len(self.transient_states) + len(self.absorbing_states)
         initial_vector_full = np.zeros(n_total)
         initial_vector_full[initial_state_idx] = 1.0
@@ -553,7 +534,7 @@ class Basin() :
         absorbing_probs = prob_vector_full[n_transient:]
         
 
-        # Normalisation  ??? 
+        # Normalization  ??? 
         total_absorbing_prob = np.sum(absorbing_probs)
         if total_absorbing_prob > 0:
             absorbing_probs = absorbing_probs / total_absorbing_prob
@@ -561,7 +542,7 @@ class Basin() :
         print("Probabilités des états absorbants:" , absorbing_probs)
         
 
-        # Sélection de l'état final
+        # Pick one of the absorbing state
         random_s = np.random.random()
         
         cumulative_prob = 0
@@ -582,25 +563,18 @@ class Basin() :
 
 
 
-    # Dans l'article il est écrit qu'un state doit être visité 10 fois avant qu'on lui applique fpta. Est-ce que c'est applicable à nous?? Ou est-ce qu'on
-    # calcule seulement le temps de sortie selon l'état qui nous à amené dans le bassin soit l'état 0??
-
-
-
-
     def run_fpta(self) :
 
         total_exit_time = 0
         simulation_results = []
 
-        # Execute 10 fpta steps
-        for step in range(10) :
-            next_state, exit_time = self.run_fpta_step(0)   # Je sais pas on est supposé appliquer ftpa à partir de quel state???
-            total_exit_time += exit_time
+        next_state, exit_time = self.run_fpta_step(0)   # Run fpta with the state that made us enter the basin
+        total_exit_time += exit_time
 
-            # Simulation results
-            simulation_results.append(next_state)
+        # Simulation results
+        simulation_results.append(next_state)
 
         print(simulation_results, total_exit_time)
         
         return simulation_results, total_exit_time
+    

@@ -1,0 +1,42 @@
+[Control] 
+config_file = ./initial_config.xyz 
+output_file = ./trajkmc.xyz
+nkmc_steps = 2
+initial_config = ./initial_config.xyz 
+n_steps = 1
+engine = lammps
+verbosity = 2
+basin = True
+#reference_table = reference_table.pickle
+#visited_environments = visited_environments.pickle
+
+[Lammps] 
+pair_style = eam/alloy 
+pair_coeff = * * ./FeC-Becquart2013.eam Fe
+
+[AtomicEnvironment] 
+style = cna/graph
+rnei = 2.20
+rcut = 6.5
+
+[EventSearch] 
+style = partn
+nsearch = 1
+emax_event = 5.0
+emin_event = 0.0
+refined_energy_thr = 0.6
+
+[pARTn] 
+path_artnso = /root/programs/artn-plugin/lib/libartn-lmp.so
+
+[RateConstant] 
+style = constant
+k0 = 1e12
+T = 300.0
+
+[PSR] 
+style = ira 
+[IRA]
+
+[Basin]
+energy_thr = 0.7
