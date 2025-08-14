@@ -385,12 +385,22 @@ class Basin() :
 
 # IMPLÉMENTER LA MÉTHODE FPTA
 
-    def compute_jump_rate(self, energy_barrier) :
-        jump_frequency = 10 ** 13 # idk
-        boltzmann_constant = 1.380649 * 10 ** -23
-        energy_barrier_j = energy_barrier * 1.602176634e-19 # Convertir eV en J 
-        jump_rate = jump_frequency * np.exp( -energy_barrier_j / (boltzmann_constant * self.temp))
+     
+    """ Avant de commencer la méthode FPTA, il faudrait s'assurer qu'il y a au moins un transient state (True) dans la connexion_table.
+        Si c'est le cas continuer dans le code et sinon sortir de la méthode du bassin et revenir dans le main code pykmc. Voir  
+        test_fpta_basin_bisection parce que c'est déjà un peu implémenté là.
+    
+        Des 3 tests du ftpa, le test_fpta_basin_bisection est celui qui fonctionne pour l'instant. Il faut quand même confirmé que les 
+        valeurs obtenues sont les bonnes.
+        
+        Dans le dossier examples l'exemple Fe_other est le plus récent que Mijanur m'a envoyé. Je n'ai pas eu beaucoup de temps pour le 
+        tester alors ça pourrait être pertinent de le faire."""
+    
 
+    def compute_jump_rate(self, energy_barrier) :
+        jump_frequency = 10 ** 13  # Hz
+        boltzmann_constant = 8.617 * 10**-5   # eV/K
+        jump_rate = jump_frequency * np.exp( -energy_barrier / (boltzmann_constant * self.temp))
         return jump_rate
 
     
@@ -436,7 +446,7 @@ class Basin() :
 
             # Calculate the sum of all outgoing rates for state i
             outgoing_rates = 0
-            state_i = all_states[i]
+            state_i = state_to_idx[i]
             
             for _, row in self.connexion_table.iterrows():
                 if row['state_connexion'] == state_i :
@@ -445,6 +455,12 @@ class Basin() :
             M[i, i] = outgoing_rates
         
         self.M_matrix = M
+
+        print(f"\nMatrice M construite ({self.n_total}x{self.n_total}):")
+        print("États:", all_states)
+        print("Matrice M:")
+        print(M)
+        
         return M            
     
 
@@ -467,6 +483,7 @@ class Basin() :
         # Recalculate the last term of the diagonal
         M_reduced[-1, -1] = abs(M_reduced[-1, :].sum())
 
+        
         return M_reduced
 
 
@@ -489,40 +506,58 @@ class Basin() :
         
         # Pick random number between [0,1) representing the probability of being in an absorbing states after time t
         random_r = np.random.random()
+        print(f"\nNombre aléatoire r = {random_r:.4f}")
 
         # Initial time t₀
-        initial_time = 1.0 / np.sum(np.diag(self.M_matrix))  # basé sur ce qu'ils ont utilisé dans l'article ***
+        initial_time = 1.0 / np.sum(np.diag(self.M_matrix))  
         
-        # Bisection method to find texit
+        # Initial values
         t_min, t_max = 0.0, initial_time
-        tolerance = 1e-5   # basé sur ce qu'ils ont utilisé dans l'article ***
+        tolerance = 1e-5
+        prob_absorbing = 0
 
 
-        # Extend search if random number r is higher than the probability of being in an absorbing state
-        while True :
+        # Extend search to make sure t_min and t_max are adequate bounderies for the bisection method
+        while True:
+
+            difference_prob_t_min_and_r = prob_absorbing - random_r
+
             prob_vector = expm(-t_max * M_reduced) @ initial_vector
             prob_absorbing = prob_vector[-1]
-            
-            if prob_absorbing > random_r:
+
+            difference_prob_t_max_and_r = prob_absorbing - random_r
+
+            if difference_prob_t_min_and_r < 0 and difference_prob_t_max_and_r < 0 :
+                t_max = t_max * 2
+
+            else:
                 break
-            t_max *= 2
         
-     
+        # Bisection method to find texit
         while True :
             t_mid = (t_min + t_max) / 2
             prob_vector = expm(-t_mid * M_reduced) @ initial_vector
             prob_absorbing = prob_vector[-1]
             
+            if iteration % 10 == 0:  # Display every 10 steps
+                print(f"  Bisection {iteration}: t={t_mid:.6f}, P_abs={prob_absorbing:.4f}")
+            
             if abs(t_max - t_min) / ((t_max + t_min) / 2) < tolerance:
+                print("1--prob_absorbing", prob_absorbing)
                 break
             
             if prob_absorbing < random_r:
                 t_min = t_mid
             else:
                 t_max = t_mid
+                
+            iteration += 1
+            if iteration > 100:
+                print("  Stop the bisection after 100 iterations")
+                break
         
         exit_time = t_mid
-        print("Temps de sortie texit =" , exit_time)
+        print("Exit time =" , exit_time)
         
 
         # individual probability of absorbing states
@@ -534,17 +569,19 @@ class Basin() :
         absorbing_probs = prob_vector_full[n_transient:]
         
 
-        # Normalization  ??? 
+        # Normalization  ??? je sais pas si c'est pertinent
         total_absorbing_prob = np.sum(absorbing_probs)
         if total_absorbing_prob > 0:
             absorbing_probs = absorbing_probs / total_absorbing_prob
         
-        print("Probabilités des états absorbants:" , absorbing_probs)
+        print("Probabilities of absorbing states:" , absorbing_probs)
         
 
         # Pick one of the absorbing state
         random_s = np.random.random()
-        
+        print(f"Nombre aléatoire r = {random_r:.4f}")
+        print(f"Nombre aléatoire s = {random_s:.4f}")
+
         cumulative_prob = 0
         selected_state = None
         for i, prob in enumerate(absorbing_probs):
@@ -556,7 +593,7 @@ class Basin() :
         if selected_state is None:
             selected_state = self.absorbing_states[-1]
         
-        print("État sélectionné:" , selected_state)
+        print("Selected state:" , selected_state)
         
         return selected_state, exit_time    
     
@@ -566,15 +603,13 @@ class Basin() :
     def run_fpta(self) :
 
         total_exit_time = 0
-        simulation_results = []
 
         next_state, exit_time = self.run_fpta_step(0)   # Run fpta with the state that made us enter the basin
         total_exit_time += exit_time
 
-        # Simulation results
-        simulation_results.append(next_state)
-
-        print(simulation_results, total_exit_time)
+        print(f"\n=== Résultats finaux ===")
+        print(f"États choisi: {next_state}")
+        print(f"Temps de sortie: {total_exit_time:.6f}")
         
-        return simulation_results, total_exit_time
+        return next_state, total_exit_time
     

@@ -4,6 +4,8 @@ import pandas as pd
 import numpy as np
 from scipy.linalg import expm
 import copy
+from scipy.optimize import bisect
+import matplotlib.pyplot as plt 
 
 
 class BasinTestFPTA:
@@ -26,7 +28,7 @@ class BasinTestFPTA:
             'central_atom': [4528, 4529, 4543, 4544, 4849],
             'sym': [0, 0, 0, 0, 0],
             'transient': [True, False, True, True, True],
-            'energy_barrier': [0.132, 2.682, 0.148, 0.247, 0.179]
+            'energy_barrier': [0.132, 0.682, 0.148, 0.247, 0.179]
         }
         
         self.connexion_table = pd.DataFrame(data)
@@ -38,10 +40,8 @@ class BasinTestFPTA:
     def compute_jump_rate(self, energy_barrier):
         #Calcule le taux de saut à partir de la barrière énergétique
         jump_frequency = 10 ** 13  # Hz
-        boltzmann_constant = 1.380649e-23  # J/K
-        # Convertir eV en J (supposant que energy_barrier est en eV)
-        energy_barrier_j = energy_barrier * 1.602176634e-19                                               # ***
-        jump_rate = jump_frequency * np.exp(-energy_barrier_j / (boltzmann_constant * self.temp))
+        boltzmann_constant = 8.617 * 10**-5   # eV/K
+        jump_rate = jump_frequency * np.exp(-energy_barrier / (boltzmann_constant * self.temp))
         return jump_rate
     
 
@@ -109,7 +109,9 @@ class BasinTestFPTA:
             
             for _, row in self.connexion_table.iterrows():
                 if row['state_connexion'] == state_i:
-                    outgoing_rates += row['jump_rate']
+                    
+                    rate = row['jump_rate']
+                    outgoing_rates += rate
                     
             
             M[i, i] = outgoing_rates
@@ -150,35 +152,35 @@ class BasinTestFPTA:
 
     def run_fpta_step(self, current_state):
         # Exécute une étape FPTA
-        initial_state_idx = self.transient_states.index(current_state)
-        n_transient = len(self.transient_states)
+        self.initial_state_idx = self.transient_states.index(current_state)
+        self.n_transient = len(self.transient_states)
         
         # Construire la matrice réduite
-        M_reduced = self.build_reduced_matrix()
+        self.M_reduced = self.build_reduced_matrix()
 
         # Vecteur initial
-        initial_vector = np.zeros(n_transient + 1)
-        initial_vector[initial_state_idx] = 1.0
+        self.initial_vector = np.zeros(self.n_transient + 1)
+        self.initial_vector[self.initial_state_idx] = 1.0
         
         # Nombre aléatoire
-        random_r = np.random.random()
-        print(f"\nNombre aléatoire r = {random_r:.4f}")
+        self.random_r = np.random.random()
+        print(f"\nNombre aléatoire r = {self.random_r:.4f}")
         
         # Temps initial
-        initial_time = 1.0 / np.max(np.diag(self.M_matrix))
+        self.initial_time = 1.0 / np.max(np.diag(self.M_matrix))
         
         # Méthode de bisection
-        t_min, t_max = 0.0, initial_time
+        t_min, t_max = 0.0, self.initial_time
         tolerance = 1e-5
 
         # Étendre la recherche si nécessaire
         iteration = 0
         while True:
-            prob_vector = expm(-t_max * M_reduced) @ initial_vector
+            prob_vector = expm(-t_max * self.M_reduced) @ self.initial_vector
             prob_absorbing = prob_vector[-1]
             print(f"  Extension {iteration}: t_max={t_max:.6f}, P_abs={prob_absorbing:.4f}")
             
-            if prob_absorbing > random_r:
+            if prob_absorbing > self.random_r:
                 break
             t_max *= 2
             iteration += 1
@@ -186,40 +188,39 @@ class BasinTestFPTA:
             if iteration > 20:  # Éviter les boucles infinies
                 print("  Arrêt de l'extension après 20 itérations")
                 break
+
+        self.bisection()    
+
+
+
+
+    def f(self, time):
+        prob_vector = expm(-time * self.M_reduced) @ self.initial_vector
+        prob_absorbing = prob_vector[-1]
+        return prob_absorbing - self.random_r
+
+
+    def bisection(self):
         
+        t_tab = np.linspace(0, 1e-12, 20)
+        y_tab = np.array([self.f(t) for t in t_tab])  # compute f for each scalar t
+        plt.plot(t_tab, y_tab, '.')
+        plt.show
+        
+
+
+
         # Bisection
-        iteration = 0
-        while True:
-            t_mid = (t_min + t_max) / 2
-            prob_vector = expm(-t_mid * M_reduced) @ initial_vector
-            prob_absorbing = prob_vector[-1]
-            
-            if iteration % 10 == 0:  # Afficher tous les 10 pas
-                print(f"  Bisection {iteration}: t={t_mid:.6f}, P_abs={prob_absorbing:.4f}")
-            
-            if abs(t_max - t_min) / ((t_max + t_min) / 2) < tolerance:
-                break
-            
-            if prob_absorbing < random_r:
-                t_min = t_mid
-            else:
-                t_max = t_mid
-                
-            iteration += 1
-            if iteration > 100:
-                print("  Arrêt de la bisection après 100 itérations")
-                break
-        
-        exit_time = t_mid
+        exit_time = bisect(self.f, 0.0, 1000000000, xtol=1e-5, maxiter=100)
         print(f"  Temps de sortie: {exit_time:.6f}")
 
         # Probabilités individuelles des états absorbants
         n_total = len(self.transient_states) + len(self.absorbing_states)
         initial_vector_full = np.zeros(n_total)
-        initial_vector_full[initial_state_idx] = 1.0
+        initial_vector_full[self.initial_state_idx] = 1.0
         
         prob_vector_full = expm(-exit_time * self.M_matrix) @ initial_vector_full
-        absorbing_probs = prob_vector_full[n_transient:]
+        absorbing_probs = prob_vector_full[self.n_transient:]
         
         # Normalisation
         total_absorbing_prob = np.sum(absorbing_probs)

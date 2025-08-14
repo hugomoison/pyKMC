@@ -16,12 +16,12 @@ pair_coeff = * * ./FeC-Becquart2013.eam Fe
 
 [AtomicEnvironment] 
 style = cna/graph
-rnei = 2.20
+rnei = 2.80
 rcut = 6.5
 
 [EventSearch] 
 style = partn
-nsearch = 1
+nsearch = 40
 emax_event = 5.0
 emin_event = 0.0
 refined_energy_thr = 0.6
@@ -39,4 +39,4 @@ style = ira
 [IRA]
 
 [Basin]
-energy_thr = 0.7
+energy_thr = 0.8

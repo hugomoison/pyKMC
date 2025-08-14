@@ -42,10 +42,8 @@ class BasinTestFPTA:
     def compute_jump_rate(self, energy_barrier):
         #Calcule le taux de saut à partir de la barrière énergétique
         jump_frequency = 10 ** 13  # Hz
-        boltzmann_constant = 1.380649e-23  # J/K
-        # Convertir eV en J (supposant que energy_barrier est en eV)
-        energy_barrier_j = energy_barrier * 1.602176634e-19                                               # ***
-        jump_rate = jump_frequency * np.exp(-energy_barrier_j / (boltzmann_constant * self.temp))
+        boltzmann_constant = 8.617 * 10**-5   # eV/K
+        jump_rate = jump_frequency * np.exp(-energy_barrier / (boltzmann_constant * self.temp))
         return jump_rate
     
 
@@ -197,9 +195,6 @@ class BasinTestFPTA:
         random_s = 0.9507
         return self.check_random_s(t) - random_s          
 
-
-
-
     
 
 
@@ -237,10 +232,10 @@ def test_fpta_complete():
 
     
 
-    #t_min = 0.0
-    #t_max = 100.0
-    #t_exit = bisect(basin.f, t_min, t_max)
-    #print(t_exit)
+    t_min = 0.0
+    t_max = 100.0
+    t_exit = bisect(basin.f, t_min, t_max)
+    print(t_exit)
 
 
 

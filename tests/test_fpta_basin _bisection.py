@@ -4,8 +4,6 @@ import pandas as pd
 import numpy as np
 from scipy.linalg import expm
 import copy
-from scipy.optimize import bisect
-import matplotlib.pyplot as plt 
 
 
 class BasinTestFPTA:
@@ -28,7 +26,7 @@ class BasinTestFPTA:
             'central_atom': [4528, 4529, 4543, 4544, 4849],
             'sym': [0, 0, 0, 0, 0],
             'transient': [True, False, True, True, True],
-            'energy_barrier': [0.132, 2.682, 0.148, 0.247, 0.179]
+            'energy_barrier': [0.132, 0.682, 0.148, 0.247, 0.179]
         }
         
         self.connexion_table = pd.DataFrame(data)
@@ -40,10 +38,9 @@ class BasinTestFPTA:
     def compute_jump_rate(self, energy_barrier):
         #Calcule le taux de saut à partir de la barrière énergétique
         jump_frequency = 10 ** 13  # Hz
-        boltzmann_constant = 1.380649e-23  # J/K
-        # Convertir eV en J (supposant que energy_barrier est en eV)
-        energy_barrier_j = energy_barrier * 1.602176634e-19                                               # ***
-        jump_rate = jump_frequency * np.exp(-energy_barrier_j / (boltzmann_constant * self.temp))
+        boltzmann_constant = 8.617 * 10**-5   # eV/K
+        jump_rate = jump_frequency * np.exp(-energy_barrier / (boltzmann_constant * self.temp))    
+        print(jump_rate)                                        
         return jump_rate
     
 
@@ -111,9 +108,7 @@ class BasinTestFPTA:
             
             for _, row in self.connexion_table.iterrows():
                 if row['state_connexion'] == state_i:
-                    
-                    rate = row['jump_rate']
-                    outgoing_rates += rate
+                    outgoing_rates += row['jump_rate']
                     
             
             M[i, i] = outgoing_rates
@@ -154,86 +149,96 @@ class BasinTestFPTA:
 
     def run_fpta_step(self, current_state):
         # Exécute une étape FPTA
-        self.initial_state_idx = self.transient_states.index(current_state)
-        self.n_transient = len(self.transient_states)
+        initial_state_idx = self.transient_states.index(current_state)
+        n_transient = len(self.transient_states)
         
         # Construire la matrice réduite
-        self.M_reduced = self.build_reduced_matrix()
+        M_reduced = self.build_reduced_matrix()
 
         # Vecteur initial
-        self.initial_vector = np.zeros(self.n_transient + 1)
-        self.initial_vector[self.initial_state_idx] = 1.0
+        initial_vector = np.zeros(n_transient + 1)
+        initial_vector[initial_state_idx] = 1.0
         
         # Nombre aléatoire
-        self.random_r = np.random.random()
-        print(f"\nNombre aléatoire r = {self.random_r:.4f}")
+        random_r = np.random.random()
         
         # Temps initial
-        self.initial_time = 1.0 / np.max(np.diag(self.M_matrix))
-        
-        # Méthode de bisection
-        t_min, t_max = 0.0, self.initial_time
-        tolerance = 1e-5
+        initial_time = 1.0 / np.sum(np.diag(self.M_matrix))
+        print("Temps initial", initial_time)
 
-        # Étendre la recherche si nécessaire
+        # Trouver des valeurs adéquates de t_min et t_max
         iteration = 0
+        t_min, t_max = 0.0, initial_time
+        tolerance = 1e-5
+        prob_absorbing = 0
+
         while True:
-            prob_vector = expm(-t_max * self.M_reduced) @ self.initial_vector
+
+            difference_prob_t_min_et_r = prob_absorbing - random_r
+
+            prob_vector = expm(-t_max * M_reduced) @ initial_vector
             prob_absorbing = prob_vector[-1]
-            print(f"  Extension {iteration}: t_max={t_max:.6f}, P_abs={prob_absorbing:.4f}")
+
+            # Condition s'assurant que t_min et t_max sont valides pour la méthode de la bissection
+            difference_prob_t_max_et_r = prob_absorbing - random_r
             
-            if prob_absorbing > self.random_r:
-                break
-            t_max *= 2
-            iteration += 1
-            
-            if iteration > 20:  # Éviter les boucles infinies
-                print("  Arrêt de l'extension après 20 itérations")
-                break
 
-        self.bisection()    
+            if difference_prob_t_min_et_r < 0 and difference_prob_t_max_et_r < 0 :
+                t_max = t_max * 2
 
-
-
-
-    def f(self, time):
-        prob_vector = expm(-time * self.M_reduced) @ self.initial_vector
-        prob_absorbing = prob_vector[-1]
-        return prob_absorbing - self.random_r
-
-
-    def bisection(self):
+            else:
+                break    
         
-        t_tab = np.linspace(0, 1e-12, 20)
-        y_tab = np.array([self.f(t) for t in t_tab])  # compute f for each scalar t
-        plt.plot(t_tab, y_tab, '.')
-        plt.show
-        
-
 
 
         # Bisection
-        exit_time = bisect(self.f, 0.0, 1000000000, xtol=1e-5, maxiter=100)
-        print(f"  Temps de sortie: {exit_time:.6f}")
+        iteration = 0
+        prob_absorbing = 0.0
+
+        while True:
+            t_mid = (t_min + t_max) / 2
+            prob_vector = expm(-t_mid * M_reduced) @ initial_vector
+            prob_absorbing = prob_vector[-1]
+            
+            if iteration % 10 == 0:  # Afficher tous les 10 pas
+                print(f"  Bisection {iteration}: t={t_mid:.6f}, P_abs={prob_absorbing:.4f}")
+            
+            if abs(t_max - t_min) / ((t_max + t_min) / 2) < tolerance:
+                print("1--prob_absorbing", prob_absorbing)
+                break
+            
+            if prob_absorbing < random_r:
+                t_min = t_mid
+            else:
+                t_max = t_mid
+                
+            iteration += 1
+            if iteration > 100:
+                print("  Arrêt de la bisection après 100 itérations")
+                break
+        
+        exit_time = t_mid
 
         # Probabilités individuelles des états absorbants
         n_total = len(self.transient_states) + len(self.absorbing_states)
         initial_vector_full = np.zeros(n_total)
-        initial_vector_full[self.initial_state_idx] = 1.0
+        initial_vector_full[initial_state_idx] = 1.0
         
         prob_vector_full = expm(-exit_time * self.M_matrix) @ initial_vector_full
-        absorbing_probs = prob_vector_full[self.n_transient:]
+        absorbing_probs = prob_vector_full[n_transient:]
         
+
         # Normalisation
         total_absorbing_prob = np.sum(absorbing_probs)
         if total_absorbing_prob > 0:
             absorbing_probs = absorbing_probs / total_absorbing_prob
         
-        print(f"  Probabilités absorbantes: {absorbing_probs}")
+        print(f"Probabilités absorbantes: {absorbing_probs}")
 
         # Sélection de l'état
         random_s = np.random.random()
-        print(f"  Nombre aléatoire s = {random_s:.4f}")
+        print(f"Nombre aléatoire r = {random_r:.4f}")
+        print(f"Nombre aléatoire s = {random_s:.4f}")
         
         cumulative_prob = 0
         selected_state = None
@@ -246,33 +251,22 @@ class BasinTestFPTA:
         if selected_state is None:
             selected_state = self.absorbing_states[-1]
         
-        print(f"  État sélectionné: {selected_state}")
-        
         return selected_state, exit_time
 
 
 
     def run_fpta(self):
-        """Exécute plusieurs étapes FPTA"""
+
         total_exit_time = 0
-        simulation_results = []
         
         next_state, exit_time = self.run_fpta_step(0)  # Toujours partir de l'état 0
         total_exit_time += exit_time
-        simulation_results.append(next_state)
 
         print(f"\n=== Résultats finaux ===")
-        print(f"États visités: {simulation_results}")
-        print(f"Temps total: {total_exit_time:.6f}")
+        print(f"États choisi: {next_state}")
+        print(f"Temps de sortie: {total_exit_time:.6f}")
         
-        # Statistiques
-        from collections import Counter
-        stats = Counter(simulation_results)
-        print("\nStatistiques:")
-        for state, count in stats.items():
-            print(f"  État {state}")
-        
-        return simulation_results, total_exit_time
+        return next_state, total_exit_time
 
 
 
@@ -304,7 +298,7 @@ def test_fpta_complete():
     # Exécuter FPTA
     try:
         results, time_total = basin.run_fpta()
-        print(" ✅ Test FPTA réussi!")
+        print("\n ✅ Test FPTA réussi! \n")
         return True
     except Exception as e:
         print(f"❌ Erreur FPTA: {e}")
@@ -313,8 +307,6 @@ def test_fpta_complete():
         return False
 
 if __name__ == "__main__":
-    # Fixer la graine pour la reproductibilité
-    np.random.seed(42)
     
     # Exécuter le test
     success = test_fpta_complete()
