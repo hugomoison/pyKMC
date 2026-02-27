@@ -6,6 +6,7 @@ boundary conditions.
 
 from __future__ import annotations
 from ase.io import read
+from ase.cell import Cell
 import numpy as np
 import ase.geometry
 
@@ -17,37 +18,70 @@ class System:
     characteristics of an atomic configuration, including atom types,
     spatial positions, simulation box dimensions, periodic boundary conditions,
     and original atom indices.
+    It Follows ASE conventions: positions always (N,3), pbc always (3,), 
+    cell always ase.cell.Cell. 
+    Dimentionality (1D, 2D, 3D) is expressed via pbc, not by reducing 
+    array dimensions.
 
     Attributes
     ----------
-    types : np.ndarray of str, shape (N), optional
+    types : np.ndarray of str, shape (N,), optional
         Atomic types (e.g., 'H', 'O', 'C') where N is the number of atoms.
         Defaults to None.
     positions : np.ndarray of float, shape (N, 3), optional
         Atomic Cartesian coordinates. Each row represents an atom's
         (x, y, z) position. Defaults to None.
-    cell : np.ndarray of float, shape (3, 3), optional
+    cell : ase.cell.Cell
         Simulation box cell. Defaults to None.
-    pbc : np.ndarray of bool, shape (3), optional
+    pbc : np.ndarray of bool, shape (3,), optional
         Flags for periodic boundary conditions (x, y, z). Defaults to None.
     index : np.ndarray of int, shape (N,), optional
         Original indices of the atoms. Defaults to None.
-
     """
 
-    def __init__(
-        self,
-        types: np.ndarray | None = None,
-        positions: np.ndarray | float = None,
-        cell: np.ndarray | None = None,
-        pbc: np.ndarray | None = None,
-        index: np.ndarray | None = None,
-    ) -> None:
+    def __init__(self, types: np.ndarray | None = None, positions: np.ndarray | float = None, cell: np.ndarray | None = None
+                 , pbc: np.ndarray | None = None, index: np.ndarray | None = None, ) -> None:
+
         self.types = types
         self.positions = positions
         self.cell = cell
         self.pbc = pbc
         self.index = index
+
+    #------------#
+    # Properties #
+    #------------#
+    #To force ASE convention
+
+    @property 
+    def cell(self) -> Cell | None : 
+        return self._cell
+
+    @cell.setter 
+    def cell(self, value: Cell | np.ndarray | None) -> None : 
+        self._cell = Cell.new(value) if value is not None else None
+
+    @property 
+    def pbc(self) -> np.ndarray | None : 
+        return self._pbc 
+    
+    @pbc.setter 
+    def pbc(self, value: np.ndarray | bool | None) -> None : 
+        if value is None : 
+            self._pbc = None 
+        else : 
+            self._pbc = np.broadcast_to(np.asarray(value, dtype=bool), (3,)).copy()
+    
+    @property 
+    def n_atoms(self) -> int | None : 
+        """ 
+        Convenience method
+        """
+        return None if self.positions is None else len(self.positions)
+
+    #--------------#
+    # Class method #
+    #--------------#
 
     @classmethod
     def create_from_file(cls, file_path: str) -> System:
@@ -93,19 +127,22 @@ class System:
 
         return new_system
 
+    #---------#
+    # Methods #
+    #---------#
+
     def update_positions(
-        self, new_positions: np.ndarray, atom_idx: np.ndarray | None = None
-    ) -> None:
+        self, new_positions: np.ndarray, atom_idx: np.ndarray | None = None, clamp_negative: bool = True) -> None:
         """Update the atomic positions of the system.
 
         This method allows updating either all atomic positions or a subset
         of them specified by their indices. After updating, positions are
-        wrapped back into the simulation cell if PBC are enabled, and any
-        small negative coordinates are clamped to zero.
+        wrapped back into the simulation cell if PBC are enabled
+        , and any small negative coordinates are clamped to zero.
 
         Parameters
         ----------
-        new_positions : np.ndarray of float, shape (N,3)
+        new_positions : np.ndarray of float, shape (N,3) or (M, 3)
             - If `atom_idx` is None, this array should have shape `(N, 3)`,
               where N is the total number of atoms in the system.
             - If `atom_idx` is provided, this array should have shape `(M, 3)`,
@@ -114,6 +151,8 @@ class System:
             A 1D NumPy array of integers specifying the indices of the atoms
             whose positions are to be updated. If `None` (default), all atoms'
             positions are updated.
+        clam_negative: bool 
+            Clamp negative values, after wrapping, to 0. Default True.
 
         Notes
         -----
@@ -122,47 +161,32 @@ class System:
           spatial search algorithms (e.g., KD-trees) due to floating-point inaccuracies.
 
         """
-        if atom_idx is None:
+
+        if atom_idx is None :
             self.positions = new_positions
-            self.positions = self.wrap_positions(
-                self.positions, cell=self.cell, pbc=self.pbc
-            )
-            # Clamp small negative positions to zero to avoid issues with KD-trees.
-            # This handles floating-point inaccuracies that might result in values like -1e-10.
-            self.positions[self.positions < 0] = 0
-
-        else:
+        
+        else : 
             self.positions[atom_idx] = new_positions
-            self.positions = self.wrap_positions(
-                self.positions, cell=self.cell, pbc=self.pbc
-            )
+
+        #Always wrap positions : 
+        if self.cell is not None and self.pbc is not None : 
+            self.positions = ase.geometry.wrap_positions(positions=self.positions, cell=self.cell, pbc=self.pbc)
+        
+        if clamp_negative : 
+        #Clamp small negative values to zero to avoid issues with KD-Tree 
+        #This handles floating-point inacurracies that might result in value like -1e-10 (e.g. when using Lammps)
             self.positions[self.positions < 0] = 0
 
-    def wrap_positions(
-        self, positions: np.ndarray, cell: np.ndarray, pbc: bool | np.ndarray = True
-    ) -> np.ndarray:
-        """Wrap atomic positions back into the primary unit cell.
+    #--------#
+    # Dunder #
+    #--------#
 
-        This method is a convenience wrapper for `ase.geometry.wrap_positions`.
+    def __len__(self) -> int: 
+        return self.n_atoms if self.n_atoms is not None else 0
 
-        Parameters
-        ----------
-        positions : np.ndarray of float, shape (N, 3)
-            Atomic coordinates to be wrapped.
-        cell : np.ndarray of float, shape (3, 3)
-            Simulation box
-        pbc : bool or np.ndarray of bool, shape (3), optional
-            Whether periodic boundary conditions are applied along each direction.
-            Defaults to True (all directions).
+    def __repr__(self) -> str : 
+        return ( 
+            f"System(n_atoms={self.n_atoms}, pbc={self.pbc}, cell={np.array(self.cell)})"
+        )
 
-        Returns
-        -------
-        np.ndarray of float, shape (N, 3)
-            A new array with the wrapped positions.
 
-        See Also
-        --------
-        ase.geometry.wrap_positions : Refer to ASE documentation for full details.
-
-        """
-        return ase.geometry.wrap_positions(positions=positions, cell=cell, pbc=pbc)
