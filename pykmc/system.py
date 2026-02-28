@@ -9,7 +9,7 @@ from ase.io import read
 from ase.cell import Cell
 import numpy as np
 import ase.geometry
-
+import logging
 
 class System:
     """Represents an atomic system with its properties.
@@ -18,7 +18,7 @@ class System:
     characteristics of an atomic configuration, including atom types,
     spatial positions, simulation box dimensions, periodic boundary conditions,
     and original atom indices.
-    It Follows ASE conventions: positions always (N,3), pbc always (3,), 
+    It follows ASE conventions: positions always (N,3), pbc always (3,), 
     cell always ase.cell.Cell. 
     Dimentionality (1D, 2D, 3D) is expressed via pbc, not by reducing 
     array dimensions.
@@ -37,16 +37,21 @@ class System:
         Flags for periodic boundary conditions (x, y, z). Defaults to None.
     index : np.ndarray of int, shape (N,), optional
         Original indices of the atoms. Defaults to None.
+    logger : logging.Logger 
+            Logger to log informations. Default None
+
+
     """
 
-    def __init__(self, types: np.ndarray | None = None, positions: np.ndarray | float = None, cell: np.ndarray | None = None
-                 , pbc: np.ndarray | None = None, index: np.ndarray | None = None, ) -> None:
+    def __init__(self, types: np.ndarray | None = None, positions: np.ndarray | None = None, cell: np.ndarray | None = None
+                 , pbc: np.ndarray | None = None, index: np.ndarray | None = None, logger: logging.Logger | None = None) -> None:
 
         self.types = types
         self.positions = positions
         self.cell = cell
         self.pbc = pbc
         self.index = index
+        self._logger = logger
 
     #------------#
     # Properties #
@@ -84,7 +89,7 @@ class System:
     #--------------#
 
     @classmethod
-    def create_from_file(cls, file_path: str) -> System:
+    def create_from_file(cls, file_path: str, logger: logging.Logger | None = None) -> System:
         """Create a System object from a structure file.
 
         This method reads an atomic configuration file (e.g., .xyz, .vasp, .xsf)
@@ -95,6 +100,8 @@ class System:
         ----------
         file_path : str
             Path to the input structure file.
+        logger : logging.Logger 
+            Logger to log informations. Default None
 
         Returns
         -------
@@ -114,13 +121,21 @@ class System:
             raise ValueError(f"Can't create System from file {file_path}: {e}") from e
 
         # Create new System instance
-        new_system = cls()
-        # update attributes
-        new_system.types = atoms.get_chemical_symbols()
-        new_system.positions = atoms.get_positions()
-        new_system.cell = atoms.get_cell()
-        new_system.pbc = atoms.get_pbc()
-        new_system.index = np.arange(len(new_system.types))
+        new_system = cls(
+            types = atoms.get_chemical_symbols(), 
+            positions = atoms.get_positions(), 
+            cell = atoms.get_cell(),
+            pbc = atoms.get_pbc(),
+            index = np.arange(len(atoms)), 
+            logger=logger
+        )
+
+        #Log warning if wrong initialization indicating file with uncomplete informations.
+        if new_system._logger is not None : 
+            if new_system.cell is None or not np.any(new_system.cell) : 
+                new_system._logger.warning("System loaded without a valid cell - simulation will not work properly.")
+            if new_system.pbc is None or not np.any(new_system.pbc) : 
+                new_system._logger.warning("All pbc are False - no periodic boundary conditions set.")
 
         #Wrap positions
         new_system.update_positions(new_system.positions)
@@ -186,7 +201,7 @@ class System:
 
     def __repr__(self) -> str : 
         return ( 
-            f"System(n_atoms={self.n_atoms}, pbc={self.pbc}, cell={np.array(self.cell)})"
+            f"System(n_atoms={self.n_atoms}, pbc={self.pbc}, cell={np.array(self.cell) if self.cell is not None else None})"
         )
 
 
