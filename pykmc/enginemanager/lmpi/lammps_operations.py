@@ -356,6 +356,8 @@ def partn_refine(engine, config, central_atom_idx:int , positions = None, cell =
     attempt = 0
 
     while attempt < max_attempts :
+        exit_flag = False
+        result = None #for rank > 0
         engine.command("fix 10 all artn dmax {}".format(config.partn.r_dmax))
         engine.command("min_style fire")
                 # RUN
@@ -383,7 +385,8 @@ def partn_refine(engine, config, central_atom_idx:int , positions = None, cell =
                     else:
                         saddlepositions_results=saddlepositions
 
-                    return Ok(
+                    exit_flag = True
+                    result =  Ok(
                         EventRefinementOutput(
                             central_atom_index=central_atom_idx,
                             saddle_positions=saddlepositions_results,
@@ -391,15 +394,21 @@ def partn_refine(engine, config, central_atom_idx:int , positions = None, cell =
                             refined='T'
                         )
                     )
+        # Synchronize all ranks
+        exit_flag = engine.local_engine_comm.bcast(exit_flag, root=0)
+        if exit_flag : 
+            return result 
+                
         attempt +=1
         artn.set("zseed", config.partn.zseed)
 
     else: #fail after max attemps
         if engine.rank == 0 : 
             err = artn.get_error()
-        return Err(
+            return Err(
                 ErrorInfo(
                     type=ErrorType.EVENT_NOT_FOUND, message="no event found", details=err
                 )
             )
+        return None
 
