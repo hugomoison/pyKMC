@@ -25,6 +25,10 @@ def initialize_parameters(engine) :
     engine.command("atom_modify map array") #! necessary for scatter atoms
     engine.command("atom_modify sort 0 0.0") #! necessary for partn
 
+def initialize_neighbors_parameters(engine) : 
+    engine.command("neighbor 0.1 bin")  # skin = 2.0 Å
+    engine.command("neigh_modify check yes")
+
 def initialize_system(engine, system) : 
 
         #system parameters
@@ -61,12 +65,39 @@ def initialize_system(engine, system) :
             + " ".join(f"{int(e['ref'])} {key}" for key, e in map_type.items())
         )
 
-def initialize_potential(engine, config) : 
+def initialize_potential(engine, config, zeros=False) : 
     pair_style = config.lammps.pair_style
     pair_coeff = config.lammps.pair_coeff
-    engine.command("pair_style {}".format(pair_style))
-    engine.command("pair_coeff {}".format(pair_coeff))
+    if zeros : 
+        engine.command("pair_style hybrid/overlay {} zero {} full zero {} full".format(pair_style, config.atomic_environments.rnei, config.atomic_environments.rcut))
+        engine.command("pair_coeff {}".format(pair_coeff))
+        engine.command("pair_coeff * * zero 1")
+        engine.command("pair_coeff * * zero 2")
+    else : 
+        engine.command("pair_style {}".format(pair_style))
+        engine.command("pair_coeff {}".format(pair_coeff))
 
+#def get_neighbors_list(engine) : 
+#    engine.command("run 0")
+#    nl_neighbors_idx = engine.lmp.find_pair_neighlist("zero", nsub=1)
+#    nl_env_idx = engine.lmp.find_pair_neighlist("zero", nsub=2)
+#    natoms_local = engine.lmp.extract_global("nlocal")
+#    nghost = engine.lmp.extract_global("nghost")
+#    ntotal = natoms_local + nghost
+#    tags_ptr = engine.lmp.extract_atom("id")
+#    tags = np.array([tags_ptr[i] for i in range(ntotal)]) #map atoms and ghost atoms
+#    result = {"neighbors": [], "environments": []}
+#
+#    nl_nei = engine.lmp.numpy.get_neighlist(nl_neighbors_idx)
+#    nl_env = engine.lmp.numpy.get_neighlist(nl_env_idx) 
+#    #for i in range(1, lmp.get_natoms()+1):
+#    for i in range(0, 1):
+#        _, neighbors = nl_nei.get(i)
+#        result["neighbors"].append((tags[neighbors]-1).tolist())
+#        _, neighbors = nl_env.get(i)
+#
+#lammps_env = set(int(x) for x in result["neighbors"][0])
+#kdtree_env = set(nl.get_neighbors("neighbors", 0)) 
 
 def minimize(engine, config, positions=None) :
     if positions is not None :
