@@ -807,20 +807,6 @@ class BasinsGenericEvents() :
     # Parallel basin exploration strategies
     # ──────────────────────────────────────────────────────────────────
 
-    def _estimate_max_transitions_per_state(self):
-        """Upper-bound on transitions one explore() call can produce.
-
-        Used to pre-allocate non-overlapping index ranges for parallel workers.
-        """
-        table = self.reference_table.table
-        if table.empty:
-            return 100  # safe fallback
-        # Each event can apply to multiple atoms × symmetries
-        max_syms = max(len(s) for s in table["sym_matrix"])
-        # Rough upper bound: n_events * max_atoms * max_syms
-        # Use generous estimate since unused indices are harmless
-        return len(table) * 50 * max_syms
-
     def _prepare_explore_kwargs(self, state_idx, start_index):
         """Prepare keyword arguments for manager.basin_explore()."""
         import pickle
@@ -934,36 +920,33 @@ class BasinsGenericEvents() :
     def _explore_states_parallel(self, states_batch, n_workers=4):
         """Explore multiple transient states in parallel via MPI engines.
 
-        Each engine rank runs its own BasinGenericEventExplorer with a
-        non-overlapping state index range. Connectivity rows are merged
-        on rank 0 after all engines complete.
+        Each worker explores with local indices starting from 0. After
+        collection, rows are remapped to contiguous global indices by
+        adding an offset equal to ``_next_state_index`` at merge time.
         """
         if not states_batch:
             return Ok(None)
 
-        gap = self._estimate_max_transitions_per_state()
-        base = self._next_state_index
-
-        # Submit all exploration tasks to MPI engines
+        # Submit all exploration tasks with local (zero-based) indices
         futures = {}
-        for i, state_idx in enumerate(states_batch):
-            start = base + i * gap
-            kwargs = self._prepare_explore_kwargs(state_idx, start)
+        for state_idx in states_batch:
+            kwargs = self._prepare_explore_kwargs(state_idx, start_index=0)
             futures[state_idx] = self.manager.basin_explore(**kwargs)
 
-        # Collect results and merge connectivity rows
-        max_new_index = base
+        # Collect results sequentially; remap local → global indices
         for state_idx, future in futures.items():
             try:
                 rows = future.result()
             except Exception as exc:
                 return self._transport_error("basin_explore", exc)
             if rows:
+                offset = self._next_state_index
+                for row in rows:
+                    row["state_connexion"] += offset
+                local_max = max(r["state_connexion"] for r in rows)
+                self._next_state_index = local_max + 1
                 self.connectivity_table.add_connectivity_batch(rows)
-                max_conn = max(r["state_connexion"] for r in rows)
-                max_new_index = max(max_new_index, max_conn + 1)
 
-        self._next_state_index = max_new_index
         return Ok(None)
 
     def is_new_state_batch(self, new_systems):
