@@ -1,9 +1,10 @@
+from __future__ import annotations
 from lammps import lammps
 import numpy as np
 import ctypes
 from typing import Protocol 
 from .base import Engine
-from ase import Cell
+from ase.cell import Cell
 from ase.data import atomic_masses, atomic_numbers
 try : 
     from mpi4py import MPI
@@ -60,6 +61,24 @@ class LammpsEngine(Engine) :
         Unique identifier for this engine instance, used for log file naming.
         Default is 0.
 
+    Notes
+    -----
+    Coordinate systems
+        LAMMPS requires the simulation cell to be lower triangular
+        (see https://docs.lammps.org/Howto_triclinic.html).
+        For non-orthorhombic cells, positions are rotated from the ASE
+        coordinate system to the LAMMPS coordinate system via a rotation
+        matrix Q computed from `Cell.standard_form()`. The inverse rotation
+        is applied when retrieving positions from LAMMPS.
+        For orthorhombic cells, no rotation is needed and Q is not defined.
+
+        `self.Q` is set during `initialize_system()`. All position data
+        returned by `get_positions()` and accepted by `set_positions()` are
+        in the ASE coordinate system — the rotation is handled internally.
+        If you access LAMMPS positions directly (e.g. via `self.lmp`), you
+        must apply the rotation manually using `_positions_to_lammps()` and
+        `_positions_from_lammps()`.
+
     Examples
     --------
     Serial usage:
@@ -83,16 +102,27 @@ class LammpsEngine(Engine) :
         self.config = config
         self.comm = comm
         self.engine_id = engine_id
+        self._is_orthorhombic = None
 
     #Convenience
     @property
     def _is_rank0(self) -> bool:
         return self.comm is None or self.comm.Get_rank() == 0
+    
+    def _positions_to_lammps(self, positions: np.ndarray) -> np.ndarray:
+        return positions @ self.Q.T if not self._is_orthorhombic else positions
+
+    def _positions_from_lammps(self, positions: np.ndarray) -> np.ndarray:
+        return positions @ self.Q if not self._is_orthorhombic else positions
+    
+    def _has_compute(self, compute_id: str) -> bool:
+        """Check if a compute with the given id exists in LAMMPS."""
+        return self.lmp.has_id("compute", compute_id)
 
     @registrable("start")
     def start(self) -> None : 
         engine_log = "none" if self.config.verbosity == 0 else f"lammps.log.{self.engine_id}"
-        self.lmp = lammps(comm=self.comm, cmdargs = ['screen', 'none', '-log', engine_log])
+        self.lmp = lammps(comm=self.comm, cmdargs = ['-screen', 'none', '-log', engine_log])
 
     @registrable("close")
     def close(self) -> None : 
@@ -111,16 +141,24 @@ class LammpsEngine(Engine) :
 
         #system parameters 
         natoms = len(types)
-        x = positions.flatten() #Lammps format 
+            #To deal with Lammps convention if non orthonhombic cell
+        self._is_orthorhombic = cell.orthorhombic
+        if not self._is_orthorhombic:
+            cell_lammps, self.Q = cell.standard_form()
+        else:
+            cell_lammps = np.array(cell)
+        
+        positions = self._positions_to_lammps(positions=positions)
 
-            #cell 
-        xhi = cell[0, 0]
-        yhi = cell[1, 1]
-        zhi = cell[2, 2]
+        x = positions.flatten() #Lammps format 
+         #cell 
+        xhi = cell_lammps[0, 0]
+        yhi = cell_lammps[1, 1]
+        zhi = cell_lammps[2, 2]
             # non diagonal terms
-        xy = cell[1, 0]
-        xz = cell[2, 0]
-        yz = cell[2, 1]
+        xy = cell_lammps[1, 0]
+        xz = cell_lammps[2, 0]
+        yz = cell_lammps[2, 1]
 
         # boundary 
         boundary = " ".join("p" if p else "f" for p in pbc)
@@ -178,12 +216,13 @@ class LammpsEngine(Engine) :
             # convert ctype positions into a numpy array
             result = np.ctypeslib.as_array(result)
             result = np.reshape(result, (-1, 3))
-            return result
+            return self._positions_from_lammps(positions=result) 
         else : 
             return None
 
     @registrable("set_positions") 
     def set_positions(self, positions: np.ndarray) -> None : 
+        positions = self._positions_to_lammps(positions=positions)
         positions = positions.flatten().astype(np.float64)
         positions = np.ascontiguousarray(positions)
         c_array = (ctypes.c_double * len(positions))(*positions)
@@ -208,19 +247,12 @@ class LammpsEngine(Engine) :
             self.set_positions(positions=positions)
 
         # Check if compute exists (rank 0 only)
-        define_compute = False
-        if self._is_rank0:
-            if self.lmp.extract_compute("c_pe", 0, 0) is None:
-                define_compute = True
+        define_compute = self._has_compute('c_pe')
 
-        # Broadcast decision to all ranks
-        if self.comm is not None:
-            define_compute = self.comm.bcast(define_compute, root=0)
-
-        if define_compute:
+        if not define_compute:
             self.lmp.command("compute c_pe all pe")
 
-        # Always run to get up-to-date value
+        #If run to get up-to-date value
         if recompute :
             self.lmp.command("run 0 post no")
         result = self.lmp.extract_compute("c_pe", 0, 0)
