@@ -495,6 +495,7 @@ class ActiveVolume(BaseModel):
 class LammpsConfig(BaseModel):
     """Lammps parameters."""
 
+    verbosity: Optional[Literal[0,1]] = Field(default=1, description="if verbosity == 1, print lammps logs, if == 0 don't.")
     pair_style: str = Field(default=..., description="Lammps pair_style command.")
     pair_coeff: str = Field(default=..., description="Lammps pair_coeff command.")
     min_style: Optional[str] = Field(
