@@ -12,6 +12,11 @@ class EngineContractTests:
 
     def make_engine(self) -> Engine:
         raise NotImplementedError
+    
+    @property
+    def is_rank0(self) -> bool:
+        """True si le rank courant doit valider les assertions."""
+        return True
 
     # ── start / close ─────────────────────────────────────────────────────────
 
@@ -49,7 +54,8 @@ class EngineContractTests:
         positions[0,0] += 0.2
         engine.set_positions(positions)
         result = engine.get_positions()
-        np.testing.assert_allclose(result, positions, atol=1e-10)
+        if self.is_rank0:
+            np.testing.assert_allclose(result, positions, atol=1e-10)
         engine.close()
 
     def test_get_potential_energy(self) : 
@@ -58,7 +64,8 @@ class EngineContractTests:
         engine.start() 
         self.initialize(engine)
         pe = engine.get_potential_energy()
-        assert isinstance(pe, float)
+        if self.is_rank0:
+            assert isinstance(pe, float)
         engine.close()
 
 
@@ -68,7 +75,8 @@ class EngineContractTests:
         engine.start() 
         self.initialize(engine)
         tot_e = engine.get_total_energy()
-        assert isinstance(tot_e, float)
+        if self.is_rank0:
+            assert isinstance(tot_e, float)
         engine.close()
 
     def minimize_with_results(self) : 
@@ -83,6 +91,7 @@ class EngineContractTests:
         tot_e1 = engine.get_potential_energy()
         #minimization 
         min_positions, tot_e2 =  engine.minimize_with_results(positions=positions)
-        assert min_positions.shape == (self.system.n_atoms, 3)
-        assert tot_e2 < tot_e1
+        if self.is_rank0:
+            assert min_positions.shape == (self.system.n_atoms, 3)
+            assert tot_e2 < tot_e1
         engine.close()
