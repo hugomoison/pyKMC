@@ -11,7 +11,7 @@ try :
 except ImportError : 
     pass
 try:
-    from pykmc.manager.registry import registrable
+    from pykmc.utils import registrable
 except ImportError:
     def registrable(name: str | None = None):
         def decorator(func):
