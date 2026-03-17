@@ -32,3 +32,6 @@ __pycache__/
 *SOURCES.txt 
 *requires.txt
 *__pycache__
+
+#Tests : 
+.pymon
