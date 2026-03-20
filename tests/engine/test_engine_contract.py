@@ -1,5 +1,6 @@
-from pykmc import Engine  # adapter selon le chemin réel
+from pykmc import Engine, EngineExtension  # adapter selon le chemin réel
 import numpy as np
+import pytest
 
 class EngineContractTests:
     """
@@ -94,4 +95,37 @@ class EngineContractTests:
         if self.is_rank0:
             assert min_positions.shape == (self.system.n_atoms, 3)
             assert tot_e2 < tot_e1
+        engine.close()
+
+    #Extension part 
+    def make_test_extension(self, engine) -> EngineExtension:
+        """Return a concrete extension compatible with this engine.
+        Must be overridden in each concrete test class.
+        """
+        raise NotImplementedError
+    
+    def make_conflicting_extension(self, engine) -> EngineExtension:
+        """Return an extension that conflicts with make_test_extension().
+        Must be overridden in each concrete test class.
+        """
+        raise NotImplementedError
+
+    def test_extension_registers_and_delegates(self):
+        """A registered extension exposes its public methods through the engine."""
+        engine = self.make_engine()
+        engine.start()
+        self.initialize(engine)
+        ext = self.make_test_extension(engine)
+        public = [m for m in dir(ext) if not m.startswith("_")]
+        assert all(hasattr(engine, m) for m in public)
+        engine.close()
+
+    def test_extension_conflict_raises(self):
+        """Registering two extensions with a method of the same name raises ValueError."""
+        engine = self.make_engine()
+        engine.start()
+        self.initialize(engine)
+        self.make_test_extension(engine)
+        with pytest.raises(ValueError):
+            self.make_conflicting_extension(engine)
         engine.close()
