@@ -1,5 +1,42 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod 
 import numpy as np 
+
+class EngineExtension:
+    """
+    Base class for all engine extensions.
+
+    Centralises registration on the engine and guarantees that
+    ``self.engine`` is always defined.
+
+    Parameters
+    ----------
+    engine : Engine
+        The engine instance to attach the extension to.
+
+    Notes
+    -----
+    Subclasses **must** call ``super().__init__(engine)`` in their own
+    ``__init__``. This call registers the extension on the engine (via
+    ``engine.register(self)``) and makes its public methods accessible
+    through ``engine.<method>``. Omitting this call means the extension
+    will never be attached.
+
+    Examples
+    --------
+    ::
+
+        class MyExtension(EngineExtension):
+            def __init__(self, engine: Engine, my_param: float):
+                super().__init__(engine)   # ← required
+                self.my_param = my_param
+
+            def my_method(self): ...
+    """
+    def __init__(self, engine: Engine):
+        self.engine = engine
+        engine.register(self)
+
 
 class Engine(ABC) : 
     """
@@ -12,6 +49,63 @@ class Engine(ABC) :
 
     All abtract methods are mandatory in order to perform the simulation.
     """
+
+    def __init__(self):
+        self._extensions: dict[str, object] = {}
+
+    def register(self, ext: object) -> None:
+        """
+        Register an extension on this engine.
+
+        The extension's public methods become accessible directly on the
+        engine instance via ``__getattr__`` delegation.
+
+        Parameters
+        ----------
+        ext : object
+            Extension instance to register. Should be a subclass of
+            :class:`EngineExtension`.
+
+        Raises
+        ------
+        ValueError
+            If an extension with the same class name is already registered,
+            or if any public method of `ext` conflicts with a method already
+            provided by a registered extension.
+        """
+
+        #Name of the extension, ie class name
+        ext_name = type(ext).__name__
+        if ext_name in self._extensions:
+            raise ValueError(f"Extension '{ext_name}' already registered.")
+
+        #Get all pulic method of ext
+        new_methods = {
+            m for m in dir(ext)
+            if not m.startswith("_") and callable(getattr(ext, m))
+        }
+
+        #Check if method name already present in extension
+        for registered_name, registered_ext in self._extensions.items():
+            clash = new_methods & {
+                m for m in dir(registered_ext)
+                if not m.startswith("_") and callable(getattr(registered_ext, m))
+            }
+            if clash:
+                raise ValueError(
+                    f"Extension '{ext_name}' has conflicting methods with '{registered_name}' :\n"
+                    + "\n".join(f"  • {m!r}" for m in sorted(clash))
+                )
+        self._extensions[ext_name] = ext
+
+    def __getattr__(self, name: str):
+        # Called only when `name` is not found through normal attribute lookup.
+        # Protects against RecursionError if _extensions is not yet set.
+        extensions = object.__getattribute__(self, "_extensions")
+        for ext in extensions.values():
+            if hasattr(ext, name):
+                return getattr(ext, name)
+        raise AttributeError(f"'{type(self).__name__}' has no attribute '{name}'")
 
     @abstractmethod
     def start(self) -> None : 

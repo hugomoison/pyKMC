@@ -10,13 +10,6 @@ try :
     from mpi4py import MPI
 except ImportError : 
     pass
-try:
-    from pykmc.utils import registrable
-except ImportError:
-    def registrable(name: str | None = None):
-        def decorator(func):
-            return func
-        return decorator
 
 class LammpsConfigProtocol(Protocol) : 
     """
@@ -103,6 +96,7 @@ class LammpsEngine(Engine) :
         self.comm = comm
         self.engine_id = engine_id
         self._is_orthorhombic = None
+        self._extensions: dict[str, object] = {}
 
     #Convenience
     @property
@@ -119,16 +113,13 @@ class LammpsEngine(Engine) :
         """Check if a compute with the given id exists in LAMMPS."""
         return self.lmp.has_id("compute", compute_id)
 
-    @registrable("start")
     def start(self) -> None : 
         engine_log = "none" if self.config.verbosity == 0 else f"lammps.log.{self.engine_id}"
         self.lmp = lammps(comm=self.comm, cmdargs = ['-screen', 'none', '-log', engine_log])
 
-    @registrable("close")
     def close(self) -> None : 
         self.lmp.close()
 
-    @registrable("initialize_parameters")
     def initialize_parameters(self) -> None : 
         self.lmp.command("units metal")
         self.lmp.command("atom_style atomic")
@@ -136,7 +127,6 @@ class LammpsEngine(Engine) :
         self.lmp.command("atom_modify map array") #! necessary for scatter atoms
         self.lmp.command("atom_modify sort 0 0.0") #! necessary for partn
 
-    @registrable("initialize_system")
     def initialize_system(self, types: list[str]|np.ndarray[str], positions: np.ndarray, cell: Cell , pbc: list[bool]|np.ndarray[bool]) -> None : 
 
         #system parameters 
@@ -196,7 +186,6 @@ class LammpsEngine(Engine) :
             + " ".join(f"{int(e['ref'])} {key}" for key, e in map_type.items())
         )
 
-    @registrable("initialize_potential")
     def initialize_potential(self, rcut: float = None) -> None :
         pair_style = self.config.pair_style 
         pair_coeff = self.config.pair_coeff
@@ -209,7 +198,6 @@ class LammpsEngine(Engine) :
             self.lmp.command("pair_coeff {}".format(pair_coeff))
             self.lmp.command("pair_coeff * * zero")
 
-    @registrable("get_positions")
     def get_positions(self) -> np.ndarray | None : 
         result = self.lmp.gather_atoms("x", 1, 3)
         if self._is_rank0 :
@@ -220,7 +208,6 @@ class LammpsEngine(Engine) :
         else : 
             return None
 
-    @registrable("set_positions") 
     def set_positions(self, positions: np.ndarray) -> None : 
         positions = self._positions_to_lammps(positions=positions)
         positions = positions.flatten().astype(np.float64)
@@ -228,7 +215,6 @@ class LammpsEngine(Engine) :
         c_array = (ctypes.c_double * len(positions))(*positions)
         self.lmp.scatter_atoms("x", 1, 3, c_array)
 
-    @registrable("get_total_energy")
     def get_total_energy(self, positions: np.ndarray = None, recompute:bool = True) -> float|None : 
         if positions is not None :
             self.set_positions(positions=positions)
@@ -241,7 +227,6 @@ class LammpsEngine(Engine) :
         else : 
             return None
 
-    @registrable("get_potential_energy")
     def get_potential_energy(self, positions: np.ndarray = None, recompute: bool = True) -> float|None :
         if positions is not None :
             self.set_positions(positions=positions)
@@ -262,14 +247,12 @@ class LammpsEngine(Engine) :
         return None
 
         
-    @registrable("minimize") 
     def minimize(self, positions: np.ndarray = None) -> None : 
         if positions is not None : 
             self.set_positions(positions=positions)
         self.lmp.command("min_style {}".format(self.config.min_style))
         self.lmp.command("minimize {}".format(self.config.minimize))
 
-    @registrable("minimize_with_results")
     def minimize_with_results(self, positions=None) -> tuple[np.ndarray, float] | None:
         self.minimize(positions=positions) 
         new_positions = self.get_positions()
