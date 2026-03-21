@@ -57,7 +57,7 @@ class TestLammpsEngineSerial(EngineContractTests):
 @pytest.mark.mpi
 class TestLammpsEngineMPI(EngineContractTests):
     """
-    Lancé avec : mpirun -n 4 pytest --with-mpi tests/engine/test_lammps_engine.py
+    Lancé avec : mpirun -n 4 pytest tests/engine/test_lammps_engine.py
 
     Tous les ranks exécutent chaque test collectivement.
     Les assertions sont restreintes au rank 0 via is_rank0.
@@ -74,7 +74,7 @@ class TestLammpsEngineMPI(EngineContractTests):
     def require_mpi(self):
         from mpi4py import MPI
         if MPI.COMM_WORLD.Get_size() == 1:
-            pytest.skip("requires mpirun -n N --with-mpi")
+            pytest.skip("requires mpirun -n N")
 
     @property
     def is_rank0(self) -> bool:
