@@ -1,18 +1,21 @@
 
-# ══════════════════════════════════════════════════════════════════════════════
-#  TESTS
-# ══════════════════════════════════════════════════════════════════════════════
+#########
+# TESTS #
+#########
 
-# ── Configuration ─────────────────────────────────────────────────────────────
+# Configuration 
 
 PYTEST       = pytest
 MPIRUN       = mpirun
 MPI_FLAGS    = --no-monitor
 N ?= 4  # nombre de ranks MPI, surchargeable via : make test-engine-mpi N=8
 
-# ── Engine ────────────────────────────────────────────────────────────────────
 
-.PHONY: test-engine test-engine-serial test-engine-mpi
+# All
+
+.PHONY: test-engine test-engine-serial test-engine-mpi 
+
+# Engine 
 
 test-engine: test-engine-serial test-engine-mpi  ## Run all engine tests (serial + MPI)
 
@@ -23,11 +26,21 @@ test-engine-mpi:  ## Run MPI engine tests (n=1, n=4 by default)
 	$(MPIRUN) -n 1 $(PYTEST) tests/engine/ $(MPI_FLAGS)
 	$(MPIRUN) -n $(N) $(PYTEST) tests/engine/ $(MPI_FLAGS)
 
+# Worker 
+
+test-worker: #Run MPI worker test 
+	$(MPIRUN) -n $(N) $(PYTEST) tests/manager/test_worker.py $(MPI_FLAGS)
+
+# Session 
+#
+test-session:  ## Run MPI session tests
+	$(MPIRUN) -n $(N) $(PYTEST)  tests/manager/test_session.py $(MPI_FLAGS) -s
+
 # ── All tests ─────────────────────────────────────────────────────────────────
 
 .PHONY: test
 
-test: test-engine  ## Run all tests
+test: test-engine test-worker  test-session ## Run all tests
 
 # ── Help ──────────────────────────────────────────────────────────────────────
 
