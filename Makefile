@@ -8,7 +8,7 @@
 PYTEST       = pytest
 MPIRUN       = mpirun
 MPI_FLAGS    = --no-monitor
-N ?= 4  # nombre de ranks MPI, surchargeable via : make test-engine-mpi N=8
+N ?= 5  # nombre de ranks MPI, surchargeable via : make test-engine-mpi N=8
 
 
 # All
@@ -34,13 +34,17 @@ test-worker: #Run MPI worker test
 # Session 
 #
 test-session:  ## Run MPI session tests
-	$(MPIRUN) -n $(N) $(PYTEST)  tests/manager/test_session.py $(MPI_FLAGS) -s
+	$(MPIRUN) -n $(N) $(PYTEST)  tests/manager/test_session.py $(MPI_FLAGS) 
+
+# Manager 
+test-manager: ## Run MPI manager tests 
+	$(MPIRUN) -n $(N) $(PYTEST) tests/manager/test_manager.py $(MPI_FLAGS) -s
 
 # ── All tests ─────────────────────────────────────────────────────────────────
 
 .PHONY: test
 
-test: test-engine test-worker  test-session ## Run all tests
+test: test-engine test-worker  test-session test-manager ## Run all tests
 
 # ── Help ──────────────────────────────────────────────────────────────────────
 

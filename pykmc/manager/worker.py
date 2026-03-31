@@ -161,7 +161,7 @@ class Worker :
             result = self._dispatch(msg)
 
             #return message 
-            if self.rank == 0 :
+            if self.rank == 0 and result !="_no_status" :
                 self.world_comm.send({"type" : "status", "value": {"alive": self._is_alive, "has_result": result is not None}}, dest = 0, tag = 0)
                 if result is not None :
                     self.world_comm.send({"type" : "result", "value": result}, dest = 0, tag = 1)
@@ -204,7 +204,7 @@ class Worker :
         #Check if class methods
         if op_type in self._builtins_op : 
             self._builtins_op[op_type]() 
-            return None 
+            return "_no_status" #special case
 
         #Find operation in registry 
         handler = self.registry.get(op_type) 

@@ -1,0 +1,738 @@
+# ==============================================================
+# core/solver.py
+# ==============================================================
+from __future__ import annotations
+from abc import ABC, abstractmethod
+from typing import Generic, TypeVar, Callable
+
+T_in  = TypeVar("T_in")
+T_out = TypeVar("T_out")
+E     = TypeVar("E")
+
+
+class Solver(ABC, Generic[T_in, T_out]):
+    @abstractmethod
+    def compute(self, data: T_in) -> T_out: ...
+
+
+# ==============================================================
+# core/executor.py
+# ==============================================================
+
+class Executor:
+    def __init__(self, map_fn: Callable | None = None) -> None:
+        self._map = map_fn
+
+    def run(self, func: Callable, items: list, **shared_kwargs) -> list:
+        if self._map is None:
+            return [func(item, **shared_kwargs) for item in items]
+        futures = self._map(func, items=items, **shared_kwargs)
+        return [f.result() for f in futures]
+
+    @classmethod
+    def serial(cls) -> Executor:
+        return cls(map_fn=None)
+
+    @classmethod
+    def parallel(cls, map_fn: Callable) -> Executor:
+        return cls(map_fn=map_fn)
+
+
+# ==============================================================
+# state/system.py  (existant — conservé tel quel)
+# ==============================================================
+# class System: ...   ← déplacer ici sans modification
+
+
+# ==============================================================
+# state/neighbors.py
+# ==============================================================
+from dataclasses import dataclass
+
+@dataclass
+class NeighborsList:
+    neighbors:           list[list[int]]
+    environments:        list[list[int]]
+    r_neighbors_cutoff:  float
+    r_env_cutoff:        float
+
+
+# ==============================================================
+# state/environment.py
+# ==============================================================
+from dataclasses import dataclass
+
+@dataclass
+class AtomicEnvironmentResult:
+    """Résultat pur — produit par EnvironmentMethod.compute()."""
+    ids:   list[str | bytes]
+    style: str
+
+    def get_atoms_with_id(self, id: str | bytes) -> list[int]:
+        return [i for i, e in enumerate(self.ids) if e == id]
+
+
+# ==============================================================
+# state/state.py
+# ==============================================================
+
+class State:
+    """
+    Agrège System, NeighborsList et AtomicEnvironmentResult.
+    Lazy recalcul : invalide neighbors/environment quand positions changent.
+    """
+    def __init__(self, system, neighbors_method, environment_method, engine) -> None:
+        self.system             = system
+        self._neighbors_method  = neighbors_method
+        self._environment_method= environment_method
+        self._engine            = engine
+        self._neighbors         = None
+        self._environment       = None
+
+    def update_positions(self, new_positions) -> None:
+        self.system.update_positions(new_positions)
+        self._neighbors  = None   # invalide
+        self._environment= None   # invalide
+
+    @property
+    def neighbors(self) -> NeighborsList:
+        if self._neighbors is None:
+            self._neighbors = self._neighbors_method.build(
+                self._engine, self.system, config=None  # TODO: passer config
+            )
+        return self._neighbors
+
+    @property
+    def environment(self) -> AtomicEnvironmentResult:
+        if self._environment is None:
+            self._environment = self._environment_method.compute(
+                self._engine, self.neighbors, self.system
+            )
+        return self._environment
+
+
+class StateFactory:
+    @staticmethod
+    def build(system, neighbors_method, environment_method, engine) -> State:
+        return State(system, neighbors_method, environment_method, engine)
+
+
+# ==============================================================
+# manager/registry.py
+# ==============================================================
+import inspect
+from typing import Callable
+
+
+def registrable(name: str | None = None):
+    """
+    Marque une méthode comme exposable dans le registre du Manager.
+    No-op si manager/ n'est pas installé — voir try/except dans engine/base.py.
+    """
+    def decorator(func):
+        func._registry_name = name or func.__name__
+        return func
+    return decorator
+
+
+def build_registry(obj, engine=None) -> dict[str, Callable]:
+    """
+    Construit un registry à partir des méthodes marquées @registrable.
+    Si engine est fourni, il est injecté comme premier argument.
+    """
+    registry = {}
+    for _, method in inspect.getmembers(obj, predicate=inspect.ismethod):
+        if hasattr(method, "_registry_name"):
+            reg_name = method._registry_name
+            if engine is not None:
+                registry[reg_name] = lambda **kw, m=method: m(engine, **kw)
+            else:
+                registry[reg_name] = lambda **kw, m=method: m(**kw)
+    return registry
+
+
+# ==============================================================
+# simulation/engine/base.py
+# ==============================================================
+import numpy as np
+from typing import Callable
+
+# Dépendance optionnelle — Engine fonctionne sans manager/
+try:
+    from manager.registry import registrable
+except ImportError:
+    def registrable(name=None):
+        def decorator(func): return func
+        return decorator
+
+
+class Engine(ABC):
+    # --- Lifecycle ---
+    @abstractmethod
+    def start(self) -> None: ...
+    @abstractmethod
+    def close(self) -> None: ...
+    @abstractmethod
+    def command(self, cmd: str) -> None: ...
+
+    # --- Initialization ---
+    @abstractmethod
+    def initialize_parameters(self) -> None: ...
+    @abstractmethod
+    def initialize_system(self, system) -> None: ...
+    @abstractmethod
+    def initialize_potential(self, config) -> None: ...
+
+    # --- Positions ---
+    @abstractmethod
+    def get_positions(self) -> np.ndarray: ...
+    @abstractmethod
+    def set_positions(self, positions: np.ndarray) -> None: ...
+
+    # --- Energies ---
+    @abstractmethod
+    def get_total_energy(self) -> float: ...
+    @abstractmethod
+    def get_potential_energy(self) -> float: ...
+
+    # --- Minimization ---
+    @abstractmethod
+    def minimize(self, config) -> None: ...
+    @abstractmethod
+    def minimize_with_results(self, config) -> tuple[np.ndarray, float]: ...
+
+    # --- Registry ---
+    @abstractmethod
+    def as_registry(self) -> dict[str, Callable]:
+        """
+        Retourne le registre de callables après start().
+        Closures sur self — doit être appelé après engine.start().
+        """
+        ...
+
+
+# ==============================================================
+# simulation/engine/lammps.py
+# ==============================================================
+
+from simulation.engine.base import Engine, registrable
+        self.comm      = comm
+        self.rank      = comm.Get_rank()
+        self.engine_id = engine_id
+        self.lmp       = None
+        self._is_alive = False
+
+    # --- Lifecycle ---
+    def start(self) -> None:
+        self.lmp = lammps(
+            comm=self.comm,
+            cmdargs=["-screen", "none", "-log", f"lammps.{self.engine_id}.log"],
+        )
+        self._is_alive = True
+
+    def close(self) -> None:
+        if self.lmp: self.lmp.close()
+        self.lmp = None
+        self._is_alive = False
+
+    def command(self, cmd: str) -> None:
+        self.lmp.command(cmd)
+
+    # --- Initialization ---
+    def initialize_parameters(self) -> None: ...  # TODO
+    def initialize_system(self, system) -> None: ...  # TODO
+    def initialize_potential(self, config) -> None: ...  # TODO
+
+    # --- Positions ---
+    def get_positions(self) -> np.ndarray | None: ...  # TODO
+    def set_positions(self, positions: np.ndarray) -> None: ...  # TODO
+
+    # --- Energies ---
+    def get_total_energy(self) -> float | None: ...  # TODO
+    def get_potential_energy(self) -> float | None: ...  # TODO
+
+    # --- Minimization ---
+    def minimize(self, config) -> None: ...  # TODO
+    def minimize_with_results(self, config) -> tuple | None: ...  # TODO
+
+    # Méthodes exposées au Manager via @registrable
+    # Sans manager/ installé : decorator no-op, méthodes intactes
+
+    @registrable("minimize")
+    def minimize_with_results(self, config) -> tuple | None: ...  # TODO
+
+    @registrable("get_total_energy")
+    def get_total_energy(self) -> float | None: ...  # TODO
+
+    @registrable("get_potential_energy")
+    def get_potential_energy(self) -> float | None: ...  # TODO
+
+    @registrable("get_positions")
+    def get_positions(self) -> np.ndarray | None: ...  # TODO
+
+    @registrable("set_positions")
+    def set_positions(self, positions: np.ndarray) -> None: ...  # TODO
+
+    # Pas de @registrable — jamais exposés au Manager
+    def start(self) -> None: ...                      # TODO
+    def close(self) -> None: ...                      # TODO
+    def initialize_parameters(self) -> None: ...      # TODO
+    def initialize_system(self, system) -> None: ...  # TODO
+    def initialize_potential(self, config) -> None:...# TODO
+    def minimize(self, config) -> None: ...           # TODO
+
+
+# ==============================================================
+# manager/worker.py
+# ==============================================================
+from __future__ import annotations
+from dataclasses import dataclass
+from concurrent.futures import Future
+from typing import Callable
+import threading
+import queue
+
+
+@dataclass
+class Job:
+    op_name: str
+    kwargs:  dict
+    future:  Future
+
+
+class Worker:
+    """
+    Générique pur — aucune dépendance vers Engine ou tout autre module.
+    Connaît uniquement : un registre de callables et une queue de jobs.
+    """
+    def __init__(self, registry: dict[str, Callable], job_queue: queue.Queue) -> None:
+        self.registry  = registry
+        self.job_queue = job_queue
+        self._thread   = threading.Thread(target=self._loop, daemon=True)
+
+    def start(self) -> None:
+        self._thread.start()
+
+    def _loop(self) -> None:
+        while True:
+            job: Job = self.job_queue.get()
+            if job is None:   # poison pill
+                break
+            try:
+                func   = self.registry[job.op_name]
+                result = func(**job.kwargs)
+                job.future.set_result(result)
+            except Exception as e:
+                job.future.set_exception(e)
+            finally:
+                self.job_queue.task_done()
+
+
+# ==============================================================
+# manager/manager.py
+# ==============================================================
+
+class Manager:
+    """
+    Générique pur — aucune dépendance vers Engine.
+    Orchestre des Workers via leurs registres de callables.
+    """
+    def __init__(
+        self,
+        local_registries:  list[dict[str, Callable]],
+        global_registry:   dict[str, Callable] | None = None,
+    ) -> None:
+        self._local_queue:  queue.Queue[Job] = queue.Queue()
+        self._global_queue: queue.Queue[Job] = queue.Queue()
+
+        self._local_workers = [
+            Worker(registry, self._local_queue)
+            for registry in local_registries
+        ]
+        self._global_worker = Worker(
+            global_registry or {}, self._global_queue
+        )
+
+    # --- Lifecycle ---
+    def start(self) -> None:
+        for w in self._local_workers:  w.start()
+        self._global_worker.start()
+
+    def close(self) -> None:
+        for _ in self._local_workers:  self._local_queue.put(None)
+        self._global_queue.put(None)
+
+    # --- Submit API ---
+    def submit(self, op_name: str, **kwargs) -> Future:
+        """Soumet un job au pool local (premier worker disponible)."""
+        future = Future()
+        self._local_queue.put(Job(op_name, kwargs, future))
+        return future
+
+    def submit_global(self, op_name: str, **kwargs) -> Future:
+        """Soumet un job au worker global."""
+        future = Future()
+        self._global_queue.put(Job(op_name, kwargs, future))
+        return future
+
+    def map(self, op_name: str, items: list, **shared_kwargs) -> list[Future]:
+        """Distribue op_name sur items à travers les workers locaux."""
+        futures = []
+        for item in items:
+            future = Future()
+            self._local_queue.put(Job(op_name, {"item": item, **shared_kwargs}, future))
+            futures.append(future)
+        return futures
+
+
+# ==============================================================
+# neighbors/base.py
+# ==============================================================
+
+class NeighborsMethod(ABC, Generic[E]):
+    @abstractmethod
+    def build(self, engine: E, system, config) -> NeighborsList: ...
+
+
+# ==============================================================
+# neighbors/solvers/base.py
+# ==============================================================
+from dataclasses import dataclass
+
+@dataclass
+class NeighborsSolverInput:
+    system: any
+    config: any
+
+class NeighborsSolver(Solver[NeighborsSolverInput, NeighborsList]):
+    @abstractmethod
+    def compute(self, data: NeighborsSolverInput) -> NeighborsList: ...
+
+
+# ==============================================================
+# neighbors/solvers/kdtree.py
+# ==============================================================
+
+class KDTreeSolver(NeighborsSolver):
+    def compute(self, data: NeighborsSolverInput) -> NeighborsList:
+        ...  # TODO : logique KDTree actuelle
+
+
+class VerletSolver(NeighborsSolver):
+    def compute(self, data: NeighborsSolverInput) -> NeighborsList:
+        ...  # TODO : C++
+
+
+# ==============================================================
+# neighbors/python.py
+# ==============================================================
+
+class PythonNeighborsMethod(NeighborsMethod[None]):
+    def __init__(self, solver: NeighborsSolver, executor: Executor) -> None:
+        self.solver   = solver
+        self.executor = executor
+
+    def build(self, engine: None, system, config) -> NeighborsList:
+        inputs  = [NeighborsSolverInput(system=system, config=config)]
+        results = self.executor.run(self.solver.compute, inputs)
+        return results[0]
+
+
+# ==============================================================
+# neighbors/lammps.py
+# ==============================================================
+
+class LammpsNeighborsMethod(NeighborsMethod):  # E=LammpsEngine
+    def build(self, engine, system, config) -> NeighborsList:
+        ...  # TODO : extraction via lmp API
+
+
+# ==============================================================
+# environment/base.py
+# ==============================================================
+
+class EnvironmentMethod(ABC, Generic[E]):
+    @abstractmethod
+    def compute(self, engine: E, neighbors: NeighborsList, system) -> AtomicEnvironmentResult: ...
+
+
+# ==============================================================
+# environment/solvers/base.py
+# ==============================================================
+from dataclasses import dataclass
+
+@dataclass
+class EnvironmentSolverInput:
+    atom_idx:         int
+    neighbors_list:   list[list[int]]
+    environment_list: list[list[int]] | None = None
+
+class EnvironmentSolver(Solver[EnvironmentSolverInput, str | bytes]):
+    @abstractmethod
+    def compute(self, data: EnvironmentSolverInput) -> str | bytes: ...
+
+
+# ==============================================================
+# environment/solvers/cna.py
+# ==============================================================
+
+class CNASolver(EnvironmentSolver):
+    def compute(self, data: EnvironmentSolverInput) -> str:
+        ...  # TODO : logique CNA actuelle pour un atome
+
+
+# ==============================================================
+# environment/solvers/graph.py
+# ==============================================================
+
+class GraphSolver(EnvironmentSolver):
+    def compute(self, data: EnvironmentSolverInput) -> bytes:
+        ...  # TODO : logique graph actuelle pour un atome
+
+
+# ==============================================================
+# environment/cna/python.py
+# ==============================================================
+
+class PythonCnaMethod(EnvironmentMethod[None]):
+    def __init__(self, executor: Executor) -> None:
+        self.solver   = CNASolver()
+        self.executor = executor
+
+    def compute(self, engine: None, neighbors: NeighborsList, system) -> AtomicEnvironmentResult:
+        n      = len(neighbors.neighbors)
+        inputs = [EnvironmentSolverInput(i, neighbors.neighbors) for i in range(n)]
+        ids    = self.executor.run(self.solver.compute, inputs)
+        return AtomicEnvironmentResult(ids=ids, style="cna")
+
+
+# ==============================================================
+# environment/cna/lammps.py
+# ==============================================================
+
+class LammpsCnaMethod(EnvironmentMethod):  # E=LammpsEngine
+    def compute(self, engine, neighbors: NeighborsList, system) -> AtomicEnvironmentResult:
+        ...  # TODO : LAMMPS compute cna/atom
+
+
+# ==============================================================
+# environment/graph/python.py
+# ==============================================================
+
+class PythonGraphMethod(EnvironmentMethod[None]):
+    def __init__(self, executor: Executor) -> None:
+        self.solver   = GraphSolver()
+        self.executor = executor
+
+    def compute(
+        self, engine: None, neighbors: NeighborsList, system,
+        atoms: list[int] | None = None,
+    ) -> AtomicEnvironmentResult:
+        targets = atoms if atoms is not None else range(len(neighbors.neighbors))
+        inputs  = [
+            EnvironmentSolverInput(i, neighbors.neighbors, neighbors.environments)
+            for i in targets
+        ]
+        ids = self.executor.run(self.solver.compute, inputs)
+        return AtomicEnvironmentResult(ids=ids, style="graph")
+
+
+# ==============================================================
+# environment/cna_graph/python.py
+# ==============================================================
+
+class CnaGraphMethod(EnvironmentMethod):  # E déterminé par cna_method
+    def __init__(
+        self,
+        cna_method:   EnvironmentMethod,
+        graph_method: PythonGraphMethod,
+        neighbors_add: int = 0,
+    ) -> None:
+        self.cna_method    = cna_method
+        self.graph_method  = graph_method
+        self.neighbors_add = neighbors_add
+
+    def compute(self, engine, neighbors: NeighborsList, system) -> AtomicEnvironmentResult:
+        # Étape 1 — CNA
+        cna_result   = self.cna_method.compute(engine, neighbors, system)
+        non_crystal  = [i for i, e in enumerate(cna_result.ids) if e == "noncrystal"]
+
+        # Étape 2 — shells supplémentaires
+        if self.neighbors_add > 0:
+            extra = set()
+            current = non_crystal
+            for _ in range(self.neighbors_add):
+                current = [n for i in current for n in neighbors.neighbors[i]]
+                extra.update(current)
+            non_crystal = list(set(non_crystal) | extra)
+
+        # Étape 3 — Graph sur non-cristallins
+        graph_result = self.graph_method.compute(None, neighbors, system, atoms=non_crystal)
+
+        # Étape 4 — merge
+        merged = list(cna_result.ids)
+        for i, atom_idx in enumerate(non_crystal):
+            merged[atom_idx] = graph_result.ids[i]
+
+        return AtomicEnvironmentResult(ids=merged, style="cna/graph")
+
+
+# ==============================================================
+# search/base.py
+# ==============================================================
+
+class SearchContext(ABC): ...
+class RefineContext(ABC): ...
+
+class SearchMethod(ABC, Generic[E]):
+    @abstractmethod
+    def search(self, engine: E, context: SearchContext,
+               central_atom_idx: int, positions=None,
+               cell=None, atom_types=None) -> any: ...
+
+    @abstractmethod
+    def refine(self, engine: E, context: RefineContext,
+               central_atom_idx: int, positions=None,
+               cell=None, atom_types=None,
+               saddle_idx=None, saddle_positions=None) -> any: ...
+
+
+# ==============================================================
+# search/partn/context.py
+# ==============================================================
+from dataclasses import dataclass, field
+
+@dataclass
+class PartnSearchContext(SearchContext):
+    push_mode:      str   = "rad"
+    push_step_size: float = 0.1
+    ninit:          int   = 20
+    dmax:           float = 0.1
+    delr_thr:       float = 0.5
+    zseed:          int   = 12345
+    # ... autres paramètres pARTn
+
+@dataclass
+class PartnRefineContext(RefineContext):
+    push_mode:      str   = "rad"
+    push_step_size: float = 0.1
+    max_attempts:   int   = 5
+    delr_sad_thr:   float = 0.1
+    zseed:          int   = 12345
+    # ... autres paramètres pARTn refine
+
+
+# ==============================================================
+# search/partn/method_lammps.py
+# ==============================================================
+
+class PartnMethod(SearchMethod):  # E=LammpsEngine
+    def search(self, engine, context: PartnSearchContext,
+               central_atom_idx: int, positions=None,
+               cell=None, atom_types=None) -> any:
+        ...  # TODO : logique partn_search actuelle
+
+    def refine(self, engine, context: PartnRefineContext,
+               central_atom_idx: int, positions=None,
+               cell=None, atom_types=None,
+               saddle_idx=None, saddle_positions=None) -> any:
+        ...  # TODO : logique partn_refine actuelle
+
+
+# ==============================================================
+# manager/factory.py
+# ==============================================================
+
+class ManagerFactory:
+    """
+    Seul endroit qui sait comment brancher engines et méthodes.
+    Appelé après engine.start() — les closures capturent engine.lmp valide.
+    Engine, NeighborsMethod, EnvironmentMethod, SearchMethod
+    ignorent tous le Manager.
+    """
+
+    @staticmethod
+    def build(
+        local_engines:       list,
+        global_engine:       any = None,
+        neighbors_method:    any = None,
+        environment_method:  any = None,
+        search_method:       any = None,
+    ) -> Manager:
+
+        def make_registry(engine) -> dict[str, Callable]:
+            registry = {
+                "minimize":             lambda **kw: engine.minimize_with_results(**kw),
+                "get_total_energy":     lambda **kw: engine.get_total_energy(**kw),
+                "get_potential_energy": lambda **kw: engine.get_potential_energy(**kw),
+                "set_positions":        lambda **kw: engine.set_positions(**kw),
+                "get_positions":        lambda **kw: engine.get_positions(**kw),
+            }
+            if search_method:
+                registry["search"] = lambda **kw: search_method.search(engine, **kw)
+                registry["refine"] = lambda **kw: search_method.refine(engine, **kw)
+            if neighbors_method:
+                registry["compute_neighbors"] = lambda **kw: neighbors_method.build(engine, **kw)
+            if environment_method:
+                registry["compute_environment"] = lambda **kw: environment_method.compute(engine, **kw)
+            return registry
+
+        return Manager(
+            local_registries=[make_registry(e) for e in local_engines],
+            global_registry=make_registry(global_engine) if global_engine else {},
+        )
+
+
+# ==============================================================
+# USAGE — assemblage final
+# ==============================================================
+
+# 1. Démarrer les engines
+local_engines = [LammpsEngine(comm=lc, engine_id=i) for i, lc in enumerate(local_comms)]
+global_engine  = LammpsEngine(comm=global_comm, engine_id=99)
+
+for e in local_engines + [global_engine]:
+    e.start()
+    e.initialize_parameters()
+    e.initialize_system(system)
+    e.initialize_potential(config)
+
+# 2. Construire le Manager via ManagerFactory APRÈS start()
+# ManagerFactory est le seul endroit qui branche engines et méthodes
+manager = ManagerFactory.build(
+    local_engines=local_engines,
+    global_engine=global_engine,
+    search_method=PartnMethod(),
+    neighbors_method=neighbors_method,
+    environment_method=env_method,
+)
+manager.start()
+
+# 3. Construire les méthodes
+neighbors_method = PythonNeighborsMethod(
+    solver=KDTreeSolver(),
+    executor=Executor.parallel(manager.map),
+)
+env_method = CnaGraphMethod(
+    cna_method=LammpsCnaMethod(),
+    graph_method=PythonGraphMethod(
+        executor=Executor.parallel(manager.submit_global)
+    ),
+    neighbors_add=1,
+)
+
+# 4. Construire le State
+state = StateFactory.build(
+    system=system,
+    neighbors_method=neighbors_method,
+    environment_method=env_method,
+    engine=local_engines[0],   # engine de référence pour state
+)
+
+# 5. Soumettre des jobs — Manager ne voit que des noms
+future = manager.submit("minimize", config=config)
+positions, energy = future.result()
+
+futures = manager.map("search", items=list_of_atoms,
+                      context=PartnSearchContext(), positions=state.system.positions)
+results = [f.result() for f in futures]

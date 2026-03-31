@@ -15,6 +15,18 @@ class Session :
         if self.world_comm.Get_rank() != 0 : 
             raise RuntimeError("Session must be used from rank 0.")
         
+    def use_local(self) -> None : 
+        """Switch to local mode no waiting status."""
+        self.world_comm.send({"type": "use_local"}, dest=self.engine_master_rank, tag=2)
+
+    def use_global(self) -> None : 
+        """Swithc to global mode no waiting status."""
+        self.world_comm.send({"type": "use_global"}, dest=self.engine_master_rank, tag=2)
+
+    def close(self) -> None : 
+        """Close no waiting status."""
+        self.world_comm.send({"type": "close"}, dest=self.engine_master_rank, tag=2)
+
     def call(self, op_name: str, **kwargs) -> Any : 
         """Send an operation to the worker and optionally retrieve a result."""
 
