@@ -1,4 +1,4 @@
-"""FPTA basin selector backed by the amsel Rust kernel.
+"""Amsel-backed basin selector with optional adaptive clocking.
 
 Mirrors :class:`pykmc.basins.selection.FPTASelector` but delegates the
 numerical work to `amsel <https://pypi.org/project/amsel>`_ -- a pure
@@ -55,13 +55,27 @@ except ImportError as exc:  # pragma: no cover - exercised only when amsel missi
 
 
 class AmselFPTASelector:
-    """FPTA selector with the Rust ``amsel`` kernel as its backend."""
+    """Basin selector with the Rust ``amsel`` kernel as its backend.
 
-    def __init__(self) -> None:
-        # Retained for parity with FPTASelector; amsel builds its own
-        # matrices internally and does not expose them.
+    Parameters
+    ----------
+    clock_mode
+        ``"sampled"`` keeps the exact sampled FPTA clock, ``"mean"``
+        forces the scalar MRM clock, and ``"adaptive"`` uses
+        ``reduced_kinetics`` to choose between them.
+    rank_tol
+        Tolerance passed to ``ReducedKineticsResult.one_rate_clock_is_plausible``.
+    """
+
+    def __init__(self, clock_mode: str = "adaptive", rank_tol: float = 1.0e-8) -> None:
+        if clock_mode not in {"sampled", "mean", "adaptive"}:
+            raise ValueError("clock_mode must be one of 'sampled', 'mean', or 'adaptive'")
         self.last_t_exit: float | None = None
         self.last_weights: np.ndarray | None = None
+        self.last_clock_mode: str | None = None
+        self.last_reduced_kinetics = None
+        self.clock_mode = clock_mode
+        self.rank_tol = rank_tol
 
     def select_from_connectivity(
         self, connectivity_table: StatesConnectivity
@@ -83,7 +97,7 @@ class AmselFPTASelector:
         if not _AMSEL_AVAILABLE:
             return Err(
                 ErrorInfo(
-                    error_type=ErrorType.BasinExitTimeSolverError,
+                    type=ErrorType.BASIN_TEXIT_NOT_FOUND,
                     message=(
                         "amsel is not installed "
                         f"({_AMSEL_IMPORT_ERROR!r}); fall back to FPTASelector "
@@ -96,44 +110,66 @@ class AmselFPTASelector:
         if not transient:
             return Err(
                 ErrorInfo(
-                    error_type=ErrorType.BasinExitTimeSolverError,
+                    type=ErrorType.BASIN_TEXIT_NOT_FOUND,
                     message="no transient states in connectivity table",
                 )
             )
         if not absorbing:
             return Err(
                 ErrorInfo(
-                    error_type=ErrorType.BasinExitTimeSolverError,
+                    type=ErrorType.BASIN_TEXIT_NOT_FOUND,
                     message="no absorbing states in connectivity table",
                 )
             )
 
         # Entry is state 0 by pyKMC convention (see FPTASelector).
         entry = transient[0]
+        problem = _amsel.AmcProblem(
+            transient=transient,
+            absorbing=absorbing,
+            rates=rates,
+        )
 
-        # First random draw: r in (0, 1) for the FPTA bisection target.
-        r1 = float(np.random.random())
+        self.last_reduced_kinetics = None
+        self.last_clock_mode = None
 
         try:
-            t_exit, weights = _amsel.fpta(
-                transient=transient,
-                absorbing=absorbing,
-                rates=rates,
-                entry=entry,
-                r=r1,
-            )
+            if self.clock_mode == "sampled":
+                fpta_res = problem.fpta(entry=entry, r=float(np.random.random()))
+                t_exit = float(fpta_res.t_exit)
+                weights_arr = np.asarray(fpta_res.weights, dtype=np.float64)
+                self.last_clock_mode = "sampled"
+            else:
+                rk = problem.reduced_kinetics(entry=entry)
+                self.last_reduced_kinetics = rk
+                use_mean = self.clock_mode == "mean" or rk.one_rate_clock_is_plausible(self.rank_tol)
+                if use_mean:
+                    mrm_res = problem.mrm(entry=entry)
+                    t_exit = float(mrm_res.tau_total)
+                    weights_arr = np.asarray(mrm_res.rate_to_absorbing, dtype=np.float64) * t_exit
+                    self.last_clock_mode = "mean"
+                else:
+                    fpta_res = problem.fpta(entry=entry, r=float(np.random.random()))
+                    t_exit = float(fpta_res.t_exit)
+                    weights_arr = np.asarray(fpta_res.weights, dtype=np.float64)
+                    self.last_clock_mode = "sampled"
         except _amsel.AmselError as exc:
             return Err(
                 ErrorInfo(
-                    error_type=ErrorType.BasinExitTimeSolverError,
+                    type=ErrorType.BASIN_TEXIT_NOT_FOUND,
                     message=f"amsel kernel rejected problem: {exc}",
                 )
             )
 
-        # Second random draw: sample the exit state from the
-        # (normalised) weights returned by amsel. Mirrors
-        # FPTASelector.select_absorbing_state's np.searchsorted path.
-        weights_arr = np.asarray(weights, dtype=np.float64)
+        weight_sum = float(np.sum(weights_arr))
+        if not np.isfinite(weight_sum) or weight_sum <= 0.0:
+            return Err(
+                ErrorInfo(
+                    type=ErrorType.BASIN_TEXIT_NOT_FOUND,
+                    message="amsel returned non-positive absorbing weights",
+                )
+            )
+        weights_arr = weights_arr / weight_sum
         cumul = np.cumsum(weights_arr)
         r2 = float(np.random.random())
         idx = int(np.searchsorted(cumul, r2))

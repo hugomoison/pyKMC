@@ -2,6 +2,7 @@ from .detection import Detector
 from .exploration import Explorer, BasinGenericEventExplorer
 from .connectivity import BasinStatesConnectivity
 from .selection import FPTASelector
+from .amsel_selection import AmselFPTASelector, _AMSEL_AVAILABLE
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 from pykmc import System, Config, NeighborsList, AtomicEnvironment, ReferenceEventTable, PointSetRegistration, check_match, Reconstruction
@@ -116,7 +117,10 @@ class BasinsGenericEvents() :
         self.explored_states = [] 
         self.connectivity_table = BasinStatesConnectivity()
         self.explorer = BasinGenericEventExplorer(config=self.config, reference_table=self.reference_table)
-        self.selector = FPTASelector()
+        if _AMSEL_AVAILABLE:
+            self.selector = AmselFPTASelector(clock_mode="adaptive")
+        else:
+            self.selector = FPTASelector()
         new_system = System(positions=system.positions.copy(), types=system.types.copy(), cell=system.cell.copy(), pbc=system.pbc.copy(), index=np.arange(len(system.types)))
         self._add_state(state_index=0, system=new_system)  #add current state 0 to self.states
 
