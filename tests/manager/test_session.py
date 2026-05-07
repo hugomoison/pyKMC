@@ -42,16 +42,16 @@ class TestSession:
     def test_local_and_global_collective(self) : 
         if self.rank == 0 : 
             print("here")
-            self.session.call("use_local")
-            r1 = self.session.call("collective") 
-            assert r1 == 0.0 
+            self.session.use_local()
+            r1 = self.session.call("collective")
+            assert r1 == 0.0
 
             print("here")
-            self.session.call("use_global")
-            r2 = self.session.call("collective") 
+            self.session.use_global()
+            r2 = self.session.call("collective")
             expected = float(np.sum(np.arange(0, self.world_comm.Get_size()-1)))
-            assert r2 == expected 
+            assert r2 == expected
 
-            self.session.call("close")
+            self.session.close()
             
 

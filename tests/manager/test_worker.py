@@ -31,12 +31,16 @@ class FakeEngine(Engine) :
         self.comm.Reduce(local, total, op=MPI.SUM, root=0)
         return float(total[0]) if rank == 0 else None
 
+_BUILTIN_OPS = {"use_local", "use_global", "close"}
+
 def _call(op_name: str, world_comm: MPI.Comm, expect_result: bool = False, **kwargs):
     """Simulate a session call to worker master (rank 1)."""
     msg = {"type": op_name}
     if kwargs:
         msg["value"] = kwargs
-    world_comm.send(msg, dest=1, tag=2)   # ← send pas seng
+    world_comm.send(msg, dest=1, tag=2)
+    if op_name in _BUILTIN_OPS:
+        return  # builtins return "_no_status" — worker sends nothing
     status = world_comm.recv(source=1, tag=0)
     assert status["type"] == "status"
     if expect_result:

@@ -8,7 +8,7 @@
 PYTEST       = pytest
 MPIRUN       = mpirun
 MPI_FLAGS    = --no-monitor
-N ?= 5  # nombre de ranks MPI, surchargeable via : make test-engine-mpi N=8
+N = 5  # nombre de ranks MPI, surchargeable via : make test-engine-mpi N=8
 
 
 # All
