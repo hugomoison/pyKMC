@@ -30,7 +30,7 @@ def build_registry(obj: object) -> dict[str, Callable]:
 
 class Worker : 
 
-    def __init__(self, local_engine: Engine, local_comm: "MPI.COMM", global_engine: Engine|None = None, global_comm: "MPI.COMM"|None = None, world_comm: "MPI.COMM"|None = None)-> None : 
+    def __init__(self, local_engine: Engine, local_comm: "MPI.COMM", engine_id:int, global_engine: Engine|None = None, global_comm: "MPI.COMM"|None = None, world_comm: "MPI.COMM"|None = None)-> None : 
         """MPI worker. Runs on all ranks in the engine communicator.
 
         Rank 0 reads incoming messages from ``MPI.COMM_WORLD``, broadcasts
@@ -78,6 +78,7 @@ class Worker :
         self.global_engine = global_engine
         self.global_comm = global_comm
         self.local_rank = local_comm.Get_rank()
+        self.engine_id = engine_id
         self._is_alive = False
 
         self.world_comm = world_comm or MPI.COMM_WORLD
