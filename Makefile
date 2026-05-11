@@ -40,6 +40,10 @@ test-session:  ## Run MPI session tests
 test-manager: ## Run MPI manager tests 
 	$(MPIRUN) -n $(N) $(PYTEST) tests/manager/test_manager.py $(MPI_FLAGS) -s
 
+test-managerfactory: ## Run MPI factory manager tests 
+
+	$(MPIRUN) -n $(N) $(PYTEST) tests/manager/test_factory.py $(MPI_FLAGS) -s
+
 # ── All tests ─────────────────────────────────────────────────────────────────
 
 .PHONY: test

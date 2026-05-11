@@ -7,7 +7,7 @@ import numpy as np
 class FakeEngine(Engine) : 
     """ Minimial Enginge with simple testable operations."""
 
-    def __init__(self, comm: "MPI.COMM") : 
+    def __init__(self, comm: "MPI.COMM" = None, **kwargs) : 
         super().__init__()
         self.comm = comm
 

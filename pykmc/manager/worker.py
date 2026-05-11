@@ -120,6 +120,8 @@ class Worker :
 
     def use_global(self) -> None : 
         """Switch active communicator and rank to global mode."""
+        if self.global_comm is None : 
+            return #Worker is not using global mode
         self.global_mode = True 
         self.comm = self.global_comm 
         self.rank = self.global_comm.Get_rank()

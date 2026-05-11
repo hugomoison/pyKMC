@@ -14,7 +14,7 @@ class ManagerFactory:
     and returning a configured Manager
     """
 
-    def __init__(self, engine_style:str, n_workers: int, comm: MPI.COMM, has_global:bool = True, global_size:int = None, engine_config: Any | None = None) -> None : 
+    def __init__(self, engine_style:str, n_workers: int, comm: MPI.Comm, has_global:bool = True, global_size:int = None, engine_config: Any | None = None) -> None : 
 
         self.engine_style = engine_style
         self.engine_config = engine_config
@@ -22,13 +22,13 @@ class ManagerFactory:
         self.n_workers = n_workers 
         self.has_global = has_global 
 
+        self.start_rank = 1 #we don't use rank 0 for workers
         self.size = self.comm.Get_size() 
         self.rank = self.comm.Get_rank() 
-        self.global_size = global_size if global_size is not None else  self.size
+        self.global_size = global_size if global_size is not None else  self.size-self.start_rank
 
         
 
-        self.start_rank = 1 #we don't use rank 0 for workers
 
         if self.size < self.n_workers + self.start_rank : 
             raise ValueError("Not enough MPI ranks to allocates workers")
@@ -65,6 +65,8 @@ class ManagerFactory:
                     global_comm = self.comm.Split(color=MPI.UNDEFINED, key=self.rank)
                 else : 
                     global_comm = self.comm.Split(color=1, key=self.rank)
+                if global_comm == MPI.COMM_NULL : 
+                    global_comm = None
 
 
         if worker_id is not None : #rank is in a chunk 
@@ -79,7 +81,7 @@ class ManagerFactory:
             
 
 
-    def _create_worker(self, engine_style: str, local_comm: MPI.COMM , engine_id: int, global_comm: MPI.COMM | None, engine_config: Any | None = None) -> Worker : 
+    def _create_worker(self, engine_style: str, local_comm: MPI.Comm , engine_id: int, global_comm: MPI.Comm | None, engine_config: Any | None = None) -> Worker : 
         match engine_style:
             case 'lammps':
                 if engine_config is None:
