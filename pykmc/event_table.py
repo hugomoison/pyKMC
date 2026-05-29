@@ -2,7 +2,7 @@
 
 from typing import Optional
 import pandas as pd
-from .rate_constant import compute_rate, compute_rate_Eyring
+from .rate_constant import compute_rate
 from .config import Config
 import numpy as np
 from .environments.graph_nauty import graph
@@ -675,7 +675,7 @@ class ActiveEventTable:
                 "saddle_positions": event_refinement_output.saddle_positions,
                 "final_positions": event_refinement_output.min2_positions,
                 "energy_barrier": event_refinement_output.dE_forward,
-                "k": compute_rate_Eyring(event_refinement_output.dE_forward, self.config),
+                "k": compute_rate(event_refinement_output.dE_forward, self.config, nu0=event_refinement_output.nu0),
                 "num_reference_event": event_refinement_output.num_reference_event,
                 "refined": event_refinement_output.refined
             }
