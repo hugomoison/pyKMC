@@ -142,6 +142,10 @@ class EventSearchOutput:
         Index of the atom that moved the most during the transition.
     cell : Optional[np.ndarray]
         Simulation cell, if applicable.
+    nu0_forward : Optional[float]
+        Vineyard prefactor (Hz) for the forward direction (HTST style); None otherwise.
+    nu0_backward : Optional[float]
+        Vineyard prefactor (Hz) for the backward direction (HTST style); None otherwise.
 
     """
 
@@ -154,6 +158,8 @@ class EventSearchOutput:
     move_atom_index: int
     #map: np.ndarray
     cell: Optional[np.ndarray] = None
+    nu0_forward: Optional[float] = None
+    nu0_backward: Optional[float] = None
 
 
 @dataclass
@@ -174,8 +180,10 @@ class EventRefinementOutput:
         Refined forward energy barrier (if matched).
     num_reference_event : Optional[int]
         Index of the corresponding reference event (if matched).
-    refined: Optional[str] 
+    refined: Optional[str]
         If the event has been refined (T: True, F: False, B: In basin)
+    nu0 : Optional[float]
+        Vineyard prefactor (Hz) inherited from the reference event (HTST style); None otherwise.
     """
 
     central_atom_index: int
@@ -185,6 +193,7 @@ class EventRefinementOutput:
     dE_forward: Optional[float] = None
     num_reference_event: Optional[int] = None
     refined: Optional[str] = None
+    nu0: Optional[float] = None
 
 
 @dataclass
