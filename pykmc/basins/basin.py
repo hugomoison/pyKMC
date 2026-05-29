@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from pykmc import System, Config, NeighborsList, AtomicEnvironment, ReferenceEventTable, PointSetRegistration, check_match, Reconstruction
 from typing import Optional
 from ..utils import geometry
-from ..rate_constant import compute_rate_Eyring
+from ..rate_constant import compute_rate
 import pandas as pd
 import copy
 import numpy as np
@@ -375,7 +375,10 @@ class BasinsGenericEvents() :
                 dE = E_sad
             else:
                 dE = E_sad - E_min
-            k = compute_rate_Eyring(dE, self.config)
+            # NOTE(htst): under style="htst", basin super-events fall back to k0
+            # here -- nu0 is not yet inherited into basin transitions (v1 limitation).
+            # compute_rate returns the k0 form automatically when nu0 is None.
+            k = compute_rate(dE, self.config, nu0=None)
 
             #also save saddle positions refined 
             idx_state = self.connectivity_table.df.loc[idx].at['state_connexion']
