@@ -462,23 +462,67 @@ class PartnConfig(BaseModel):
         return v
 
 class RateConstantConfig(BaseModel):
-    """Rate constant computation parameters."""
+    """Rate constant computation parameters.
 
-    style: Literal["constant"] = Field(
+    Two prefactor styles are available:
+
+    - ``constant``: ``k = k0 * exp(-dE / (kb*T))`` with a user-set ``k0``.
+    - ``htst``: ``k = nu0 * exp(-dE / (kb*T))`` with the Vineyard harmonic
+      prefactor ``nu0`` computed per reference event from partial Hessians at
+      the minimum and saddle. Falls back to ``k0`` per event when nu0 cannot be
+      computed (logged to the htst diagnostics file).
+    """
+
+    style: Literal["constant", "htst"] = Field(
         default=...,
-        description="Method used to compute the prefactor of the rate constant. ",
+        description="Prefactor method: 'constant' (fixed k0) or 'htst' (Vineyard nu0 per event).",
     )
     k0: float = Field(
         default=1.0,
-        description="When `style` is set to **'constant'**, this value is used directly as the pre-exponential factor ($k_0$) "
-        "\n"
-        "$$ k = k_{0} \\exp\\left(-\\frac{\\Delta E}{k_{b}T}\\right) $$"
-        "\n",
+        description="Pre-exponential factor for 'constant' style, and the per-event "
+        "fallback for 'htst'. "
+        "$$ k = k_{0} \\exp\\left(-\\frac{\\Delta E}{k_{b}T}\\right) $$",
     )
     T: float = Field(
         default=300,
         description="Temperature (in Kelvin) used for computing rate constants.",
     )
+    free_radius: float = Field(
+        default=6.0,
+        gt=0.0,
+        description="HTST: radius (Angstrom) around the moving atom defining the free "
+        "(movable) atoms in the partial Hessian.",
+    )
+    fd_step: float = Field(
+        default=0.01,
+        gt=0.0,
+        description="HTST: central-difference displacement (Angstrom) for the "
+        "finite-difference Hessian.",
+    )
+    nu0_min_THz: float = Field(
+        default=1.0,
+        gt=0.0,
+        description="HTST: lower acceptance bound for nu0 (THz); below this the event "
+        "falls back to k0.",
+    )
+    nu0_max_THz: float = Field(
+        default=100.0,
+        gt=0.0,
+        description="HTST: upper acceptance bound for nu0 (THz); above this the event "
+        "falls back to k0.",
+    )
+    require_one_negative_mode: bool = Field(
+        default=True,
+        description="HTST: require exactly one negative saddle mode; otherwise fall "
+        "back to k0 for that event.",
+    )
+
+    @model_validator(mode="after")
+    def _check_nu0_window(self) -> "RateConstantConfig":
+        """Ensure the nu0 acceptance window is ordered."""
+        if self.nu0_min_THz >= self.nu0_max_THz:
+            raise ValueError("nu0_min_THz must be < nu0_max_THz")
+        return self
 
 
 class PSRConfig(BaseModel):
