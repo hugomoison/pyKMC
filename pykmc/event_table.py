@@ -1,7 +1,8 @@
 """Module implementing Classes to manage reference events and active events."""
 
+from typing import Optional
 import pandas as pd
-from .rate_constant import compute_rate_Eyring
+from .rate_constant import compute_rate, compute_rate_Eyring
 from .config import Config
 import numpy as np
 from .environments.graph_nauty import graph
@@ -62,6 +63,8 @@ class ReferenceEventTable:
                     dE_forward=ev.dE_forward,
                     dE_backward=ev.dE_backward,
                     cell=ev.cell,
+                    nu0_forward=ev.nu0_forward,
+                    nu0_backward=ev.nu0_backward,
                 )
             results_is_valid_events.append(res)
             if res.is_ok() : 
@@ -88,6 +91,8 @@ class ReferenceEventTable:
         dE_forward: float,
         dE_backward: float,
         cell: np.ndarray,
+        nu0_forward: Optional[float] = None,
+        nu0_backward: Optional[float] = None,
     ) -> Result[pd.DataFrame, ErrorInfo]:
         """Check if the event has the required conditions to be added to the table DataFrame based on the configuration's parameters.
 
@@ -107,6 +112,10 @@ class ReferenceEventTable:
             Energy barrier of the backward event.
         cell : np.ndarray
             Simulation box cell.
+        nu0_forward : Optional[float]
+            Vineyard prefactor (Hz) for the forward event ('htst' style); None for 'constant'.
+        nu0_backward : Optional[float]
+            Vineyard prefactor (Hz) for the backward event ('htst' style); None for 'constant'.
 
         Returns
         -------
@@ -178,6 +187,8 @@ class ReferenceEventTable:
                 dE_forward=dE_forward,
                 dE_backward=dE_backward,
                 cell=cell,
+                nu0_forward=nu0_forward,
+                nu0_backward=nu0_backward,
             )
             if self.is_new_event(
                 dfevent=dfevent_forward
@@ -353,6 +364,8 @@ class ReferenceEventTable:
         dE_forward: float,
         dE_backward: float,
         cell: np.ndarray,
+        nu0_forward: Optional[float] = None,
+        nu0_backward: Optional[float] = None,
     ) -> tuple[pd.Series, pd.Series]:
         """Build foward and backward events Series.
 
@@ -372,6 +385,10 @@ class ReferenceEventTable:
             Energy barrier of the backward event.
         cell : np.ndarray
             Simulation box cell.
+        nu0_forward : Optional[float]
+            Vineyard prefactor (Hz) for the forward event ('htst' style); None for 'constant'.
+        nu0_backward : Optional[float]
+            Vineyard prefactor (Hz) for the backward event ('htst' style); None for 'constant'.
 
         Returns
         -------
@@ -451,7 +468,8 @@ class ReferenceEventTable:
                 "saddle_positions": saddle_positions[neighbor_list_forwward],
                 "final_positions": min2_positions[neighbor_list_forwward],
                 "energy_barrier": dE_forward,
-                "k": compute_rate_Eyring(dE_forward, self.config),
+                "k": compute_rate(dE_forward, self.config, nu0=nu0_forward),
+                "nu0": nu0_forward,
                 "id_saddle": id_saddle,
                 "id_final": id_min2,
                 "move_atom_idx": np.where(neighbor_list_forwward == index_move)[0][0],
@@ -475,7 +493,8 @@ class ReferenceEventTable:
                 "saddle_positions": saddle_positions[neighbor_list_backward],
                 "final_positions": min1_positions[neighbor_list_backward],
                 "energy_barrier": dE_backward,
-                "k": compute_rate_Eyring(dE_backward, self.config),
+                "k": compute_rate(dE_backward, self.config, nu0=nu0_backward),
+                "nu0": nu0_backward,
                 "id_saddle": id_saddle,
                 "id_final": id_min1,
                 "move_atom_idx": np.where(neighbor_list_backward == index_move)[0][0],
@@ -510,7 +529,8 @@ class ReferenceEventTable:
                      "saddle_positions": pd.Series(dtype="object"),
                     "final_positions": pd.Series(dtype="object"),
                     "energy_barrier": pd.Series(dtype="float64"),
-                    "k": pd.Series(dtype="float64"), 
+                    "k": pd.Series(dtype="float64"),
+                    "nu0": pd.Series(dtype="float64"),
                     "id_saddle": pd.Series(dtype="str"),
                     "id_final": pd.Series(dtype="str"),
                     "move_atom_idx": pd.Series(dtype='int64'),
