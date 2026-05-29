@@ -831,6 +831,40 @@ class BiasConfig(BaseModel):
         description="Target topology ID for 'topo' bias (e.g. interstitial).",
     )
 
+    @field_validator("direction", "target_point", mode="before")
+    @classmethod
+    def parse_float_list(cls, v):
+        if v is None or isinstance(v, list):
+            return v
+        if isinstance(v, str):
+            stripped = v.strip()
+            if stripped.lower() == "none" or stripped == "":
+                return None
+            stripped = stripped.strip("[]")
+            parts = [p for p in stripped.replace(",", " ").split() if p]
+            try:
+                return [float(x) for x in parts]
+            except ValueError:
+                raise ValueError(f"Invalid float list: {v!r}")
+        return v
+
+    @field_validator("atom_indices", mode="before")
+    @classmethod
+    def parse_int_list(cls, v):
+        if v is None or isinstance(v, list):
+            return v
+        if isinstance(v, str):
+            stripped = v.strip()
+            if stripped.lower() == "none" or stripped == "":
+                return None
+            stripped = stripped.strip("[]")
+            parts = [p for p in stripped.replace(",", " ").split() if p]
+            try:
+                return [int(x) for x in parts]
+            except ValueError:
+                raise ValueError(f"Invalid integer list: {v!r}")
+        return v
+
 
 class Config(BaseModel):
     """Config for the KMC simulations."""
