@@ -12,9 +12,10 @@ import ase.geometry
 
 class Reconstruction: 
 
-    def __init__(self, config: Config, manager: Manager) -> None : 
+    def __init__(self, config: Config, manager: Manager, types=None) -> None :
         self.config = config
         self.manager = manager #Manager objet that can perform minimization and return minimized positions
+        self.types = types
 
     def reconstruct(self, supposed_min1_positions, supposed_min2_positions, saddle_positions, cell, delr_thr, neighbors = None, fraction = 0.15) : 
         """From a saddle point, try to reconstruct the event to see if it matches the 
@@ -59,7 +60,7 @@ class Reconstruction:
         saddle_toward_min1_pos = push_towards(saddle_positions[neighbors], supposed_min1_positions, fraction=0.15, cell = cell)
         tmp_positions[neighbors] = saddle_toward_min1_pos 
         #future = self.manager.minimize_with_results(self.config, positions=tmp_positions)
-        min1_pos, _ = self.manager.global_minimize_with_results(self.config, positions=tmp_positions)
+        min1_pos, _ = self.manager.global_minimize_with_results(self.config, positions=tmp_positions, types=self.types)
 #        min1_pos, _ = future.result()
 
         #compaire min1_pos with system current positions
@@ -78,7 +79,7 @@ class Reconstruction:
             saddle_toward_min2_pos = push_towards(saddle_positions[neighbors],supposed_min2_positions, fraction=0.15, cell = cell)
             tmp_positions[neighbors] = saddle_toward_min2_pos
             #future = self.manager.minimize_with_results(self.config, positions=tmp_positions)
-            min2_pos, min2_etot = self.manager.global_minimize_with_results(self.config, positions=tmp_positions)
+            min2_pos, min2_etot = self.manager.global_minimize_with_results(self.config, positions=tmp_positions, types=self.types)
 #            min2_pos, _ = future.result()
 
             #Compare min2pos with expected final_positions

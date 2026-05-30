@@ -181,13 +181,13 @@ class MpiApiSession :
             self._is_busy = False
 
     #@session_locked
-    def minimize_with_results(self, config, positions=None) :
+    def minimize_with_results(self, config, positions=None, types=None) :
         """Minimize and return the minimized positions and the total energy.
         """
         self._is_busy = True
         #print(f"[Session n°{self.session_id}] Minimizing and get positions and total energy")
-        try : 
-            self.send_message({"type": "minimize_with_results", "value": {"config": config, "positions": positions}})
+        try :
+            self.send_message({"type": "minimize_with_results", "value": {"config": config, "positions": positions, "types": types}})
             msg = self.messenger.recv(source=self.engine_master_rank, tag=1)
             if msg.get("type") == "result" : 
                 return msg["value"]
@@ -225,11 +225,11 @@ class MpiApiSession :
             self._is_busy = False
 
     #@session_locked
-    def partn_search(self, config, central_atom_idx, positions=None, cell=None, type=None) :
-        self._is_busy = True 
+    def partn_search(self, config, central_atom_idx, positions=None, cell=None, types=None) :
+        self._is_busy = True
         #print(f"[Session] Launching pARTn search")
-        try : 
-            self.send_message({"type": "partn_search", "value": {"config": config, "central_atom_idx": central_atom_idx, "positions": positions, "cell": cell, "type": type}})
+        try :
+            self.send_message({"type": "partn_search", "value": {"config": config, "central_atom_idx": central_atom_idx, "positions": positions, "cell": cell, "types": types}})
             msg = self.messenger.recv(source=self.engine_master_rank, tag=1)
             if msg.get("type") == "result" : 
                 return msg["value"]
@@ -239,11 +239,11 @@ class MpiApiSession :
             self._is_busy = False
 
     #@session_locked
-    def partn_refine(self, config, central_atom_idx, positions = None, cell=None, type=None, saddle_idx=None, saddle_positions=None) :
-        self._is_busy = True 
+    def partn_refine(self, config, central_atom_idx, positions=None, cell=None, types=None, saddle_idx=None, saddle_positions=None) :
+        self._is_busy = True
         #print(f"[Session] Launching pARTn search")
-        try : 
-            self.send_message({"type": "partn_refine", "value": {"config": config, "central_atom_idx": central_atom_idx, "positions": positions, "cell":cell, "type":type, "saddle_idx":saddle_idx, "saddle_positions":saddle_positions}})
+        try :
+            self.send_message({"type": "partn_refine", "value": {"config": config, "central_atom_idx": central_atom_idx, "positions": positions, "cell":cell, "types":types, "saddle_idx":saddle_idx, "saddle_positions":saddle_positions}})
             msg = self.messenger.recv(source=self.engine_master_rank, tag=1)
             if msg.get("type") == "result" : 
                 return msg["value"]

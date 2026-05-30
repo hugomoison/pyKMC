@@ -13,3 +13,4 @@ from .initializer import *
 from .engine import *
 from .manager import *
 from .utils import *
+from .bias import Bias, DirectionBias, PointBias, TopoBias

@@ -21,7 +21,7 @@ import pandas as pd
 
 def info_atomic_environments(
     kmc: "KMC",
-    new_environments: list[str | bytes],
+    new_environments: list[str],
 ) -> AtomicEnvironmentInfo:
     """Construct the dataclass containing information of the atomic environments.
 
@@ -29,7 +29,7 @@ def info_atomic_environments(
     ----------
     kmc : KMC
         the kmc object.
-    new_environments : list[str | bytes]
+    new_environments : list[str]
         list of new atomic environments at the current step.
 
     Returns
@@ -150,37 +150,41 @@ def info_refinements(
     n_attempts = len(results_refinements)
     n_successes = 0
     n_fails = {
-        "psr": {
-            "no match found": 0,
-            "matching score > matching thr": 0,
-            "n_symmetries": [],
-        },
-        "invalid dE": 0,
-        "invalid min": 0,
-        "event not found": 0,
-    }
-
+        "no_match_found": 
+                    {"n": 0, 
+                    "ref_event": []}, 
+        "matching_score_>_matching_threshold" : 
+                    {"n": 0, 
+                    "ref_event": [], 
+                    "matching_score" : []}, 
+        "invalid_dE" : 
+                    {"n" : 0, 
+                     "ref_event": []},
+        "invalid_minima" : 
+                    {"n" : 0, 
+                     "ref_event": [] }, 
+        "event_not_found" : 
+                    {"n": 0, 
+                     "ref_event" : []}
+             }
     for res in results_refinements:
         if res.is_ok():
             n_successes += 1
         else:
             match res.err_value().type:
                 case ErrorType.PSR_NO_MATCH_FOUND:
-                    n_fails["psr"]["no match found"] += 1
-                    n_fails["psr"]["n_symmetries"].append(
-                        res.err_value().variables["n_sym_associated"]
-                    )
+                    n_fails["no_match_found"]["n"] += 1
+                    n_fails["no_match_found"]["ref_event"].append(res.err_value().variables["n_ref_event"])
                 case ErrorType.PSR_MATCHING_SCORE_ABOVE_ACCEPTANCE_THRESHOLD:
-                    n_fails["psr"]["matching score > matching thr"] += 1
-                    n_fails["psr"]["n_symmetries"].append(
-                        res.err_value().variables["n_sym_associated"]
-                    )
+                    n_fails["matching_score_>_matching_threshold"]["n"] += 1
+                    n_fails["matching_score_>_matching_threshold"]["ref_event"].append(res.err_value().variables["n_ref_event"])
+                    n_fails["matching_score_>_matching_threshold"]["matching_score"].append(res.err_value().variables["matching_score"])
                 case ErrorType.REFINEMENT_INVALID_ENERGY_BARRIER:
-                    n_fails["invalid dE"] += 1
+                    n_fails["invalid_dE"]['n'] +=1 
                 case ErrorType.REFINEMENT_INVALID_MINIMA:
-                    n_fails["invalid min"] += 1
+                    n_fails["invalid_min"]["n"] +=1
                 case ErrorType.EVENT_NOT_FOUND:
-                    n_fails["event not found"] += 1
+                    n_fails["event_not_found"]["n"] +=1
 
     return RefinementsInfo(n_attempts, n_successes, n_fails)
 

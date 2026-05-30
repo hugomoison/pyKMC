@@ -328,12 +328,12 @@ class ReferenceEventTable:
 
         self.table = pd.concat([self.table, dfevent], ignore_index=True)
 
-    def has_id_subset_table(self, ids: list[str | bytes]) -> pd.DataFrame:
+    def has_id_subset_table(self, ids: list[str]) -> pd.DataFrame:
         """Return subset table with event having id in ids.
 
         Parameters
         ----------
-        ids : list[str | bytes]
+        ids : list[str]
             list of IDs.
 
         Returns

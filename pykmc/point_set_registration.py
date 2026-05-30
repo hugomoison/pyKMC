@@ -189,8 +189,10 @@ def check_match(
                     details="Hausdorff distance = {}, acceptance threshold = {} ".format(
                         result_match.ok_value().matching_score, matching_score
                     ),
+                    variables={"matching_score": result_match.ok_value().matching_score}
                 )
             )
+        
         else:
             return result_match  # Ok(PSROutput)
 

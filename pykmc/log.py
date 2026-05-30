@@ -242,6 +242,7 @@ LOGGING_CONFIG = {
             "formatter": "file_formatter",
             "level": "DEBUG",
             "filename": "pykmc.log",
+            "mode": "a",
         },
         "console_output_handler": {
             "class": "logging.StreamHandler",
@@ -254,18 +255,21 @@ LOGGING_CONFIG = {
             "formatter": "file_formatter",
             "level": "DEBUG",
             "filename": "pykmc.out",
+            "mode" : "a"
         },
         "step_informations": {
             "class": "logging.FileHandler",
             "formatter": "file_formatter",
             "level": "DEBUG",
             "filename": "pykmc.info",
+            "mode" : "a"
         },
         "events_output":{
             "class": "logging.FileHandler",
             "formatter": "file_formatter", 
             "level": "DEBUG", 
             "filename" : "pykmc.events",
+            "mode" : "a"
         },
         "progress_bar_handler": {
             "class": "pykmc.log.ProgressHandler",

@@ -1,7 +1,10 @@
 """Defines the `AtomicEnvironment` class for characterizing and computing local atomic environments."""
 
+from __future__ import annotations
+
 import numpy as np
-from .environments import cna, graph
+from .environments import cna, graph, identify_diamond, region
+from .config import RegionConfig
 
 
 class AtomicEnvironment:
@@ -15,7 +18,7 @@ class AtomicEnvironment:
        first neighbors lists
     environment_list : list[list[int]] or None
         Optional. lists of atoms in environments (used for 'graph' or 'cna/graph' styles).
-    neighbors_add : int or None 
+    neighbors_add : int or None
         Optional. When `style` is 'cna/graph', specifies the N-th shell of neighbors whose graph IDs should also be computed.
     atomic_environment_list : list
         Computed atomic environment ID for each atom. **Populated during initialization**
@@ -31,11 +34,14 @@ class AtomicEnvironment:
     def __init__(
         self,
         style: str,
-        neighbors_list: list[list[int]],
+        neighbors_list: list[list[int]] | None = None,
         environment_list: list[list[int]] | None = None,
-        neighbors_add: int = 0
+        neighbors_add: int = 0,
+        region: RegionConfig | None = None,
+        positions: np.ndarray | None = None,
+        atom_types: list[str] | None = None,
     ) -> None:
-        self.style =  style
+        self.style = style
         self.neighbors_list = neighbors_list
         self.environment_list = environment_list
         self.neighbors_add = neighbors_add
@@ -52,17 +58,23 @@ class AtomicEnvironment:
                 self.atomic_environment_list = self.compute_cnagraph(
                     neighbors_list, environment_list
                 )
+            case "diamond/graph" : 
+                self.atomic_environment_list = self.compute_diamondgraph(neighbors_list, environment_list)
+            case "region":
+                self.atomic_environment_list = self.compute_region(
+                    region, positions, atom_types
+                )
             case _:
                 raise Exception("Atomic environment style unknown")
 
 
 
-    def get_atoms_with_id(self, id: str|bytes) -> list[int] : 
+    def get_atoms_with_id(self, id: str) -> list[int] : 
         """Return list of atom indices whose environment matches the given ID.
 
         Parameters
         ----------
-        id : str | bytes
+        id : str 
             The match ID.
         Returns
         -------
@@ -71,12 +83,21 @@ class AtomicEnvironment:
         """
         return [i for i, e in enumerate(self.atomic_environment_list) if e == id]
     
-    def get_new_environments(self, visited_environments: set[str|bytes]) -> list[str|bytes] : 
+    def get_new_environments(self, visited_environments: set[str]) -> list[str] : 
         """ 
         Return list of atomic environment ID that are in the current self.environment_list but not in visited_environments
         """
         #return list([]) #Set if you want to only test refinements
         return list(set(self.atomic_environment_list).difference(visited_environments))
+
+    def compute_region(
+        self,
+        r: RegionConfig | None,
+        positions: np.ndarray | None,
+        atom_types: list[str] | None,
+    ) -> list[str]:
+        """See :py:func:`.environments.region` for details."""
+        return region(r, positions, atom_types)
 
     def compute_cna(self) -> list[str]:
         """See :py:func:`.environments.cna` for details on CNA computation."""
@@ -84,13 +105,13 @@ class AtomicEnvironment:
 
     def compute_graph(
         self, neighbors_list: list[list[int]], environment_list: list[list[int]]
-    ) -> list[bytes]:
+    ) -> list[str]:
         """See :py:func:`.environment.graph` for detail on Graph Topology computation."""
         return graph(neighbors_list, environment_list)
 
     def compute_cnagraph(
         self, neighbors_list: list[list[int]], environment_list: list[list[int]]
-    ) -> list[str | bytes]:
+    ) -> list[str]:
         """Compute CNA and then Graph Topology for all atoms that have a non cristalline environment.
 
         Parameters
@@ -102,7 +123,7 @@ class AtomicEnvironment:
 
         Returns
         -------
-        list[str | bytes]
+        list[str]
             atomic environment ID for each atom
 
         """
@@ -125,4 +146,26 @@ class AtomicEnvironment:
         for i, idx in enumerate(non_crystal_idx):
             list_hash[idx] = list_graphs_hash[i]
 
+        return list_hash
+    
+    def compute_diamondgraph(self, neighbors_list, environment_list) : 
+        #Compute identify diamant ID 
+        list_hash = identify_diamond(neighbors_list)
+        non_crystal_idx = (
+            np.where(np.array(list_hash) == "noncrystal")[0].astype(int).tolist()
+        )
+
+        # If radd_cna != None add neighbors of non crystal from cna
+        if self.neighbors_add > 0:
+            tmp = []
+            for _i in range(self.neighbors_add):  # Do it recursively
+                for idx in non_crystal_idx:
+                    tmp += neighbors_list[idx]
+            non_crystal_idx += tmp
+            non_crystal_idx = list(set(non_crystal_idx))
+        # Compute graph topo for all non cristalline atoms
+        list_graphs_hash = graph(neighbors_list, environment_list, non_crystal_idx)
+        for i, idx in enumerate(non_crystal_idx):
+            list_hash[idx] = list_graphs_hash[i]
+        
         return list_hash

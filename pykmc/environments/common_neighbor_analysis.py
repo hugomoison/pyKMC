@@ -1,6 +1,6 @@
 """Determine cristalline environments."""
 
-def cna(neighbors_list: list[list[int]]) -> list[str] : 
+def cna_signature(neighbors_list: list[list[int]]) -> list[str] : 
     """Classify atomic environments by neighbor count.
 
     Determine if each atom's environment is 'crystal' (12, 8, or 6 neighbors)
@@ -18,7 +18,7 @@ def cna(neighbors_list: list[list[int]]) -> list[str] :
 
     """
 
-    hash = [] 
+    all_signatures = []
     #Compute signature
     for i, neighbors_i in enumerate(neighbors_list):
         signatures = {} #signature for all i,j pairs
@@ -41,7 +41,14 @@ def cna(neighbors_list: list[list[int]]) -> list[str] :
             #Signature (n_common, n_bonds)
             sig = (n_common, n_bonds)
             signatures[sig] = signatures.get(sig, 0) +1 #counter of same signature
+        all_signatures.append(signatures)
+    return all_signatures
 
+def cna(neighbors_list) : 
+    
+    all_signatures = cna_signature(neighbors_list)
+    hash = []
+    for signatures in all_signatures : 
         #Compute hash : 
         if is_crystal(signatures) : 
             hash.append("crystal")
@@ -68,5 +75,40 @@ def is_crystal(signatures:dict) :
         return True 
     
     return False
+
+def is_diamond(signature:dict) : 
+
+    if not signature : 
+        return False 
+    if signature.get((4,2),0) == 12 : 
+        return True 
+    return False
+
+def identify_diamond(neighbors_list) : 
+    #Neet first to have list of second neighbors atoms : 
+
+    second_neighbors_list = [] 
+    for idx, l_nei in enumerate(neighbors_list) :
+        tmp = set()
+        for n in l_nei : 
+            tmp = tmp | set(neighbors_list[n])
+        tmp.discard(idx)
+        second_neighbors_list.append(tmp)
+
+    #then compute cna signature
+    all_signatures = cna_signature(second_neighbors_list)
+    hash = []
+    #check is fcc or bcc
+    for signatures in all_signatures : 
+        if is_diamond(signatures) : 
+            hash.append("crystal")
+        else : 
+            hash.append("noncrystal")
+
+    return hash
+
+
+
+
 
 

@@ -116,7 +116,7 @@ class System:
         """
         # Create ase.Atoms from file
         try:
-            atoms = read(file_path, parallel=False)
+            atoms = read(file_path, parallel=False, index=-1)
         except Exception as e:
             raise ValueError(f"Can't create System from file {file_path}: {e}") from e
 

@@ -6,7 +6,7 @@ authors = [
 ]
 description = "test kmc and python"
 readme = "README.md"
-requires-python = "<3.13,>=3.9"
+requires-python = "<3.13,>=3.10"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -18,6 +18,7 @@ dependencies = ["ase>=3.24.0", "executorlib==0.0.8", "lammps>=2024.8.29.1.0", "m
 
 [project.optional-dependencies]
 dev = [
+    "ruff",
     "mkdocs",
     "mkdocs-material",    
     "mdx_include",

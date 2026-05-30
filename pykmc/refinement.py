@@ -109,6 +109,13 @@ class Refinement:
                     res.ok_value().dE_forward = res.ok_value().E_saddle - total_energy
                 res = self.check_refinement_energy(res,abs(res.ok_value().dE_forward- ctx["reference_energy_barrier"]),self.config.eventsearch.refined_energy_thr,)
 
+            else : 
+                err = res.err_value()
+                if not isinstance(err.variables, dict):
+                    err.variables = {}
+                err.variables["n_ref_event"] = ctx["num_reference_event"]
+
+
             self.results.append(res)
 
     def refine_single(
@@ -146,12 +153,9 @@ class Refinement:
         ##=>Check results if match or match < matching_score
         result_psr = check_match(result_psr, self.config.psr.matching_score_thr)
         if not result_psr.is_ok():
-            result_psr.err_value().variables = {
-                "n_sym_associated": len(dfevent.at["sym_matrix"])
-            }
             f = concurrent.futures.Future()
             f.set_result(result_psr)
-            future_context[f] = {}
+            future_context[f] = {"num_reference_event": dfevent["idx_ref"]}
             return f
 
         else:
@@ -213,7 +217,7 @@ class Refinement:
                                                       self.system.positions.copy()[neighbors.copy()])  # send copy not reference !
                     else:
                     #add a job to manager queue
-                        f = self.manager.partn_refine(self.config, at_idx, self.system.positions.copy()) #send copy not reference !
+                        f = self.manager.partn_refine(self.config, at_idx, self.system.positions.copy(), type=self.system.types.copy()) #send copy not reference !
                 futures.append(f)
 
 

@@ -53,6 +53,11 @@ class ControlConfig(BaseModel):
         description="Path to a list of visited environment generated from a previous simulation."
     )
 
+    restart_file: Optional[str] = Field( 
+        default = None, 
+        description="File with restart informations."
+    )
+
     reconstruction: Optional[bool] = Field(
         default=True, description="If at each KMC step we reconstruct generic events.\n NOT WORKING"
     )
@@ -95,10 +100,15 @@ class ControlConfig(BaseModel):
         description="Incorporate AV's into simulations, recommended for large systems"
     )
 
+    bias: Optional[bool] = Field(
+        default=False,
+        description="Enable event selection bias. Requires a [Bias] section."
+    )
+
 class AtomicEnvironmentConfig(BaseModel):
     """Atomic environments parameters."""
 
-    style: Literal["cna", "graph", "cna/graph"] = Field(
+    style: Literal["cna", "graph", "cna/graph", "diamond/graph"] = Field(
         ...,
         description="Method used to characterize and assign an ID to an atom's local atomic environment",
     )
@@ -170,6 +180,11 @@ class PartnConfig(BaseModel):
     delr_thr: float = Field(
         default=0.1, 
         description="Threshold at which an atom is considered to have moved. This threshold affects the npart parameter in the artn.out output."
+    )
+
+    evalf_max: int = Field(
+        default = 9999, 
+        description="to stop an artn search before end when the number of force evaluations by the force engine is greater to nevalf_max."
     )
 
     #Exploration
@@ -276,7 +291,7 @@ class PartnConfig(BaseModel):
     )
 
     nevalf_max: int = Field(
-        default=9999, 
+        default=500, 
         description="Stop an artn search before end when the number of force evaluations by the force engine is greater to nevalf_max"
     )
 
@@ -304,6 +319,11 @@ class PartnConfig(BaseModel):
 #################
 #Refinement part#
 #################
+
+    r_evalf_max: int = Field(
+        default = 300, 
+        description="to stop an artn refinement before end when the number of force evaluations by the force engine is greater to nevalf_max."
+    )
 
     #Max single refinement attempt
     r_max_attempts: int = Field(
@@ -527,6 +547,193 @@ class BasinConfig(BaseModel):
     description="Energy threshold"
     )
 
+
+class RegionConfig(BaseModel):
+    """Selects atoms by type, index, or geometric region (union semantics).
+
+    Used for ``inactive_atoms`` and ``frozen_atoms`` config sections.
+    Runtime geometric queries (e.g. ``contains(positions)``) live in
+    ``pykmc/region.py``.
+    """
+
+    region_type: Optional[Literal["sphere", "shell", "box", "plane"]] = Field(
+        default=None, description="Shape of the geometric region."
+    )
+    center: Optional[list[float]] = Field(
+        default=None, description="Center [x, y, z] for sphere or shell regions."
+    )
+    radius: Optional[float] = Field(
+        default=None, description="Outer radius for sphere or shell regions."
+    )
+    inner_radius: Optional[float] = Field(
+        default=None, description="Inner (hollow) radius for shell regions."
+    )
+    lo: Optional[list[float]] = Field(
+        default=None, description="Lower corner [xlo, ylo, zlo] for box regions."
+    )
+    hi: Optional[list[float]] = Field(
+        default=None, description="Upper corner [xhi, yhi, zhi] for box regions."
+    )
+    normal: Optional[Literal["x", "y", "z"]] = Field(
+        default=None, description="Axis normal to the cutting plane."
+    )
+    threshold: Optional[float] = Field(
+        default=None, description="Position along the normal axis defining the plane."
+    )
+    side: Literal["inside", "outside", "above", "below"] = Field(
+        default="inside",
+        description=(
+            "Membership side: 'inside'/'outside' for sphere/shell/box, "
+            "'above'/'below' for plane."
+        ),
+    )
+    types: list[str] = Field(
+        default_factory=list,
+        description="Chemical symbols of atom types to select (e.g. ['Fe', 'O']).",
+    )
+    indices: list[int] = Field(
+        default_factory=list,
+        description="0-based atom indices to select.",
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def collect_region_keys(cls, data: Any) -> Any:
+        """Strip ``region_`` prefix from flat INI keys."""
+        if not isinstance(data, dict):
+            return data
+        region_keys = {k: v for k, v in data.items() if k.startswith("region_")}
+        if not region_keys:
+            return data
+        result = {k: v for k, v in data.items() if not k.startswith("region_")}
+        for k, v in region_keys.items():
+            field_name = k if k == "region_type" else k[len("region_"):]
+            result[field_name] = v
+        return result
+
+    @field_validator("center", "lo", "hi", mode="before")
+    @classmethod
+    def parse_float3(cls, v):
+        if isinstance(v, str):
+            parts = v.split()
+            if len(parts) != 3:
+                raise ValueError(f"Expected exactly 3 values, got: {v!r}")
+            return [float(x) for x in parts]
+        return v
+
+    @field_validator("types", mode="before")
+    @classmethod
+    def parse_types(cls, v):
+        if isinstance(v, str):
+            return [x.strip() for x in v.split() if x.strip()]
+        return v
+
+    @field_validator("indices", mode="before")
+    @classmethod
+    def parse_indices(cls, v):
+        if isinstance(v, str):
+            try:
+                return [int(x.strip()) for x in v.split() if x.strip()]
+            except ValueError:
+                raise ValueError(f"Invalid list of integers for indices: {v!r}")
+        return v
+
+    @model_validator(mode="after")
+    def check_fields(self) -> "RegionConfig":
+        """Validate required fields per region_type."""
+        if self.region_type is None:
+            return self
+        t = self.region_type
+        if t in ("sphere", "shell"):
+            if self.center is None or self.radius is None:
+                raise ValueError(
+                    f"region_type='{t}' requires region_center and region_radius."
+                )
+            if t == "shell" and self.inner_radius is None:
+                raise ValueError("region_type='shell' requires region_inner_radius.")
+            if self.side not in ("inside", "outside"):
+                raise ValueError(
+                    f"region_type='{t}' requires side 'inside' or 'outside'."
+                )
+        elif t == "box":
+            if self.lo is None or self.hi is None:
+                raise ValueError("region_type='box' requires region_lo and region_hi.")
+            if len(self.lo) != 3 or len(self.hi) != 3:
+                raise ValueError(
+                    "region_lo and region_hi must each have exactly 3 values."
+                )
+            if self.side not in ("inside", "outside"):
+                raise ValueError(
+                    "region_type='box' requires side 'inside' or 'outside'."
+                )
+        elif t == "plane":
+            if self.normal is None or self.threshold is None:
+                raise ValueError(
+                    "region_type='plane' requires region_normal and region_threshold."
+                )
+            if self.side not in ("above", "below"):
+                raise ValueError(
+                    "region_type='plane' requires side 'above' or 'below'."
+                )
+        return self
+
+
+class BiasConfig(BaseModel):
+    """Event selection bias parameters."""
+
+    style: Literal["direction", "point", "topo"] = Field(
+        default=...,
+        description="Bias style: 'direction' (DirectionBias), 'point' (PointBias), or 'topo' (TopoBias)."
+    )
+    mode: Literal["filter", "boost"] = Field(
+        default="filter",
+        description=(
+            "Selection mode. 'filter': rejection-loop removes non-accepted events. "
+            "'boost': multiplies desired event rates by a dynamic factor so they fire "
+            "with probability bias_weight, without blocking other events."
+        )
+    )
+    bias_weight: float = Field(
+        default=0.5,
+        description=(
+            "Target probability in (0, 1) that a desired event is selected at each step. "
+            "Only used in boost mode."
+        )
+    )
+    pass_unlisted: bool = Field(
+        default=False,
+        description=(
+            "Whether atoms not in atom_indices pass through the bias predicate unchanged. "
+            "False (default): non-listed atoms are rejected/undesired. "
+            "True: non-listed atoms always pass; only valid in filter mode."
+        )
+    )
+    direction: Optional[list[float]] = Field(
+        default=None,
+        description="Direction vector [x, y, z] for 'direction' bias."
+    )
+    target_point: Optional[list[float]] = Field(
+        default=None,
+        description="Target point [x, y, z] for 'point' bias."
+    )
+    atom_indices: Optional[list[int]] = Field(
+        default=None,
+        description="Global atom indices to bias. None means all atoms."
+    )
+    threshold: float = Field(
+        default=0.0,
+        description="Minimum projection onto the bias direction for acceptance."
+    )
+    topo_source: Optional[str] = Field(
+        default=None,
+        description="Source topology ID for 'topo' bias (e.g. vacancy)."
+    )
+    topo_target: Optional[str] = Field(
+        default=None,
+        description="Target topology ID for 'topo' bias (e.g. interstitial)."
+    )
+
+
 class Config(BaseModel):
     """Config for the KMC simulations."""
 
@@ -567,6 +774,21 @@ class Config(BaseModel):
     basin: Optional[BasinConfig] = Field(default=None, description="Basin parameters")
 
     activevolume: Optional[ActiveVolume] = Field(default=None, description="Active volume parameters")
+
+    inactive_atoms: Optional[RegionConfig] = Field(
+        default=None,
+        description="Atoms on which no event search can be centered. "
+        "Applies both at search time (central atom selection) and at result time "
+        "(events where the most-displaced atom is inactive are discarded).",
+    )
+
+    frozen_atoms: Optional[RegionConfig] = Field(
+        default=None,
+        description="Atoms that cannot move during event search or refinement. "
+        "Implemented via 'fix setforce 0.0 0.0 0.0' in LAMMPS wrapping fix artn.",
+    )
+
+    bias: Optional[BiasConfig] = Field(default=None, description="Event selection bias parameters.")
 
     @classmethod
     def from_ini_file(cls, ini_path: str) -> Config:
@@ -657,8 +879,9 @@ class Config(BaseModel):
             ("control.engine", "lammps"): ["lammps"],
             ("eventsearch.style", "partn"): ["partn"],
             ("psr.style", "ira"): ["ira"],
-            ("control.basin", True) : ["basin"], 
-            ("control.active_volume", True) : ["activevolume"]
+            ("control.basin", True) : ["basin"],
+            ("control.active_volume", True) : ["activevolume"],
+            ("control.bias", True) : ["bias"]
         }
 
         for (field_path, condition_value), required_fields in validation_rules.items():
