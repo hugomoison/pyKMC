@@ -108,7 +108,7 @@ class ControlConfig(BaseModel):
 class AtomicEnvironmentConfig(BaseModel):
     """Atomic environments parameters."""
 
-    style: Literal["cna", "graph", "cna/graph"] = Field(
+    style: Literal["cna", "graph", "cna/graph", "diamond/graph"] = Field(
         ...,
         description="Method used to characterize and assign an ID to an atom's local atomic environment",
     )
@@ -309,11 +309,6 @@ class PartnConfig(BaseModel):
     dmax: float = Field(
         default=6.0,
         description="dmax parameter used in fix ID all artn dmax value lammps command. should be higher than push_step_size.",
-    )
-
-    path_artnso: str = Field(
-        default=...,
-        description="Path to use to load the plugin with lammps command 'plugin load /path/to/artn-plugin/libartn.so'",
     )
 
 #################

@@ -21,7 +21,7 @@ import pandas as pd
 
 def info_atomic_environments(
     kmc: "KMC",
-    new_environments: list[str | bytes],
+    new_environments: list[str],
 ) -> AtomicEnvironmentInfo:
     """Construct the dataclass containing information of the atomic environments.
 
@@ -29,7 +29,7 @@ def info_atomic_environments(
     ----------
     kmc : KMC
         the kmc object.
-    new_environments : list[str | bytes]
+    new_environments : list[str]
         list of new atomic environments at the current step.
 
     Returns

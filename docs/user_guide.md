@@ -180,16 +180,14 @@ To further control the behavior of the selected event search algorithm (style), 
 
 ### pARTn : 
 
-Since pARTn is implemented as a LAMMPS plugin, this section must specify the path to the shared library (.so) containing the plugin using the `path_artnso` key.
-
-
 All other parameters have default values (see the full parameter documentation), but depending on your system, you may need to adjust some of them for optimal performance.
+Parameters related to refinements are prefixed with r_
 
 A minimal `[pARTn]` section will look like this : 
 ```INI 
 [pARTn] 
-path_artnso = /path/to/artn/lib/libartn-lmp.so
-push_dist_thr = 3.0
+delr_thr = 0.1
+r_eigval_th = -0.02
 ```
 
 For a detailed explanation of the pARTn algorithm and its parameters, please refer to the official pARTn documentation.
@@ -270,8 +268,8 @@ style = partn
 nsearch = 50  
 
 [pARTn] 
-path_artnso = /path/to/artn/lib/libartn-lmp.so
-push_dist_thr = 3.0 
+delr_thr = 0.1
+r_eigval_th = -0.02
 
 [RateConstant]
 style = constant 

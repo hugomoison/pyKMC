@@ -2,12 +2,14 @@
 # Ignore everything in examples by default
 examples/**
 # Whitelist
+!examples/*/
 !examples/README.md
 !examples/**/input.in.template
 !examples/**/initial_config.xyz
 !examples/**/Ni_v6_2.0_LKBeland2016.eam
 !examples/**/Cu01.eam.alloy
 !examples/**/FeC-Becquart2013.eam
+!examples/**/Si.sw
 
 
 # Utils : 

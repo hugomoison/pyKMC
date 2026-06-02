@@ -29,8 +29,6 @@ emin_event = 0.0
 r_nnewchance = 3
 
 [pARTn] 
-path_artnso = /root/programs/artn-plugin-1501/lib/libartn-lmp.so
-forc_thr = 0.001
 
 [RateConstant] 
 style = constant

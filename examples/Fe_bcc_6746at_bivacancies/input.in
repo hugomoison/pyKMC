@@ -27,7 +27,6 @@ emin_event = 0.0
 nnew_chance = 3
 
 [pARTn] 
-path_artnso = /root/programs/artn-plugin-1501/lib/libartn-lmp.so
 
 [RateConstant] 
 style = constant

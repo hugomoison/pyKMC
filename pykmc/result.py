@@ -337,7 +337,7 @@ class EventsInfo:
 
     types: list[str] 
     central_atom: list[int]
-    initial_topologies: list[str|bytes]
+    initial_topologies: list[str]
     reference_events: list[int]
     dE_forward: list[float]
     dE_backward: list[float]

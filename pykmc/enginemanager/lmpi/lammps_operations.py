@@ -265,16 +265,17 @@ def partn_search(engine, config, central_atom_idx: int, positions = None, cell =
     # PARAMETERS :
     delr_threshold = config.eventsearch.delr_thr
 
+    # INITILIZE ARTN on all ranks
+    artn = pypARTn.artn(engine="lmp")
+
     # LAMMPS COMMANDS
-    engine.command("plugin load {}".format(config.partn.path_artnso))
+    engine.command( f"plugin load {artn.lib._name}" )
     atoms_frozen = _make_frozen_group(engine, config, positions, types)
     _apply_frozen_fix(engine, "f_frozen_pre", atoms_frozen)
     engine.command("fix 10 all artn dmax {}".format(config.partn.dmax))
     _apply_frozen_fix(engine, "f_frozen_post", atoms_frozen)
     engine.command("min_style fire")
 
-    # INITILIZE ARTN on all ranks
-    artn = pypARTn.artn(engine="lmp")
     # SETUP ARTN
     artn.reset_input()
     # Control 
@@ -429,7 +430,7 @@ def partn_refine(engine, config, central_atom_idx:int , positions = None, cell =
     # INITILIZE ARTN
     artn = pypARTn.artn(engine="lmp")
     # LAMMPS COMMANDS
-    engine.command("plugin load {}".format(config.partn.path_artnso))
+    engine.command( f"plugin load {artn.lib._name}" )
     
     # SETUP ARTN
     artn.reset_input()

@@ -1,0 +1,40 @@
+[Control] 
+initial_config = tmp.xyz
+n_steps = 100
+engine = lammps
+verbosity = 2
+n_sessions = 7
+
+[Lammps] 
+pair_style = sw
+pair_coeff = * * Si.sw Si
+min_style = cg
+minimize = 1e-10 1e-12 10000 10000
+
+
+[AtomicEnvironment] 
+style = diamond/graph
+rnei = 3.0
+rcut = 6.3
+
+[EventSearch] 
+style = partn
+nsearch = 50
+emax_event = 3.5
+emin_event = 0.0
+r_evalf_max = 1000
+
+[pARTn]
+path_artnso = /root/programs/artn-plugin-1501/lib/libartn-lmp.so
+
+[RateConstant] 
+style = constant
+k0 = 10
+T = 300.0
+
+[PSR] 
+style = ira
+
+[IRA]
+
+[Basin]

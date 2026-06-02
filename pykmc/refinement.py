@@ -218,7 +218,7 @@ class Refinement:
                                                       self.system.positions.copy()[neighbors.copy()])  # send copy not reference !
                     else:
                     #add a job to manager queue
-                        f = self.manager.partn_refine(self.config, at_idx, self.system.positions.copy(), type=self.system.types.copy()) #send copy not reference !
+                        f = self.manager.partn_refine(self.config, at_idx, self.system.positions.copy(), types=self.system.types.copy()) #send copy not reference !
                 futures.append(f)
 
 
