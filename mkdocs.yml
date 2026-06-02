@@ -17,7 +17,8 @@ nav:
   - User Guide : user_guide.md
   - Troubleshooting: troubleshooting.md
   - KMC Parameters : parameters.md
-  - Tutorial: 
+  - HTST rate prefactors : htst.md
+  - Tutorial:
       - pyKMC Workflow : 0-pyKMC-workflow.md 
       - Simple example : 1-pyKMC-simple.md
   - API Reference: 
@@ -37,6 +38,7 @@ nav:
       - PointSetRegistration : api/point_set_registration.md
       - Symmetries : api/symmetries.md
       - RateConstante : api/rate_constant.md
+      - HTST : api/htst.md
       - Initialize : api/initializer.md
       - Result : api/result.md
       - Info: api/info_simulations.md
