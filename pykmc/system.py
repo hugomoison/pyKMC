@@ -5,9 +5,12 @@ boundary conditions.
 """
 
 from __future__ import annotations
-from ase.io import read
-import numpy as np
+
+import warnings
+
 import ase.geometry
+import numpy as np
+from ase.io import read
 
 
 class System:
@@ -50,7 +53,9 @@ class System:
         self.index = index
 
     @classmethod
-    def create_from_file(cls, file_path: str) -> System:
+    def create_from_file(
+        cls, file_path: str, elements: list[str] | None = None
+    ) -> System:
         """Create a System object from a structure file.
 
         This method reads an atomic configuration file (e.g., .xyz, .vasp, .xsf)
@@ -61,6 +66,12 @@ class System:
         ----------
         file_path : str
             Path to the input structure file.
+        elements : list[str] | None, optional
+            Element symbols in LAMMPS type order (typically parsed from
+            ``pair_coeff``). When the file carries no chemical species — e.g. a
+            LAMMPS dump, which ASE maps by atomic number so type 1 becomes "H" —
+            atom types are remapped to these elements. Ignored when the file
+            already carries species consistent with ``elements``.
 
         Returns
         -------
@@ -79,10 +90,31 @@ class System:
         except Exception as e:
             raise ValueError(f"Can't create System from file {file_path}: {e}") from e
 
+        symbols = atoms.get_chemical_symbols()
+        if elements and not set(symbols) <= set(elements):
+            # ASE assigns symbols by atomic number when the file carries no
+            # species (e.g. a LAMMPS dump: type i -> Z=i, so type 1 -> "H").
+            # Remap LAMMPS atom types to the pair_coeff element list (type order).
+            lammps_types = atoms.get_atomic_numbers()
+            try:
+                symbols = [elements[int(t) - 1] for t in lammps_types]
+                warnings.warn(
+                    f"initial_config '{file_path}' carries no chemical species; "
+                    f"mapped LAMMPS atom types to {elements} (pair_coeff order).",
+                    stacklevel=2,
+                )
+            except IndexError:
+                warnings.warn(
+                    f"initial_config '{file_path}' has atom types exceeding the "
+                    f"pair_coeff element list {elements}; keeping ASE-default "
+                    f"symbols. Check pair_coeff species order.",
+                    stacklevel=2,
+                )
+
         # Create new System instance
         new_system = cls()
         # update attributes
-        new_system.types = atoms.get_chemical_symbols()
+        new_system.types = symbols
         new_system.positions = atoms.get_positions()
         new_system.cell = atoms.get_cell()
         new_system.pbc = atoms.get_pbc()
