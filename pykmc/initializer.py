@@ -14,7 +14,21 @@ from .neighbors_list import NeighborsList
 from .atomic_environment import AtomicEnvironment
 from .event_table import ReferenceEventTable
 from .bias import DirectionBias, PointBias, TopoBias
+from ase.data import chemical_symbols
 import pickle
+
+
+def _elements_from_pair_coeff(pair_coeff: str | None) -> list[str] | None:
+    """Extract element symbols (in LAMMPS type order) from a pair_coeff string.
+
+    e.g. ``"* * Ni_v6_2.0.eam Ni"`` -> ``["Ni"]``;
+    ``"* * FeNiCr.eam Fe Ni Cr"`` -> ``["Fe", "Ni", "Cr"]``. Returns None when no
+    element symbols can be parsed (e.g. an empty or MTP-style pair_coeff).
+    """
+    if not pair_coeff:
+        return None
+    elements = [tok for tok in str(pair_coeff).split() if tok in chemical_symbols]
+    return elements or None
 
 
 class Initializer:
@@ -69,8 +83,10 @@ class Initializer:
                 self.kmc.config.control.initial_config
             ),
         )
+        pair_coeff = getattr(self.kmc.config.lammps, "pair_coeff", None)
         self.kmc.system = System.create_from_file(
-            self.kmc.config.control.initial_config
+            self.kmc.config.control.initial_config,
+            elements=_elements_from_pair_coeff(pair_coeff),
         )
 
     def initialize_neighbors_list(self) -> None:
