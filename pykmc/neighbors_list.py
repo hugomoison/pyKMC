@@ -24,11 +24,12 @@ class NeighborsList:
 
     """
 
-    def __init__(self, system: System, rnei: float, rcut: float = None) -> None:
+    def __init__(self, system: System, rnei: float, rcut: float | None = None) -> None:
         self.system = system
         self.rnei = rnei
         self.rcut = rcut
-        if rcut is not None : 
+        self.neighbors_list: dict[str, list[list[int]]]
+        if rcut is not None :
             self.neighbors_list = {"rnei": [], "rcut": []}
         else : 
             self.neighbors_list = {"rnei" : []}

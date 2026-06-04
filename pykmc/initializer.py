@@ -10,8 +10,7 @@ if TYPE_CHECKING:
     from .kmc import KMC
 from .log import LogKMC, LOGGING_CONFIG
 from .system import System
-from .neighbors_list import NeighborsList
-from .atomic_environment import AtomicEnvironment
+from .state import State
 from .event_table import ReferenceEventTable
 from .bias import DirectionBias, PointBias, TopoBias
 import pickle
@@ -69,28 +68,18 @@ class Initializer:
                 self.kmc.config.control.initial_config
             ),
         )
-        self.kmc.system = System.create_from_file(
+        system = System.create_from_file(
             self.kmc.config.control.initial_config
         )
+        self.kmc.state = State(system, self.kmc.config)
 
     def initialize_neighbors_list(self) -> None:
-        """Construct a new Neighbors List."""
+        """Log neighbour-list construction (the State builds it lazily)."""
         self.kmc.loggers.info("log", ":=> Constructing Neighbors Lists")
-        self.kmc.neighbors_list = NeighborsList(
-            self.kmc.system,
-            self.kmc.config.atomicenvironment.rnei,
-            self.kmc.config.atomicenvironment.rcut,
-        )
 
     def initialize_atomic_environments(self) -> None:
-        """Construct a new Atomic Environment."""
+        """Log atomic-environment construction (the State builds it lazily)."""
         self.kmc.loggers.info("log", ":=> Computing Atomic Environments")
-        self.kmc.atomic_environment = AtomicEnvironment(
-            self.kmc.config.atomicenvironment.style,
-            self.kmc.neighbors_list.neighbors_list["rnei"],
-            self.kmc.neighbors_list.neighbors_list["rcut"],
-            self.kmc.config.atomicenvironment.neighbors_add,
-        )
 
     def initialize_reference_table(self) -> None:
         """Initialize the Reference Event Table."""

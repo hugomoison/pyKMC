@@ -3,7 +3,8 @@
 This module defines the `KMC` class.
 """
 
-from pykmc import NeighborsList, AtomicEnvironment, ActiveEventTable, Config, Reconstruction
+from pykmc import NeighborsList, AtomicEnvironment, ActiveEventTable, Config, Reconstruction, System
+from .state import State
 import random
 from .result import (
     EventSearchOutput,
@@ -83,16 +84,34 @@ class KMC:
     def __init__(self, config: Config) -> None:
         self.config = config
         self.loggers = None
-        self.system = None
+        self.state: State | None = None
         self.manager = None
         self.engine = None
-        self.neighbors_list = None
-        self.atomic_environment = None
         self.reference_table = None
         self.visited_environments = None
         self.total_energy = None
         self.potential_energy = None
         self.bias: Bias | None = None
+
+    def _require_state(self) -> State:
+        """Return the State, asserting it has been initialized by the Initializer."""
+        assert self.state is not None, "State not initialized (run the Initializer first)."
+        return self.state
+
+    @property
+    def system(self) -> System:
+        """The atomic system, owned by the State coordinator."""
+        return self._require_state().system
+
+    @property
+    def neighbors_list(self) -> NeighborsList:
+        """Neighbour list derived from the current system (rebuilt lazily)."""
+        return self._require_state().neighbors_list
+
+    @property
+    def atomic_environment(self) -> AtomicEnvironment:
+        """Atomic-environment IDs derived from the current system (rebuilt lazily)."""
+        return self._require_state().atomic_environment
 
     def run(self) -> None:
         """Run the simulation."""
@@ -100,17 +119,6 @@ class KMC:
         #self._initialize()
         self.manager.initialize_sessions(self.config, self.system)
         self.minimize_system()
-        self.neighbors_list = NeighborsList(
-                self.system,
-                self.config.atomicenvironment.rnei,
-                self.config.atomicenvironment.rcut,
-            )
-        self.atomic_environment = AtomicEnvironment(
-                self.config.atomicenvironment.style,
-                self.neighbors_list.neighbors_list["rnei"],
-                self.neighbors_list.neighbors_list["rcut"],
-                self.config.atomicenvironment.neighbors_add,
-            )
         self.inactive_ae = (
             AtomicEnvironment(
                 style="region",
@@ -238,12 +246,11 @@ class KMC:
                 self.loggers.info("log","\t :=> Exploring the Basin." )
                 #get basin info/explore
                 basin = BasinsGenericEvents(self.config, self.reference_table, self.visited_environments, self.manager)
-                self.system.update_positions(result_reconstruction.ok_value().min1_positions)
+                self._require_state().set_positions(result_reconstruction.ok_value().min1_positions, sync=False)
                 result_basin = basin.execute(self.system)
                 if result_basin.is_ok() : #Basin did no fail
                 #move system to a state connected to the exit_state
-                    self.system.update_positions(result_basin.ok_value().initial_system_positions)
-                    self.neighbors_list = basin.states[result_basin.ok_value().from_state].neighbors_list
+                    self._require_state().set_positions(result_basin.ok_value().initial_system_positions, sync=False)
                 #construct new active table with only event : new_actual_state - > exit_state
                     tmp_active_table = ActiveEventTable(self.config)
                     tmp_event = EventRefinementOutput(central_atom_index=result_basin.ok_value().central_atom,
@@ -258,7 +265,7 @@ class KMC:
                     self.manager.use_global()
                     result_basin_reconstruction = self._reconstruction_active_event(0, tmp_active_table)
                     if result_basin_reconstruction.is_ok() :
-                        self.system.update_positions(result_basin_reconstruction.ok_value().min2_positions)
+                        self._require_state().set_positions(result_basin_reconstruction.ok_value().min2_positions, sync=False)
                         self.total_energy = result_basin_reconstruction.ok_value().min2_etot
                         delta_t = result_basin.ok_value().t_exit
                         ktot = result_basin.ok_value().k_tot
@@ -274,16 +281,16 @@ class KMC:
 
                     else :
                        self.loggers.info("log", "\t :=> Reconstruction Exit State Basin fails with error {}, back to original event".format(result_basin_reconstruction.err_value()))
-                       self.system.update_positions(basin.states[0].system.positions)
-                       self.system.update_positions(result_reconstruction.ok_value().min2_positions)
+                       self._require_state().set_positions(basin.states[0].system.positions, sync=False)
+                       self._require_state().set_positions(result_reconstruction.ok_value().min2_positions, sync=False)
                 else :
                     self.loggers.info("log", "\t :=> Basin fails with error : {}, back to original event".format(result_basin.err_value()))
-                    self.system.update_positions(result_reconstruction.ok_value().min2_positions)
+                    self._require_state().set_positions(result_reconstruction.ok_value().min2_positions, sync=False)
                 if basin.connectivity_table is not None :
                     basin.connectivity_table.save('basin_connectivity_'+str(step)+'.pickle')
                 #update delta_t, ktot (use basin infos)
             else :
-                self.system.update_positions(result_reconstruction.ok_value().min2_positions)
+                self._require_state().set_positions(result_reconstruction.ok_value().min2_positions, sync=False)
                 self.total_energy = result_reconstruction.ok_value().min2_etot
             total_time += delta_t * 10**-12  # time is in seconds
 
@@ -330,18 +337,8 @@ class KMC:
                 elapsed_real
             )
 
-            # == Update variables ==
-            self.neighbors_list = NeighborsList(
-                self.system,
-                self.config.atomicenvironment.rnei,
-                self.config.atomicenvironment.rcut,
-            )
-            self.atomic_environment = AtomicEnvironment(
-                self.config.atomicenvironment.style,
-                self.neighbors_list.neighbors_list["rnei"],
-                self.neighbors_list.neighbors_list["rcut"],
-                self.config.atomicenvironment.neighbors_add,
-            )
+            # == Update derived state (neighbour list + atomic environment) ==
+            self._require_state().sync()
             self.inactive_ae = (
                 AtomicEnvironment(
                     style="region",
@@ -603,14 +600,14 @@ class KMC:
 
 
         #Move the system to the saddle point
-        self.system.update_positions(new_positions= saddle_positions, atom_idx = neighbors)
+        self._require_state().set_positions(saddle_positions, atom_idx=neighbors, sync=False)
 
         #try to reconstruct
         result = Reconstruction(self.config, self.manager, types=self.system.types).reconstruct(supposed_initial_positions, supposed_final_positions, self.system.positions, self.system.cell, self.config.psr.matching_score_thr, neighbors)
         #result with min1, saddle, min2 pos
 
         #Back to original positions, in case reconstruction fails
-        self.system.update_positions(new_positions = supposed_initial_positions, atom_idx = neighbors)
+        self._require_state().set_positions(supposed_initial_positions, atom_idx=neighbors, sync=False)
         return result
 
     def _apply_event(
@@ -627,7 +624,7 @@ class KMC:
 
         """
         new_positions = active_table.table.loc[idx_selected_event].at["final_positions"]
-        self.system.update_positions(new_positions)
+        self._require_state().set_positions(new_positions, sync=False)
 
     def minimize_system(self, positions = None) -> None:
         """Minimize the system and update its positions."""
@@ -642,7 +639,7 @@ class KMC:
         #np.savetxt('before_min.dat', self.system.positions)
         #np.savetxt('after_min.dat', new_positions)
         if self.config.control.restart_file is None :
-            self.system.update_positions(new_positions)
+            self._require_state().set_positions(new_positions, sync=False)
         self.total_energy = total_energy
         self.potential_energy = self.manager.global_get_potential_energy()
 
