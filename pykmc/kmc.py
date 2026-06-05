@@ -189,6 +189,7 @@ class KMC:
             if self.inactive_ae is not None:
                 inactive_set = set(self.inactive_ae.get_atoms_with_id("in"))
                 search_results = [r for r in search_results if r.move_atom_index not in inactive_set]
+            self.attach_prefactors(search_results)
             results_is_valid_events = self.add_reference_events(search_results)
 
             ##=>Close simulation if no events in the reference table
@@ -478,6 +479,47 @@ class KMC:
             ),
         )
         return results_is_valid_events
+
+    def attach_prefactors(self, search_results: list[EventSearchOutput]) -> None:
+        """Compute the Vineyard prefactor nu0 per reference event (HTST style only).
+
+        No-op unless ``rateconstant.style == "htst"``. Runs inside the loop's
+        local-mode window: fans one nu0 job per event across the session pool
+        (mirroring the search), then stores ``nu0_forward``/``nu0_backward`` on
+        each EventSearchOutput. Events whose nu0 cannot be computed keep None
+        (so the rate falls back to k0) and are logged to the htst diagnostics.
+
+        Parameters
+        ----------
+        search_results : list[EventSearchOutput]
+            Successful event searches for this step (mutated in place).
+
+        """
+        if self.config.rateconstant.style != "htst":
+            return
+        payloads = [
+            {
+                "central_atom_idx": ev.move_atom_index,
+                "min1_positions": ev.min1_positions,
+                "saddle_positions": ev.saddle_positions,
+                "min2_positions": ev.min2_positions,
+                "types": self.system.types.copy(),
+                "cell": self.system.cell.copy(),
+            }
+            for ev in search_results
+        ]
+        futures = self.manager.compute_event_prefactors(self.config, payloads)
+        for ev, fut in zip(search_results, futures, strict=False):
+            pre = fut.result()
+            ev.nu0_forward = pre.nu0_forward
+            ev.nu0_backward = pre.nu0_backward
+            if pre.nu0_forward is None or pre.nu0_backward is None:
+                self.loggers.info(
+                    "log",
+                    "\t :=> [htst] nu0 fallback to k0 (move atom {}): {}".format(
+                        ev.move_atom_index, pre.reason
+                    ),
+                )
 
     def execute_refinements(self, df_reference_events: pd.DataFrame) -> Refinement:
         """Refine all events in df_reference_events for all atoms on which they can be apply.

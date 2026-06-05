@@ -28,6 +28,10 @@
   <details><summary>Description</summary>
   Path to a list of visited environment generated from a previous simulation.
   </details>
+- **`restart_file`** : `str`, optional
+  <details><summary>Description</summary>
+  File with restart informations.
+  </details>
 - **`reconstruction`** : `bool`, default = `True`
   <details><summary>Description</summary>
   If at each KMC step we reconstruct generic events.
@@ -45,17 +49,29 @@
   <details><summary>Description</summary>
   Number of Sessions
   </details>
-- **`engine_use_rank_0`** : `bool`, default = `True`
+- **`engine_use_rank_0`** : `bool`, default = `False`
   <details><summary>Description</summary>
-  If use mpi rank 0 or not.
+  Deprecated : If use mpi rank 0 or not.
   </details>
 - **`verbosity`** : `int`, default = `1`
   <details><summary>Description</summary>
   Controls the level of detail in the simulation output.
   </details>
-- **`refine_thr`** : `int`, default = `0.99`
+- **`refine_thr`** : `float`, default = `0.9999`
   <details><summary>Description</summary>
   Event constributing to this percent of ktot are refined.
+  </details>
+- **`basin`** : `bool`, default = `False`
+  <details><summary>Description</summary>
+  Basin mode
+  </details>
+- **`active_volume`** : `bool`, default = `False`
+  <details><summary>Description</summary>
+  Incorporate AV's into simulations, recommended for large systems
+  </details>
+- **`bias`** : `bool`, default = `False`
+  <details><summary>Description</summary>
+  Enable event selection bias. Requires a [Bias] section.
   </details>
 
 ---
@@ -107,7 +123,7 @@
   <details><summary>Description</summary>
   Minimum energy forward and backward barrier (in eV) for an event to be added to the reference table.
   </details>
-- **`backward_emin_event`** : `float`, default = `0.05`
+- **`backward_emin_event`** : `float`, default = `0.0`
   <details><summary>Description</summary>
   To be used with `energy_assymetry`.
   </details>
@@ -119,7 +135,7 @@
   <details><summary>Description</summary>
   Refinement is accepted only if the central atom moves less than this distance between the current position and the refined minimum.
   </details>
-- **`refined_energy_thr`** : `float`, default = `0.2`
+- **`refined_energy_thr`** : `float`, default = `0.05`
   <details><summary>Description</summary>
   Maximumallowed difference (in eV) between a reference event's initial barrier energy and its refined barrier energy.
   </details>
@@ -151,20 +167,47 @@
 
 <details><summary>Section Overview</summary>
   Rate constant computation parameters.
+  
+  Two prefactor styles are available:
+  
+  - ``constant``: ``k = k0 * exp(-dE / (kb*T))`` with a user-set ``k0``.
+  - ``htst``: ``k = nu0 * exp(-dE / (kb*T))`` with the Vineyard harmonic
+    prefactor ``nu0`` computed per reference event from partial Hessians at
+    the minimum and saddle. Falls back to ``k0`` per event when nu0 cannot be
+    computed (logged to the htst diagnostics file).
 </details>
 
-- **`style`** : `Literal['constant']`, mandatory
+- **`style`** : `Literal['constant', 'htst']`, mandatory
   <details><summary>Description</summary>
-  Method used to compute the prefactor of the rate constant. 
+  Prefactor method: 'constant' (fixed k0) or 'htst' (Vineyard nu0 per event).
   </details>
 - **`k0`** : `float`, default = `1.0`
   <details><summary>Description</summary>
-  When `style` is set to **'constant'**, this value is used directly as the pre-exponential factor ($k_0$) 
-  $$ k = k_{0} \exp\left(-\frac{\Delta E}{k_{b}T}\right) $$
+  Pre-exponential factor for 'constant' style, and the per-event fallback for 'htst'. $$ k = k_{0} \exp\left(-\frac{\Delta E}{k_{b}T}\right) $$
   </details>
 - **`T`** : `float`, default = `300`
   <details><summary>Description</summary>
   Temperature (in Kelvin) used for computing rate constants.
+  </details>
+- **`free_radius`** : `float`, default = `6.0`
+  <details><summary>Description</summary>
+  HTST: radius (Angstrom) around the moving atom defining the free (movable) atoms in the partial Hessian.
+  </details>
+- **`fd_step`** : `float`, default = `0.01`
+  <details><summary>Description</summary>
+  HTST: central-difference displacement (Angstrom) for the finite-difference Hessian.
+  </details>
+- **`nu0_min_THz`** : `float`, default = `1.0`
+  <details><summary>Description</summary>
+  HTST: lower acceptance bound for nu0 (THz); below this the event falls back to k0.
+  </details>
+- **`nu0_max_THz`** : `float`, default = `100.0`
+  <details><summary>Description</summary>
+  HTST: upper acceptance bound for nu0 (THz); above this the event falls back to k0.
+  </details>
+- **`require_one_negative_mode`** : `bool`, default = `True`
+  <details><summary>Description</summary>
+  HTST: require exactly one negative saddle mode; otherwise fall back to k0 for that event.
   </details>
 
 ---
@@ -208,6 +251,10 @@
   <details><summary>Description</summary>
   Threshold at which an atom is considered to have moved. This threshold affects the npart parameter in the artn.out output.
   </details>
+- **`evalf_max`** : `int`, default = `9999`
+  <details><summary>Description</summary>
+  to stop an artn search before end when the number of force evaluations by the force engine is greater to nevalf_max.
+  </details>
 - **`zseed`** : `int`, default = `0`
   <details><summary>Description</summary>
   The value of zseed is used to seed the random number generator. If the value equals 0, a new radom seed gets geenrated. The exact zseed value of each research is written in file zseed.dat, which can be useful for debugging, or re-running exact same pARTn runs.
@@ -230,11 +277,11 @@
   <details><summary>Description</summary>
   Specify the minimal number of pushes with the initial push vector.
   </details>
-- **`lanczos_min_size`** : `float`, default = `10`
+- **`lanczos_min_size`** : `int`, default = `10`
   <details><summary>Description</summary>
   Enforce Lanczos to always do at least this number of iterations.
   </details>
-- **`lanczos_max_size`** : `float`, default = `20`
+- **`lanczos_max_size`** : `int`, default = `20`
   <details><summary>Description</summary>
   Maximum number of Lanczos iterations.
   </details>
@@ -242,7 +289,7 @@
   <details><summary>Description</summary>
   Scaling factor for displacement during the Lanczos algorithm
   </details>
-- **`lanczos_eval_conv_thr`** : `float`, default = `0.01`
+- **`lanczos_eval_conv_thr`** : `float`, default = `0.001`
   <details><summary>Description</summary>
   Threshold for convergence of eigenvalue in Lanczos. Once convergence is reached, the Lanczos scheme exits.
   </details>
@@ -286,7 +333,7 @@
   <details><summary>Description</summary>
   Specify how to test convergence of the forces. 'maxval': the convergence will be tested by MAXVAL( ABS( force ) ); 'norm' the convergence will be tested by NORM2( force ).
   </details>
-- **`nevalf_max`** : `int`, default = `9999`
+- **`nevalf_max`** : `int`, default = `500`
   <details><summary>Description</summary>
   Stop an artn search before end when the number of force evaluations by the force engine is greater to nevalf_max
   </details>
@@ -302,6 +349,18 @@
 - **`path_artnso`** : `str`, mandatory
   <details><summary>Description</summary>
   Path to use to load the plugin with lammps command 'plugin load /path/to/artn-plugin/libartn.so'
+  </details>
+- **`r_evalf_max`** : `int`, default = `300`
+  <details><summary>Description</summary>
+  to stop an artn refinement before end when the number of force evaluations by the force engine is greater to nevalf_max.
+  </details>
+- **`r_max_attempts`** : `int`, default = `5`
+  <details><summary>Description</summary>
+  When adjusting the saddle energy and positions, in some rare cases partn has trouble finding the saddle point and goes back to the minium.In that case, we do another attempt with a different seed.
+  </details>
+- **`r_delr_sad_thr`** : `float`, default = `0.4`
+  <details><summary>Description</summary>
+  When a saddle point is found by pARTn, we compare artn delr_sad to this threshold to check if the system went back to the minimum. If yes, new attempt.
   </details>
 - **`r_push_mode`** : `Literal['list', 'rad']`, default = `'list'`
   <details><summary>Description</summary>
@@ -321,11 +380,11 @@
   <details><summary>Description</summary>
   Refinement: Specify the minimal number of pushes with the initial push vector.
   </details>
-- **`r_lanczos_min_size`** : `float`, default = `20`
+- **`r_lanczos_min_size`** : `int`, default = `20`
   <details><summary>Description</summary>
   Refinement: Enforce Lanczos to always do at least this number of iterations.
   </details>
-- **`r_lanczos_max_size`** : `float`, default = `50`
+- **`r_lanczos_max_size`** : `int`, default = `50`
   <details><summary>Description</summary>
   Refinement: Maximum number of Lanczos iterations.
   </details>
@@ -333,7 +392,7 @@
   <details><summary>Description</summary>
   Refinement: Scaling factor for displacement during the Lanczos algorithm
   </details>
-- **`r_lanczos_eval_conv_thr`** : `float`, default = `0.01`
+- **`r_lanczos_eval_conv_thr`** : `float`, default = `0.001`
   <details><summary>Description</summary>
   Threshold for convergence of eigenvalue in Lanczos. Once convergence is reached, the Lanczos scheme exits.
   </details>
@@ -393,6 +452,203 @@
 - **`sym_thr`** : `float`, default = `0.01`
   <details><summary>Description</summary>
   Threshold in terms of the Hausdorff distance. If an operation returns a distance value beyond sym_thr, then SOFI will not consider that operation as a symmetry operation.
+  </details>
+
+---
+
+## `Basin` Section (optional)
+
+<details><summary>Section Overview</summary>
+  Basin parameters
+</details>
+
+- **`energy_thr`** : `float`, default = `0.0`
+  <details><summary>Description</summary>
+  Energy threshold
+  </details>
+
+---
+
+## `Activevolume` Section (optional)
+
+<details><summary>Section Overview</summary>
+  Active Volume Parameters
+</details>
+
+- **`ract`** : `float`, default = `6.0`
+  <details><summary>Description</summary>
+  Radius of entire active volume, spherical
+  </details>
+- **`rmov`** : `float`, default = `4.0`
+  <details><summary>Description</summary>
+  Radius of movable atoms in active volume, spherical
+  </details>
+- **`AV_debug`** : `bool`, default = `False`
+  <details><summary>Description</summary>
+  Debug flag for active volume size checks
+  </details>
+
+---
+
+## `Inactive_atoms` Section (optional)
+
+<details><summary>Section Overview</summary>
+  Selects atoms by type, index, or geometric region (union semantics).
+  
+  Used for ``inactive_atoms`` and ``frozen_atoms`` config sections.
+  Runtime geometric queries (e.g. ``contains(positions)``) live in
+  ``pykmc/region.py``.
+</details>
+
+- **`region_type`** : `Literal['sphere', 'shell', 'box', 'plane']`, optional
+  <details><summary>Description</summary>
+  Shape of the geometric region.
+  </details>
+- **`center`** : `list[float]`, optional
+  <details><summary>Description</summary>
+  Center [x, y, z] for sphere or shell regions.
+  </details>
+- **`radius`** : `float`, optional
+  <details><summary>Description</summary>
+  Outer radius for sphere or shell regions.
+  </details>
+- **`inner_radius`** : `float`, optional
+  <details><summary>Description</summary>
+  Inner (hollow) radius for shell regions.
+  </details>
+- **`lo`** : `list[float]`, optional
+  <details><summary>Description</summary>
+  Lower corner [xlo, ylo, zlo] for box regions.
+  </details>
+- **`hi`** : `list[float]`, optional
+  <details><summary>Description</summary>
+  Upper corner [xhi, yhi, zhi] for box regions.
+  </details>
+- **`normal`** : `Literal['x', 'y', 'z']`, optional
+  <details><summary>Description</summary>
+  Axis normal to the cutting plane.
+  </details>
+- **`threshold`** : `float`, optional
+  <details><summary>Description</summary>
+  Position along the normal axis defining the plane.
+  </details>
+- **`side`** : `Literal['inside', 'outside', 'above', 'below']`, default = `'inside'`
+  <details><summary>Description</summary>
+  Membership side: 'inside'/'outside' for sphere/shell/box, 'above'/'below' for plane.
+  </details>
+- **`types`** : `list[str]`, default = `PydanticUndefined`
+  <details><summary>Description</summary>
+  Chemical symbols of atom types to select (e.g. ['Fe', 'O']).
+  </details>
+- **`indices`** : `list[int]`, default = `PydanticUndefined`
+  <details><summary>Description</summary>
+  0-based atom indices to select.
+  </details>
+
+---
+
+## `Frozen_atoms` Section (optional)
+
+<details><summary>Section Overview</summary>
+  Selects atoms by type, index, or geometric region (union semantics).
+  
+  Used for ``inactive_atoms`` and ``frozen_atoms`` config sections.
+  Runtime geometric queries (e.g. ``contains(positions)``) live in
+  ``pykmc/region.py``.
+</details>
+
+- **`region_type`** : `Literal['sphere', 'shell', 'box', 'plane']`, optional
+  <details><summary>Description</summary>
+  Shape of the geometric region.
+  </details>
+- **`center`** : `list[float]`, optional
+  <details><summary>Description</summary>
+  Center [x, y, z] for sphere or shell regions.
+  </details>
+- **`radius`** : `float`, optional
+  <details><summary>Description</summary>
+  Outer radius for sphere or shell regions.
+  </details>
+- **`inner_radius`** : `float`, optional
+  <details><summary>Description</summary>
+  Inner (hollow) radius for shell regions.
+  </details>
+- **`lo`** : `list[float]`, optional
+  <details><summary>Description</summary>
+  Lower corner [xlo, ylo, zlo] for box regions.
+  </details>
+- **`hi`** : `list[float]`, optional
+  <details><summary>Description</summary>
+  Upper corner [xhi, yhi, zhi] for box regions.
+  </details>
+- **`normal`** : `Literal['x', 'y', 'z']`, optional
+  <details><summary>Description</summary>
+  Axis normal to the cutting plane.
+  </details>
+- **`threshold`** : `float`, optional
+  <details><summary>Description</summary>
+  Position along the normal axis defining the plane.
+  </details>
+- **`side`** : `Literal['inside', 'outside', 'above', 'below']`, default = `'inside'`
+  <details><summary>Description</summary>
+  Membership side: 'inside'/'outside' for sphere/shell/box, 'above'/'below' for plane.
+  </details>
+- **`types`** : `list[str]`, default = `PydanticUndefined`
+  <details><summary>Description</summary>
+  Chemical symbols of atom types to select (e.g. ['Fe', 'O']).
+  </details>
+- **`indices`** : `list[int]`, default = `PydanticUndefined`
+  <details><summary>Description</summary>
+  0-based atom indices to select.
+  </details>
+
+---
+
+## `Bias` Section (optional)
+
+<details><summary>Section Overview</summary>
+  Event selection bias parameters.
+</details>
+
+- **`style`** : `Literal['direction', 'point', 'topo']`, mandatory
+  <details><summary>Description</summary>
+  Bias style: 'direction' (DirectionBias), 'point' (PointBias), or 'topo' (TopoBias).
+  </details>
+- **`mode`** : `Literal['filter', 'boost']`, default = `'filter'`
+  <details><summary>Description</summary>
+  Selection mode. 'filter': rejection-loop removes non-accepted events. 'boost': multiplies desired event rates by a dynamic factor so they fire with probability bias_weight, without blocking other events.
+  </details>
+- **`bias_weight`** : `float`, default = `0.5`
+  <details><summary>Description</summary>
+  Target probability in (0, 1) that a desired event is selected at each step. Only used in boost mode.
+  </details>
+- **`pass_unlisted`** : `bool`, default = `False`
+  <details><summary>Description</summary>
+  Whether atoms not in atom_indices pass through the bias predicate unchanged. False (default): non-listed atoms are rejected/undesired. True: non-listed atoms always pass; only valid in filter mode.
+  </details>
+- **`direction`** : `list[float]`, optional
+  <details><summary>Description</summary>
+  Direction vector [x, y, z] for 'direction' bias.
+  </details>
+- **`target_point`** : `list[float]`, optional
+  <details><summary>Description</summary>
+  Target point [x, y, z] for 'point' bias.
+  </details>
+- **`atom_indices`** : `list[int]`, optional
+  <details><summary>Description</summary>
+  Global atom indices to bias. None means all atoms.
+  </details>
+- **`threshold`** : `float`, default = `0.0`
+  <details><summary>Description</summary>
+  Minimum projection onto the bias direction for acceptance.
+  </details>
+- **`topo_source`** : `str`, optional
+  <details><summary>Description</summary>
+  Source topology ID for 'topo' bias (e.g. vacancy).
+  </details>
+- **`topo_target`** : `str`, optional
+  <details><summary>Description</summary>
+  Target topology ID for 'topo' bias (e.g. interstitial).
   </details>
 
 ---

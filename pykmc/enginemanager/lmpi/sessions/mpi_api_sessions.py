@@ -245,9 +245,38 @@ class MpiApiSession :
         try :
             self.send_message({"type": "partn_refine", "value": {"config": config, "central_atom_idx": central_atom_idx, "positions": positions, "cell":cell, "types":types, "saddle_idx":saddle_idx, "saddle_positions":saddle_positions}})
             msg = self.messenger.recv(source=self.engine_master_rank, tag=1)
-            if msg.get("type") == "result" : 
+            if msg.get("type") == "result" :
                 return msg["value"]
-            else : 
+            else :
                 raise RuntimeError(f"Unexpected message type: {msg}")
-        finally : 
+        finally :
+            self._is_busy = False
+
+    def compute_event_prefactors(
+        self, config, central_atom_idx, min1_positions, saddle_positions,
+        min2_positions, types, cell,
+    ):
+        """Request per-event Vineyard nu0 from the engine (returns EventPrefactors)."""
+        self._is_busy = True
+        try:
+            self.send_message(
+                {
+                    "type": "compute_event_prefactors",
+                    "value": {
+                        "config": config,
+                        "central_atom_idx": central_atom_idx,
+                        "min1_positions": min1_positions,
+                        "saddle_positions": saddle_positions,
+                        "min2_positions": min2_positions,
+                        "types": types,
+                        "cell": cell,
+                    },
+                }
+            )
+            msg = self.messenger.recv(source=self.engine_master_rank, tag=1)
+            if msg.get("type") == "result":
+                return msg["value"]
+            else:
+                raise RuntimeError(f"Unexpected message type: {msg}")
+        finally:
             self._is_busy = False

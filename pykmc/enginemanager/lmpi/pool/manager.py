@@ -180,6 +180,19 @@ class Manager:
         future = self.submit_job("partn_refine", {"config": config, "central_atom_idx": central_atom, "positions": positions, "cell":cell, "types":types, "saddle_idx":saddle_idx, "saddle_positions":saddle_positions})
         return future
 
+    def compute_event_prefactors(self, config, events: list[dict]) -> list[Future]:
+        """Fan out one per-event Vineyard nu0 job per event across the session pool.
+
+        Each item in ``events`` is a dict with keys: central_atom_idx,
+        min1_positions, saddle_positions, min2_positions, types, cell.
+        Mirrors ``partn_search`` (one submit_job per work item).
+        """
+        futures = []
+        for ev in events:
+            f = self.submit_job("compute_event_prefactors", {"config": config, **ev})
+            futures.append(f)
+        return futures
+
     def close_all(self):
         """
         Close all sessions and their underlying engines.

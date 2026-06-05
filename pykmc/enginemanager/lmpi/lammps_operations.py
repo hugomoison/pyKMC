@@ -16,6 +16,8 @@ from ...result import  (
     ErrorType,
     EventRefinementOutput,
 )
+from pykmc.htst.prefactor import compute_event_prefactors as _compute_event_prefactors
+from pykmc.htst.constants import thz_to_hz
 
 
 def initialize_parameters(engine) : 
@@ -101,6 +103,58 @@ def get_positions(engine) :
         result = np.ctypeslib.as_array(result)
         result = np.reshape(result, (-1, 3))
         return result
+
+def get_forces(engine, positions=None):
+    if positions is not None:
+        set_positions(engine=engine, positions=positions)
+    engine.command("run 0")
+    result = engine.lmp.gather_atoms("f", 1, 3)
+    if engine.rank == 0:
+        result = np.ctypeslib.as_array(result)
+        result = np.reshape(result, (-1, 3))
+        return result
+
+
+def compute_event_prefactors(
+    engine,
+    config,
+    central_atom_idx,
+    min1_positions,
+    saddle_positions,
+    min2_positions,
+    types,
+    cell,
+):
+    """Per-event Vineyard nu0 on one session: binds get_forces to the orchestrator.
+
+    Runs entirely on this engine; concurrency comes from one job per event
+    (see Manager.compute_event_prefactors). Never raises — returns an
+    EventPrefactors whose nu0_* are None on any failure.
+    """
+    rc = config.rateconstant
+
+    def forces_fn(pos):
+        return get_forces(engine, pos)
+
+    # pyKMC production systems are fully periodic; the free-region selector only
+    # needs box lengths from `cell`.
+    pbc = np.array([True, True, True])
+    return _compute_event_prefactors(
+        forces_fn=forces_fn,
+        min1=min1_positions,
+        saddle=saddle_positions,
+        min2=min2_positions,
+        types=list(types),
+        central_index=int(central_atom_idx),
+        free_radius=rc.free_radius,
+        fd_step=rc.fd_step,
+        cell=cell,
+        pbc=pbc,
+        nu0_min_hz=thz_to_hz(rc.nu0_min_THz),
+        nu0_max_hz=thz_to_hz(rc.nu0_max_THz),
+        require_one_negative_mode=rc.require_one_negative_mode,
+    )
+
 
 def get_types(engine) -> list[str]:
     int_types = engine.lmp.gather_atoms("type", 0, 1)
