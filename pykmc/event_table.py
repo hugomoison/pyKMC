@@ -2,7 +2,7 @@
 
 from typing import Optional
 import pandas as pd
-from .rate_constant import compute_rate
+from .rate_constant import make_rate_constant
 from .config import Config
 import numpy as np
 from .environments.graph_nauty import graph
@@ -34,6 +34,7 @@ class ReferenceEventTable:
 
     def __init__(self, config: Config) -> None:
         self.config = config
+        self.rate_constant = make_rate_constant(config)
         self._initialize_table()
 
     def add_events(
@@ -468,7 +469,7 @@ class ReferenceEventTable:
                 "saddle_positions": saddle_positions[neighbor_list_forwward],
                 "final_positions": min2_positions[neighbor_list_forwward],
                 "energy_barrier": dE_forward,
-                "k": compute_rate(dE_forward, self.config, nu0=nu0_forward),
+                "k": self.rate_constant.compute(dE_forward, nu0=nu0_forward),
                 "nu0": nu0_forward,
                 "id_saddle": id_saddle,
                 "id_final": id_min2,
@@ -493,7 +494,7 @@ class ReferenceEventTable:
                 "saddle_positions": saddle_positions[neighbor_list_backward],
                 "final_positions": min1_positions[neighbor_list_backward],
                 "energy_barrier": dE_backward,
-                "k": compute_rate(dE_backward, self.config, nu0=nu0_backward),
+                "k": self.rate_constant.compute(dE_backward, nu0=nu0_backward),
                 "nu0": nu0_backward,
                 "id_saddle": id_saddle,
                 "id_final": id_min1,
@@ -582,6 +583,7 @@ class ActiveEventTable:
 
     def __init__(self, config: Config, event_dataframe: pd.DataFrame = None):
         self.config = config
+        self.rate_constant = make_rate_constant(config)
 
         if event_dataframe is not None:
             if not isinstance(event_dataframe, pd.DataFrame):
@@ -675,7 +677,7 @@ class ActiveEventTable:
                 "saddle_positions": event_refinement_output.saddle_positions,
                 "final_positions": event_refinement_output.min2_positions,
                 "energy_barrier": event_refinement_output.dE_forward,
-                "k": compute_rate(event_refinement_output.dE_forward, self.config, nu0=event_refinement_output.nu0),
+                "k": self.rate_constant.compute(event_refinement_output.dE_forward, nu0=event_refinement_output.nu0),
                 "num_reference_event": event_refinement_output.num_reference_event,
                 "refined": event_refinement_output.refined
             }
