@@ -133,14 +133,15 @@ def compute_event_prefactors(
     """
     rc = config.rateconstant
 
-    def forces_fn(pos):
-        return get_forces(engine, pos)
+    def hessian_fn(positions, free_indices):
+        return dynamical_matrix_eskm(engine, positions, free_indices=free_indices)
 
     # pyKMC production systems are fully periodic; the free-region selector only
     # needs box lengths from `cell`.
     pbc = np.array([True, True, True])
     return _compute_event_prefactors(
-        forces_fn=forces_fn,
+        forces_fn=None,
+        hessian_fn=hessian_fn,
         min1=min1_positions,
         saddle=saddle_positions,
         min2=min2_positions,
@@ -174,7 +175,7 @@ def dynamical_matrix_eskm(engine, positions, free_indices=None, dx=1e-5):
         group, nat = "g_dyn", len(free)
     else:
         group, nat = "all", int(engine.lmp.get_natoms())
-    tmp = f"/tmp/pykmc_dynmat.{engine.engine_id}.dat"
+    tmp = f"/tmp/pykmc_dynmat.{getattr(engine, 'engine_id', 0)}.dat"
     engine.command(f"dynamical_matrix {group} eskm {dx} file {tmp}")
     if free_indices is not None:
         engine.command("group g_dyn delete")

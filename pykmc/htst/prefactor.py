@@ -39,7 +39,7 @@ def _masses_for(types: list[str]) -> np.ndarray:
 
 
 def compute_event_prefactors(
-    forces_fn: Callable[[np.ndarray], np.ndarray],
+    forces_fn: Optional[Callable[[np.ndarray], np.ndarray]],
     min1: np.ndarray,
     saddle: np.ndarray,
     min2: np.ndarray,
@@ -52,6 +52,8 @@ def compute_event_prefactors(
     nu0_min_hz: float,
     nu0_max_hz: float,
     require_one_negative_mode: bool,
+    *,
+    hessian_fn: Optional[Callable[[np.ndarray, np.ndarray], np.ndarray]] = None,
 ) -> EventPrefactors:
     """Compute forward/backward ν₀ (Hz) for one reference event. Never raises.
 
@@ -76,6 +78,11 @@ def compute_event_prefactors(
     require_one_negative_mode : bool
         Reserved. ``vineyard_prefactor`` already requires exactly one negative
         saddle mode in v1, so a bad saddle always falls back regardless.
+    hessian_fn : Callable, optional
+        ``(positions, free_indices) -> mass-weighted Hessian`` [eV/(amu·Å²)].
+        When given, supplies the Hessian directly (e.g. LAMMPS
+        ``dynamical_matrix``) and ``forces_fn`` may be None; otherwise the
+        finite-difference Hessian built from ``forces_fn`` is used.
 
     Returns
     -------
@@ -95,15 +102,24 @@ def compute_event_prefactors(
     masses = _masses_for(types)
     free = select_free_indices(min1, central_index, free_radius, cell, pbc)
 
+    if hessian_fn is None:
+        # Default: finite-difference mass-weighted partial Hessian from forces.
+        def _fd_hessian(geom: np.ndarray, free_idx: np.ndarray) -> np.ndarray:
+            return mass_weighted_partial_hessian(forces_fn, geom, masses, free_idx, fd_step)
+
+        hessian = _fd_hessian
+    else:
+        hessian = hessian_fn
+
     def _bounded(nu0: float) -> Optional[float]:
         if not np.isfinite(nu0) or nu0 < nu0_min_hz or nu0 > nu0_max_hz:
             return None
         return nu0
 
     try:
-        h_min1 = mass_weighted_partial_hessian(forces_fn, min1, masses, free, fd_step)
-        h_sad = mass_weighted_partial_hessian(forces_fn, saddle, masses, free, fd_step)
-        h_min2 = mass_weighted_partial_hessian(forces_fn, min2, masses, free, fd_step)
+        h_min1 = hessian(min1, free)
+        h_sad = hessian(saddle, free)
+        h_min2 = hessian(min2, free)
         # Frozen-boundary partial Hessian -> no translational zero modes -> n_zero_modes=0.
         nu0_f = _bounded(vineyard_prefactor(h_min1, h_sad, n_zero_modes=0))
         nu0_b = _bounded(vineyard_prefactor(h_min2, h_sad, n_zero_modes=0))
