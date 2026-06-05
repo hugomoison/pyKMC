@@ -468,9 +468,10 @@ class RateConstantConfig(BaseModel):
       computed (logged to the htst diagnostics file).
     """
 
-    style: Literal["constant", "htst"] = Field(
+    style: Literal["constant", "htst", "rpa"] = Field(
         default=...,
-        description="Prefactor method: 'constant' (fixed k0) or 'htst' (Vineyard nu0 per event).",
+        description="Prefactor method: 'constant' (fixed k0), 'htst' (Vineyard nu0 "
+        "per event), or 'rpa' (HTST + recrossing; bare-Vineyard until kappa lands).",
     )
     k0: float = Field(
         default=1.0,
