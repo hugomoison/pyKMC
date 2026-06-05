@@ -17,7 +17,7 @@ from ...result import  (
     EventRefinementOutput,
 )
 from pykmc.htst.prefactor import compute_event_prefactors as _compute_event_prefactors
-from pykmc.htst.constants import thz_to_hz
+from pykmc.htst.constants import thz_to_hz, ESKM_DIV_EV_AMU_A2
 
 
 def initialize_parameters(engine) : 
@@ -154,6 +154,43 @@ def compute_event_prefactors(
         nu0_max_hz=thz_to_hz(rc.nu0_max_THz),
         require_one_negative_mode=rc.require_one_negative_mode,
     )
+
+
+def dynamical_matrix_eskm(engine, positions, free_indices=None, dx=1e-5):
+    """Mass-weighted Hessian at ``positions`` via LAMMPS ``dynamical_matrix eskm``.
+
+    Computes the Hessian in-LAMMPS (a C++ finite difference per DOF) instead of
+    the Python force loop. When ``free_indices`` is given, only those atoms
+    vibrate (a LAMMPS group); the rest stay fixed at ``positions`` as the frozen
+    boundary. Returns the Hessian in eV/(amu·Å²) on rank 0 (a drop-in for
+    ``mass_weighted_partial_hessian``); ``None`` on other ranks.
+    """
+    set_positions(engine, positions)
+    engine.command("run 0")  # rebuild neighbour lists after the scatter
+    if free_indices is not None:
+        free = np.asarray(free_indices, dtype=int)
+        ids = " ".join(str(i + 1) for i in free)  # 1-based LAMMPS ids
+        engine.command(f"group g_dyn id {ids}")
+        group, nat = "g_dyn", len(free)
+    else:
+        group, nat = "all", int(engine.lmp.get_natoms())
+    tmp = f"/tmp/pykmc_dynmat.{engine.engine_id}.dat"
+    engine.command(f"dynamical_matrix {group} eskm {dx} file {tmp}")
+    if free_indices is not None:
+        engine.command("group g_dyn delete")
+    if engine.rank != 0:
+        return None
+    data = np.loadtxt(tmp)
+    dim = 3 * nat
+    hessian = np.empty((dim, dim))
+    for i in range(dim):
+        hessian[i] = data[i * nat:(i + 1) * nat].reshape(-1)
+    hessian /= ESKM_DIV_EV_AMU_A2
+    try:
+        os.remove(tmp)
+    except OSError:
+        pass
+    return 0.5 * (hessian + hessian.T)
 
 
 def get_types(engine) -> list[str]:

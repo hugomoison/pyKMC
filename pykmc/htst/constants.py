@@ -14,6 +14,12 @@ HBAR_EV_S = 6.582119569e-16  # ℏ in eV·s (needed by the vendored vineyard_pre
 ZERO_MODE_TOL_EV2 = 1.0e-6  # |λ| below this is a projected-out zero mode
 KB_EV_PER_K = 8.617333e-5  # eV/K (matches pyKMC PhysicalConstants.kb)
 
+# LAMMPS ``dynamical_matrix ... eskm`` (metal units) writes the mass-weighted
+# Hessian scaled by conv_energy = 9648.5 so its eigenvalues are (rad/ps)^2.
+# Divide the matrix by this to recover eV/(amu·Å²) — the convention used by
+# ``normal_modes_from_hessian`` / ``vineyard_prefactor`` (via HBAR_OMEGA_EV).
+ESKM_DIV_EV_AMU_A2 = 9648.5
+
 
 def eigval_to_omega_eV(lmbda: float) -> float:
     """Return ℏω in eV (angular) from a positive mass-weighted-Hessian eigenvalue.
