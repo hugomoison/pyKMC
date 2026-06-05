@@ -134,7 +134,12 @@ def compute_event_prefactors(
     rc = config.rateconstant
 
     def hessian_fn(positions, free_indices):
-        return dynamical_matrix_eskm(engine, positions, free_indices=free_indices)
+        # Use the configured finite-difference step so the dynamical_matrix
+        # Hessian matches the validated FD path; a too-small step shifts the soft
+        # saddle modes and inflates nu0 (see HTST cross-validation).
+        return dynamical_matrix_eskm(
+            engine, positions, free_indices=free_indices, dx=rc.fd_step
+        )
 
     # pyKMC production systems are fully periodic; the free-region selector only
     # needs box lengths from `cell`.
@@ -157,7 +162,7 @@ def compute_event_prefactors(
     )
 
 
-def dynamical_matrix_eskm(engine, positions, free_indices=None, dx=1e-5):
+def dynamical_matrix_eskm(engine, positions, free_indices=None, dx=1e-2):
     """Mass-weighted Hessian at ``positions`` via LAMMPS ``dynamical_matrix eskm``.
 
     Computes the Hessian in-LAMMPS (a C++ finite difference per DOF) instead of
@@ -165,6 +170,9 @@ def dynamical_matrix_eskm(engine, positions, free_indices=None, dx=1e-5):
     vibrate (a LAMMPS group); the rest stay fixed at ``positions`` as the frozen
     boundary. Returns the Hessian in eV/(amu·Å²) on rank 0 (a drop-in for
     ``mass_weighted_partial_hessian``); ``None`` on other ranks.
+
+    ``dx`` defaults to the FD step (0.01 Å) used by the validated FD path; a
+    much smaller step shifts the soft saddle modes and inflates nu0.
     """
     set_positions(engine, positions)
     engine.command("run 0")  # rebuild neighbour lists after the scatter
