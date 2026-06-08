@@ -2,6 +2,15 @@ code, pre {
   font-weight: 600;
 }
 
+/* Details/summary color */
+[data-md-color-scheme="default"] details summary {
+  color: #fe8019;
+}
+
+[data-md-color-scheme="slate"] details summary {
+  color: #fe8019;
+}
+
 /* Gruvbox Light */
 [data-md-color-scheme="default"] {
   --md-code-bg-color: #ebebeb;
