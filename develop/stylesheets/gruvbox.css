@@ -6,14 +6,18 @@ code, pre {
 .md-typeset details {
   border-color: #ff5722;
   background-color: #fff3e0;
+  color: #3c3836;
 }
 .md-typeset details summary {
   border-color: #ff5722;
   background-color: #ffe0b2;
+  color: #3c3836;
 }
 .md-typeset details summary::after {
-  border-color: #ff5722;
-  background-color: #fff3e0;
+  background-color: #3c3836;
+}
+.md-typeset details summary::before {
+  background-color: #ff5722 !important;
 }
 
 
