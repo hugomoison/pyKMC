@@ -111,7 +111,8 @@ ok "All repositories cloned"
 step "Fixing Python version constraint"
 
 if [ "$PYTHON_MINOR" -eq 13 ]; then
-    sed -i '' 's/requires-python = "<3.13,>=3.9"/requires-python = "<3.14,>=3.9"/' pyKMC/pyproject.toml
+    sed -i '' 's/<3.13,/<3.14,/' pyKMC/pyproject.toml
+    grep -q '<3.14,' pyKMC/pyproject.toml || fail "Failed to bump pyproject upper Python bound (sed pattern stale?)"
     ok "Updated pyproject.toml for Python 3.13"
 else
     ok "Python $PYTHON_VERSION is within range, no fix needed"
@@ -122,7 +123,7 @@ fi
 # ------------------------------------------
 step "Creating virtual environment and installing pyKMC"
 
-python3.13 -m venv ./pykmc_env
+"$PYTHON_BIN" -m venv ./pykmc_env
 source pykmc_env/bin/activate
 
 python -m pip install --upgrade pip --quiet
@@ -158,19 +159,11 @@ cmake ../cmake \
   -DCMAKE_CXX_COMPILER=mpicxx \
   -DCMAKE_C_COMPILER=mpicc \
   -DCMAKE_Fortran_COMPILER=mpif90 \
-  -DPython_EXECUTABLE="$(which python)" \
-  > /dev/null 2>&1
-
-make -j"$(sysctl -n hw.ncpu)" > /dev/null 2>&1
-make install-python > /dev/null 2>&1
+  -DPython_EXECUTABLE="$(which python)" > /dev/null 2>&1
+make -j"$(sysctl -n hw.ncpu)"           > /dev/null 2>&1
+make install-python                     > /dev/null 2>&1
 
 cd "$INSTALL_DIR"
-
-# Symlinks for pARTn compatibility (pARTn configure expects libs in lammps/src/)
-mkdir -p lammps/src/styles
-ln -sf ../../build/styles/lmpinstalledpkgs.h lammps/src/styles/lmpinstalledpkgs.h
-ln -sf ../build/liblammps.dylib lammps/src/liblammps.dylib
-ln -sf ../build/liblammps.dylib lammps/src/liblammps.so
 
 python -c "from lammps import lammps" || fail "LAMMPS Python bindings not working"
 ok "LAMMPS built and installed"
@@ -181,9 +174,8 @@ ok "LAMMPS built and installed"
 step "Building IRA"
 
 cd "$INSTALL_DIR/IterativeRotationsAssignments"
-mkdir -p lib
-ln -sf libira.dylib lib/libira.so
-python -m pip install . --quiet
+
+python -m pip install . #--quiet
 
 cd "$INSTALL_DIR"
 
@@ -197,21 +189,20 @@ step "Building pARTn plugin"
 
 cd "$INSTALL_DIR/artn-plugin"
 
-./configure --with-lammps LAMMPS_PATH="$INSTALL_DIR/lammps" > /dev/null 2>&1
-
-# Patch C++17 support (required by LAMMPS headers)
-sed -i '' 's/^CXX=mpicxx$/CXX=mpicxx\nCXXFLAGS=-std=c++17/' make.inc
-sed -i '' 's/$(CXX) -g -fPIC -I/$(CXX) -g -fPIC ${CXXFLAGS} -I/g' ENGINES/LAMMPS/Makefile
-
-make lmplib > /dev/null 2>&1
+cmake -B build \
+      -DWITH_LAMMPS=ON \
+      -DLAMMPS_PATH="$INSTALL_DIR/lammps/build" \
+      -DARTN_INSTALL_PYTHON=ON \
+      -DCMAKE_CXX_FLAGS_INIT="-std=c++17"             > /dev/null 2>&1
+cmake --build build --parallel "$(sysctl -n hw.ncpu)" > /dev/null 2>&1
+cmake --install build                                 > /dev/null 2>&1
 
 cd "$INSTALL_DIR"
 
-# Install pypARTn Python interface
-cp artn-plugin/interface/pypARTn.py "$(python -c 'import site; print(site.getsitepackages()[0])')/"
-
-ls artn-plugin/lib/libartn-lmp.so > /dev/null || fail "pARTn library not found"
-python -c "import pypARTn" || fail "pypARTn not working"
+python -c "
+import pypARTn
+a=pypARTn.artn(engine='lmp')
+" || fail "pypARTn not working"
 ok "pARTn built and installed"
 
 # ------------------------------------------
@@ -220,8 +211,15 @@ ok "pARTn built and installed"
 step "Verifying installation"
 
 python -c "
-from lammps import lammps
-import ase, pykmc, ira_mod, pypARTn
+import ase, pykmc, ira_mod
+import lammps
+lmp=lammps.lammps()
+import pypARTn
+artn=pypARTn.artn( engine='lmp' )
+lmp.command( f'plugin load {artn.lib._name}' )
+print( 'Loaded libraries:' )
+print( ' * liblammps   ::', lmp.lib._name )
+print( ' * libartn-lmp ::', artn.lib._name )
 print('All imports OK')
 " || fail "Import verification failed"
 
@@ -237,9 +235,9 @@ cat > "$INSTALL_DIR/activate.sh" << 'ACTIVATE'
 
 PYKMC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$PYKMC_DIR/pykmc_env/bin/activate"
-export DYLD_LIBRARY_PATH="$(brew --prefix)/lib:${DYLD_LIBRARY_PATH}"
-export PYTHONPATH="$PYKMC_DIR/artn-plugin/interface:$PYTHONPATH"
-export PYTHONPATH="$PYKMC_DIR/IterativeRotationsAssignments/interface:$PYTHONPATH"
+# Drop any inherited pyKMC PYTHONPATH so the venv's pypARTn / ira_mod are loaded
+# (not the previous install's interface modules, which can shadow site-packages)
+unset PYTHONPATH
 echo "pyKMC environment activated. Run with:"
 echo "  mpirun -n 8 python -m pykmc -in input.in"
 ACTIVATE
@@ -256,8 +254,4 @@ echo ""
 echo "To use pyKMC:"
 echo "  source $INSTALL_DIR/activate.sh"
 echo "  mpirun -n 8 python -m pykmc -in input.in"
-echo ""
-echo "In your input.in, set:"
-echo "  [pARTn]"
-echo "  path_artnso = $INSTALL_DIR/artn-plugin/lib/libartn-lmp.so"
 echo ""

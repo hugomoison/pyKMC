@@ -47,14 +47,14 @@ if command -v apt >/dev/null 2>&1; then
         sudo apt update
         sudo apt install -y $PKGS
     fi
-elif command -v dnf >/dev/null 2>&1; then
+elif command -v dnf > /dev/null 2>&1; then
     PKGS=""
-    rpm -q gcc-c++     >/dev/null 2>&1 || PKGS="$PKGS gcc-c++"
-    rpm -q gcc-gfortran >/dev/null 2>&1 || PKGS="$PKGS gcc-gfortran"
-    rpm -q cmake       >/dev/null 2>&1 || PKGS="$PKGS cmake"
+    rpm -q gcc-c++       >/dev/null 2>&1 || PKGS="$PKGS gcc-c++"
+    rpm -q gcc-gfortran  >/dev/null 2>&1 || PKGS="$PKGS gcc-gfortran"
+    rpm -q cmake         >/dev/null 2>&1 || PKGS="$PKGS cmake"
     rpm -q openmpi-devel >/dev/null 2>&1 || PKGS="$PKGS openmpi-devel"
-    rpm -q fftw-devel  >/dev/null 2>&1 || PKGS="$PKGS fftw-devel"
-    rpm -q lapack-devel >/dev/null 2>&1 || PKGS="$PKGS lapack-devel"
+    rpm -q fftw-devel    >/dev/null 2>&1 || PKGS="$PKGS fftw-devel"
+    rpm -q lapack-devel  >/dev/null 2>&1 || PKGS="$PKGS lapack-devel"
     rpm -q python3-devel >/dev/null 2>&1 || PKGS="$PKGS python3-devel"
     if [ -n "$PKGS" ]; then
         echo "Installing missing packages:$PKGS"
@@ -131,6 +131,7 @@ git clone -b develop https://github.com/hugomoison/pyKMC.git
 git clone -b stable_22Jul2025_update3 --depth 1 https://github.com/lammps/lammps.git
 git clone https://github.com/mammasmias/IterativeRotationsAssignments.git
 git clone https://gitlab.com/mammasmias/artn-plugin.git
+
 ok "All repositories cloned"
 
 # ------------------------------------------
@@ -139,7 +140,8 @@ ok "All repositories cloned"
 step "Fixing Python version constraint"
 
 if [ "$PYTHON_MINOR" -eq 13 ]; then
-    sed -i 's/requires-python = "<3.13,>=3.9"/requires-python = "<3.14,>=3.9"/' pyKMC/pyproject.toml
+    sed -i 's/<3.13,/<3.14,/' pyKMC/pyproject.toml
+    grep -q '<3.14,' pyKMC/pyproject.toml || fail "Failed to bump pyproject upper Python bound (sed pattern stale?)"
     ok "Updated pyproject.toml for Python 3.13"
 else
     ok "Python $PYTHON_VERSION is within range, no fix needed"
@@ -170,7 +172,7 @@ ok "mpi4py rebuilt from source"
 step "Building LAMMPS (this may take a few minutes)"
 
 cd "$INSTALL_DIR/lammps"
-mkdir build && cd build
+mkdir -p build && cd build
 
 cmake ../cmake \
   -DBUILD_SHARED_LIBS=on \
@@ -186,19 +188,11 @@ cmake ../cmake \
   -DCMAKE_CXX_COMPILER=mpicxx \
   -DCMAKE_C_COMPILER=mpicc \
   -DCMAKE_Fortran_COMPILER=mpif90 \
-  -DPython_EXECUTABLE="$(which python)" \
-  > /dev/null 2>&1
-
-make -j"$(nproc)" > /dev/null 2>&1
-make install-python > /dev/null 2>&1
+  -DPython_EXECUTABLE="$(which python)" > /dev/null 2>&1
+make -j"$(nproc)"                       > /dev/null 2>&1
+make install-python                     > /dev/null 2>&1
 
 cd "$INSTALL_DIR"
-
-# Symlinks for pARTn compatibility (pARTn configure expects LAMMPS libs/headers
-# under lammps/src/, but CMake puts them under lammps/build/).
-mkdir -p lammps/src/styles
-ln -sf ../../build/styles/lmpinstalledpkgs.h lammps/src/styles/lmpinstalledpkgs.h
-ln -sf ../build/liblammps.so lammps/src/liblammps.so
 
 python -c "from lammps import lammps" || fail "LAMMPS Python bindings not working"
 ok "LAMMPS built and installed"
@@ -223,21 +217,21 @@ step "Building pARTn plugin"
 
 cd "$INSTALL_DIR/artn-plugin"
 
-./configure --with-lammps LAMMPS_PATH="$INSTALL_DIR/lammps" > /dev/null 2>&1
-
-# Patch C++17 support (required by LAMMPS headers)
-sed -i 's/^CXX=mpicxx$/CXX=mpicxx\nCXXFLAGS=-std=c++17/' make.inc
-sed -i 's/$(CXX) -g -fPIC -I/$(CXX) -g -fPIC ${CXXFLAGS} -I/g' ENGINES/LAMMPS/Makefile
-
-make lmplib > /dev/null 2>&1
+cmake -B build \
+      -DWITH_LAMMPS=ON \
+      -DLAMMPS_PATH="$INSTALL_DIR/lammps/build" \
+      -DARTN_INSTALL_PYTHON=ON \
+      -DCMAKE_CXX_FLAGS_INIT="-std=c++17" > /dev/null 2>&1
+cmake --build build --parallel "$(nproc)" > /dev/null 2>&1
+cmake --install build                     > /dev/null 2>&1
 
 cd "$INSTALL_DIR"
 
-# Install pypARTn Python interface
-cp artn-plugin/interface/pypARTn.py "$(python -c 'import site; print(site.getsitepackages()[0])')/"
+python -c "
+import pypARTn
+a=pypARTn.artn(engine='lmp')
+" || fail "pypARTn not working"
 
-ls artn-plugin/lib/libartn-lmp.so > /dev/null || fail "pARTn library not found"
-python -c "import pypARTn" || fail "pypARTn not working"
 ok "pARTn built and installed"
 
 # ------------------------------------------
@@ -246,8 +240,15 @@ ok "pARTn built and installed"
 step "Verifying installation"
 
 python -c "
-from lammps import lammps
-import ase, pykmc, ira_mod, pypARTn
+import ase, pykmc, ira_mod
+import lammps
+lmp=lammps.lammps()
+import pypARTn
+artn=pypARTn.artn( engine='lmp' )
+lmp.command( f'plugin load {artn.lib._name}' )
+print( 'Loaded libraries:' )
+print( ' * liblammps   ::', lmp.lib._name )
+print( ' * libartn-lmp ::', artn.lib._name )
 print('All imports OK')
 " || fail "Import verification failed"
 
@@ -263,9 +264,9 @@ cat > "$INSTALL_DIR/activate.sh" << 'ACTIVATE'
 
 PYKMC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$PYKMC_DIR/pykmc_env/bin/activate"
-export LD_LIBRARY_PATH="$PYKMC_DIR/lammps/build:${LD_LIBRARY_PATH:-}"
-export PYTHONPATH="$PYKMC_DIR/artn-plugin/interface:${PYTHONPATH:-}"
-export PYTHONPATH="$PYKMC_DIR/IterativeRotationsAssignments/interface:$PYTHONPATH"
+# Drop any inherited pyKMC PYTHONPATH so the venv's pypARTn / ira_mod are loaded
+# (not the previous install's interface modules, which can shadow site-packages)
+unset PYTHONPATH
 echo "pyKMC environment activated. Run with:"
 echo "  mpirun -n 8 python -m pykmc -in input.in"
 ACTIVATE
@@ -282,8 +283,4 @@ echo ""
 echo "To use pyKMC:"
 echo "  source $INSTALL_DIR/activate.sh"
 echo "  mpirun -n 8 python -m pykmc -in input.in"
-echo ""
-echo "In your input.in, set:"
-echo "  [pARTn]"
-echo "  path_artnso = $INSTALL_DIR/artn-plugin/lib/libartn-lmp.so"
 echo ""

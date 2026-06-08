@@ -1334,30 +1334,23 @@ Finally, install pyKMC along with its dependencies:
 </span></code></pre></div>
 If LAMMPS is already installed, only the last command (<code>make install-python</code>) is necessary.</p>
 <h3 id="partn">pARTn</h3>
-<p>For event search, <a href="https://mammasmias.gitlab.io/artn-plugin/sections/Intro.html">pARTn</a> can be used with LAMMPS.
-Follow the installation instructions provided <a href="https://mammasmias.gitlab.io/artn-plugin/sections/Installation.html">here</a>:</p>
+<p>For event search, <a href="https://mammasmias.gitlab.io/artn-plugin/">pARTn</a> can be used with LAMMPS.
+Follow the installation instructions provided <a href="https://mammasmias.gitlab.io/artn-plugin/user_guide/Installation.html">here</a>:</p>
 <ul>
-<li>Run the configuration script:
+<li>Run the following commands, this will install the python module <code>pypARTn</code> into your python env:
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nb">cd</span><span class="w"> </span>/path/to/artn-plugin
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>./configure<span class="w"> </span>--with-lammps<span class="w"> </span><span class="nv">LAMMPS_PATH</span><span class="o">=</span>/path/to/lammps
-</span></code></pre></div></li>
-<li>Compile the plugin:
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>make<span class="w"> </span>lmplib
-</span></code></pre></div>
-Add the interface path to the PYTHONPATH environment variable:
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">PYTHONPATH</span><span class="o">=</span>/your/path/to/artn-plugin/interface:<span class="nv">$PYTHONPATH</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>cmake<span class="w"> </span>-B<span class="w"> </span>build<span class="w"> </span>-DWITH_LAMMPS<span class="o">=</span>ON<span class="w"> </span>-DLAMMPS_PATH<span class="o">=</span>/path/to/lammps/build<span class="w"> </span>-DARTN_INSTALL_PYTHON<span class="o">=</span>ON
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>cmake<span class="w"> </span>--build<span class="w"> </span>build
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>cmake<span class="w"> </span>--install<span class="w"> </span>build
 </span></code></pre></div></li>
 </ul>
 <h3 id="ira">IRA</h3>
 <p>For point set registration (used during event reconstruction), <a href="https://mammasmias.github.io/IterativeRotationsAssignments/">IRA</a> can be used.</p>
 <p>Follow the installation instructions provided <a href="https://mammasmias.github.io/IterativeRotationsAssignments/#compilation">here</a>:</p>
 <ul>
-<li>Compile the source code:
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">cd</span><span class="w"> </span>/path/to/ira/src/
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>make<span class="w"> </span>all
-</span></code></pre></div></li>
-<li>Add the interface path to PYTHONPATH:
-<div class="language-text highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>export PYTHONPATH=$PYTHONPATH:/your/path/to/IRA/interface
+<li>Compile the source and create the python module <code>ira_mod</code>:
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">cd</span><span class="w"> </span>/path/to/ira
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.
 </span></code></pre></div></li>
 </ul>
 
