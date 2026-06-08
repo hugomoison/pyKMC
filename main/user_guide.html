@@ -1,0 +1,1795 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://hugomoison.github.io/pyKMC/main/user_guide.html">
+      
+      
+        <link rel="prev" href="install/installation.html">
+      
+      
+        <link rel="next" href="troubleshooting.html">
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>User Guide - pyKMC</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="stylesheets/gruvbox.css">
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-orange" data-md-color-accent="red">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#user-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="index.html" title="pyKMC" class="md-header__button md-logo" aria-label="pyKMC" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            pyKMC
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              User Guide
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-orange" data-md-color-accent="red"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-orange" data-md-color-accent="red"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.04 7 9.54s-2.94 8.27-7 9.54c.95.3 1.95.46 3 .46a10 10 0 0 0 10-10A10 10 0 0 0 9 2"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="index.html" title="pyKMC" class="md-nav__button md-logo" aria-label="pyKMC" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    pyKMC
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="install/installation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="user_guide.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Control
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Engine
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Engine">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lammps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lammps
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#atomic-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Atomic Environment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#event-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event Search :
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Event Search :">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#partn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pARTn :
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rate-constant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rate Constant
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#psr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PSR
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="PSR">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ira" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IRA
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#final-configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Final configuration file
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-a-simulation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running a simulation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-multiple-lammps-instances" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using multiple lammps instances
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="troubleshooting.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="parameters.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    KMC Parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="developer_guide.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/system.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/neighbors_list.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    NeighborsList
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/atomic_environment.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AtomicEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/config.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/log.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/algorithms.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Algorithms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/kmc.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    KMC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/environments.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/engine.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/lammpsengine.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LammpsEngine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/event_table.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    EventTable
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/eventsearch.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    EventSearch
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/refinement.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Refinement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/point_set_registration.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PointSetRegistration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/symmetries.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Symmetries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/rate_constant.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RateConstante
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/initializer.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Initialize
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/result.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Result
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/info_simulations.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Info
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/utils.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utils
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/run.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    run
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#control" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Control
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Engine
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Engine">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lammps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lammps
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#atomic-environment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Atomic Environment
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#event-search" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event Search :
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Event Search :">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#partn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        pARTn :
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#rate-constant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Rate Constant
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#psr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PSR
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="PSR">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#ira" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IRA
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#final-configuration-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Final configuration file
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-a-simulation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Running a simulation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-multiple-lammps-instances" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using multiple lammps instances
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="user-guide">User Guide</h1>
+<p><em>This is a temporary user guide that aim to provide basic information on the simulation workflow and how to choose simulation's parameters</em> </p>
+<p>pyKMC is an on-the-fly kinetic Monte Carlo (KMC) program.</p>
+<p>At each step, if a new atomic environment is encountered, pyKMC performs event searches and adds the resulting generic events to a reference event table.
+When a previously visited environment is found again, pyKMC refines the stored reference events to account for elastic deformations, and builds an active event table specific to the current state.</p>
+<p>An event is then selected from this active table based on the chosen KMC algorithm and applied to the system, advancing the simulation.</p>
+<p>To start a simulation, pyKMC requires a configuration file in the INI format. This file contains general simulation parameters, as well as tool-specific settings needed to run the different stages of the simulation workflow. </p>
+<h2 id="control">Control</h2>
+<p>The first section of the INI configuration file, called [Control], defines general simulation parameters.
+You must provide an initial atomic configuration file, readable by ase.io.read, which includes atomic positions, cell parameters, and periodic boundary conditions (PBC). For example, if using an XYZ file, it should look like:</p>
+<p><div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="m">2047</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nv">Lattice</span><span class="o">=</span><span class="s2">&quot;28.16 0.0 0.0 0.0 28.16 0.0 0.0 0.0 28.16&quot;</span><span class="w"> </span><span class="nv">pbc</span><span class="o">=</span><span class="s2">&quot;T T T&quot;</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>Ni<span class="w">       </span><span class="m">0</span>.00000000<span class="w">       </span><span class="m">0</span>.00000000<span class="w">       </span><span class="m">0</span>.00000000<span class="w">       </span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>Ni<span class="w">       </span><span class="m">0</span>.00000000<span class="w">       </span><span class="m">1</span>.76000000<span class="w">       </span><span class="m">1</span>.76000000<span class="w">       </span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>...<span class="w"> </span>
+</span></code></pre></div>
+The path to this file should be provided using the <code>initial_config</code> key. 
+You must also specify : 
+- the number of KMC steps to run with <code>n_steps</code>
+- the simulation engine to use to compute energy, forces and perfrom event searches/refinements (e.g., lammps) with the <code>engine</code> key</p>
+<p>A minimal example of a <code>[Control]</code> section would be:
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">[Control]</span><span class="w"> </span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="na">initial_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">myconfig.xyz</span><span class="w"> </span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="na">n_steps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">100</span><span class="w"> </span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="na">engine</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">lammps</span>
+</span></code></pre></div>
+Additional options in this section allow you to customize output filenames (see the full parameter documentation).
+pyKMC also saves the reference event table and the list of visited environments as .pickle files. To reuse them in a new simulation, simply provide their paths:</p>
+<p><div class="language-INI highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="na">reference_table</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">my_reference_table.pickle</span><span class="w"> </span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="na">visited_environments</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">my_visited_environments_list.pickle</span>
+</span></code></pre></div>
+Alternatively, you may provide only a list of visited environments if you wish to exclude certain environments from being explored.</p>
+<h2 id="engine">Engine</h2>
+<p>The INI configuration file must also include a section specific to the engine you selected in the <code>[Control]</code> section.
+For example, if you set <code>engine = lammps</code>, your file should include a <code>[Lammps]</code> section.</p>
+<h3 id="lammps">Lammps</h3>
+<p>When using LAMMPS, you need to specify the potential parameters.
+Currently, only pair potentials are supported. You must provide the <code>pair_style</code> and <code>pair_coeff</code> keys</p>
+<p>Additionally, you can change default parameters used during system minimization (see the full parameter documentation). </p>
+<p>A minimal <code>[Lammps]</code> section might look like:
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">[Lammps]</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="na">pair_style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">eam/alloy</span><span class="w"> </span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="na">pair_coeff</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">* * my_file.eam Ni</span><span class="w"> </span>
+</span></code></pre></div></p>
+<h2 id="atomic-environment">Atomic Environment</h2>
+<p>During the simulation, at each step, pyKMC assigns an atomic environment ID to every atom in the system.
+This ID serves as a unique fingerprint of the atom’s local environment, allowing pyKMC to identify recurring configurations.</p>
+<p>Each reference event is also tagged with an environment ID, corresponding to the initial local configuration of the event’s central atom—the atom that moves the most during the transition. For the event, their ID are always computed based on graph (see below).</p>
+<p>To determine whether a stored reference event can be reused, pyKMC compares the event's environment ID with those computed in the current system.</p>
+<p>Different ID generation strategies (called styles) are available to define atomic environments. </p>
+<p>To define parameters related to the generation of those IDs, the INI configuration file should contains a <code>[AtomicEnvironment]</code> section. </p>
+<p>The two main parameters are specified by the <code>rnei</code> and <code>rcut</code> keys. <code>rnei</code> defines the first nearest neighbors of an atom. Atoms within this distance are considered direct neighbors. <code>rcut</code>defines the atomic environment sphere, atoms in this sphere are part of the local atomic environment. </p>
+<p>You can select the method (or style) used to assign an atomic environment ID to each atom.
+The available styles are:
+- cna : 
+In this mode, pyKMC counts the number of neighbors around each atom and checks whether it matches a typical crystalline coordination number (6, 8, or 12).
+    - if the atom has one of these neighbor counts, it is labeled "crystal".
+    - Otherwise, it is labeled "noncrystal".
+This style should be only use when setting in the <code>[Control]</code> section <code>reconstruction = False</code>. (<em>Not working anymore for the moment</em>).</p>
+<div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+  <img src="images/atomic_env_base.png" width="220" />
+  <div style="text-align: center; font-weight: bold;">
+    Using style=cna gives: 
+  </div>
+  <img src="images/atomic_env_cna.png" width="300" />
+</div>
+
+<ul>
+<li>graph : 
+In this style, pyKMC constructs a graph from each atom's environment using pyNauty. 
+A unique, canonical certificate (a binary) is then computed using pyNauty, serving as the atom’s environment ID.</li>
+</ul>
+<div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+  <img src="images/atomic_env_base.png" width="220" />
+  <div style="text-align: center; font-weight: bold;">
+    Using style=graph gives: 
+  </div>
+  <img src="images/atomic_env_graph.png" width="300" />
+</div>
+
+<ul>
+<li>cna/graph : 
+In large systems, many atoms are in a perfect crystalline environment. Computing graph-based IDs for all of them is inefficient.
+This hybrid mode provides a compromise: <ul>
+<li>First, a CNA classification is performed. </li>
+<li>If an atom is labeled "crystal", it keeps this simple ID. </li>
+<li>If it is labeled "noncrystal", a graph-based ID is computed. </li>
+</ul>
+</li>
+</ul>
+<div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+  <img src="images/atomic_env_base.png" width="220" />
+  <div style="text-align: center; font-weight: bold;">
+    Using style=cna/graph gives: 
+  </div>
+  <img src="images/atomic_env_cnagraph.png" width="300" />
+</div>
+
+<p>When searching for an event around a "noncrystal" atom, it may happen that another atom ends up being the one that moves the most. In this case, the resulting event will be tagged with the graph ID of that other atom.
+If this ID corresponds to a "crystal" atom in the current system, that event will never be selected. </p>
+<p>To avoid this issue, you can instruct pyKMC to expand the graph style to the nth neighbors of the "noncrystal" atom using the <code>neighbors_add</code> key. </p>
+<p>For example, when looking at a vacancy with <code>neighbors_add = 1</code> it will gives : </p>
+<div style="text-align: center;">
+<img src="images/atomic_env_radd.png" width="400" />
+</div>
+
+<p>Finally, the <code>[AtomicEnvironment]</code> section of the INI configuration file will look like this : 
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">[AtomicEnvironment]</span><span class="w"> </span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">cna/graph</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="na">rnei</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">3.0</span><span class="w"> </span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="na">rcut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">6.5</span><span class="w"> </span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="na">neighbors_add</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1</span><span class="w"> </span>
+</span></code></pre></div></p>
+<h2 id="event-search">Event Search :</h2>
+<p>The <code>[EventSearch]</code> section lets you define:
+- the algorithm used to search for new events,
+- the criteria used to keep or discard events in the reference event table,
+- if a refinement is successful.</p>
+<p>This section requires two mandatory keys:
+- <code>style</code> : the algorithm used to perform event searches. <em>Currently, only partn is supported.</em>
+- <code>nsearch</code> : number of event searches to perform per atomic environment.</p>
+<p>A minimal configuration looks like:
+A <code>[EventSearch]</code> section in the INI configuration file is typically : 
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">[EventSearch]</span><span class="w"> </span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">partn</span><span class="w"> </span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="na">nsearch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">50</span><span class="w"> </span>
+</span></code></pre></div></p>
+<p>When an event is found, it is characterized by two energy barriers, a foward energy barrier <span class="arithmatex"><span class="MathJax_Preview">dE_{foward}</span><script type="math/tex">dE_{foward}</script></span> and an inverse energy barrier <span class="arithmatex"><span class="MathJax_Preview">dE_{backward}</span><script type="math/tex">dE_{backward}</script></span> : </p>
+<div style="text-align: center;">
+  <img src="images/pesevent.png" width="400" />
+  <div style="font-size: 0.9em; color: gray; margin-top: 5px;">
+    Potential energy surface</code>
+  </div>
+</div>
+
+<p>The event is added to the reference table only if it satisfies all the following conditions:</p>
+<ul>
+<li><span class="arithmatex"><span class="MathJax_Preview">dE_{foward}</span><script type="math/tex">dE_{foward}</script></span> &lt; <code>emax_event</code> </li>
+<li><span class="arithmatex"><span class="MathJax_Preview">dE_{foward}</span><script type="math/tex">dE_{foward}</script></span> &gt; <code>emin_event</code> </li>
+<li><span class="arithmatex"><span class="MathJax_Preview">dE_{backward}</span><script type="math/tex">dE_{backward}</script></span> &gt; <code>emin_event</code> </li>
+<li><span class="arithmatex"><span class="MathJax_Preview">dE_{backward}</span><script type="math/tex">dE_{backward}</script></span> &lt; <code>energy_asymmetry</code>x<code>backward_min</code> and <span class="arithmatex"><span class="MathJax_Preview">dE_{backward}</span><script type="math/tex">dE_{backward}</script></span> &gt; <code>backward_min</code> </li>
+</ul>
+<p>Once a reference event is reused, it is refined to adapt to the current atomic configuration. The refinement is considered successful if:
+- The central atom moves less than <code>refined_minimum_delr_thr</code> between the current position and the refined minimum.
+- The difference in energy barriers between the generic and refined events is less than <code>refined_energy_thr</code>.
+These thresholds ensure that the refined event remains consistent with the original.</p>
+<p>To further control the behavior of the selected event search algorithm (style), you must define a separate section matching the algorithm name. For instance, if you choose <code>style = partn</code> you must also include a <code>[pARTn]</code> section in your INI file to configure specific parameters for the pARTn method. </p>
+<h3 id="partn">pARTn :</h3>
+<p>All other parameters have default values (see the full parameter documentation), but depending on your system, you may need to adjust some of them for optimal performance.
+Parameters related to refinements are prefixed with r_</p>
+<p>A minimal <code>[pARTn]</code> section will look like this : 
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">[pARTn]</span><span class="w"> </span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="na">delr_thr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.1</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="na">r_eigval_th</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-0.02</span>
+</span></code></pre></div></p>
+<p>For a detailed explanation of the pARTn algorithm and its parameters, please refer to the official pARTn documentation.</p>
+<h2 id="rate-constant">Rate Constant</h2>
+<p>Each time an event is added to either the reference or the active event table, a rate constant is computed. The method used to compute this rate is defined in the [RateConstant] section of the INI configuration file.</p>
+<p>Currently, the only implemented style is : <code>style = constant</code>. This method computes the rate constant using the following equation. </p>
+<p>$$
+k = k_{0} e^{-\frac{dE_{forward}}{{k_{b}T}}}
+$$
+Where:
+- <span class="arithmatex"><span class="MathJax_Preview">k</span><script type="math/tex">k</script></span> is the rate constant,
+- <span class="arithmatex"><span class="MathJax_Preview">k_{0}</span><script type="math/tex">k_{0}</script></span> is a user-defined pre-exponential factor (typically <span class="arithmatex"><span class="MathJax_Preview">10^{13}s^{-1}=10ps^{-1}</span><script type="math/tex">10^{13}s^{-1}=10ps^{-1}</script></span>),
+- <span class="arithmatex"><span class="MathJax_Preview">T</span><script type="math/tex">T</script></span> is the system temperature, defined by the user.
+- <span class="arithmatex"><span class="MathJax_Preview">dE_{forward}</span><script type="math/tex">dE_{forward}</script></span> is the forward energy barrier,
+- <span class="arithmatex"><span class="MathJax_Preview">k_{b}</span><script type="math/tex">k_{b}</script></span>​ is the Boltzmann constant,
+- <span class="arithmatex"><span class="MathJax_Preview">h</span><script type="math/tex">h</script></span> is Planck’s constant.</p>
+<p>All parameters must be provided in LAMMPS metal units.</p>
+<p>Typically, it will gives : </p>
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">[RateConstant]</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">constant</span><span class="w"> </span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="na">k0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">10</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="na">T</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">300</span><span class="w"> </span>
+</span></code></pre></div>
+<h2 id="psr">PSR</h2>
+<p>When applying a reference event to a system for refinement, pyKMC performs a point set registration (also known as shape matching) to align the atomic positions from the reference event with the local atomic environment of the atom currently targeted for refinement.</p>
+<p>You can define the algorithm to use with the <code>style</code> key. <em>Currently only 'ira' in implemented</em>.  This is the only mandatory parameter. </p>
+<p>You may also want to adjust the default value of matching_score_thr, which sets the maximum allowed matching score for a successful registration.
+For <code>style = ira</code>, the matching score corresponds to the Hausdorff distance between the two point sets.</p>
+<p>This will gives you : 
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">[PSR]</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">ira</span><span class="w"> </span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="na">matching_score_thr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.3</span><span class="w"> </span>
+</span></code></pre></div></p>
+<p>As with the Engine of EventSearch parts, you must also include a dedicated section for the selected point set registration method.</p>
+<h3 id="ira">IRA</h3>
+<p>When using, IRA, you can change default parameters that are being used, to have a full explaination please refer to the full parameters documentation and the IRA documentation. 
+To ensure access to default values, the section must be present in the configuration file, even if it's empty.</p>
+<h2 id="final-configuration-file">Final configuration file</h2>
+<p>Finally, based on the previous examples, a complete INI configuration file would look like this:</p>
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">[Control]</span><span class="w"> </span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="na">initial_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">myconfig.xyz</span><span class="w"> </span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="na">n_steps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">100</span><span class="w"> </span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="na">engine</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">lammps</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="k">[Lammps]</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="na">pair_style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">eam/alloy</span><span class="w"> </span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="na">pair_coeff</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">* * my_file.eam Ni</span><span class="w"> </span>
+</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
+</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="k">[AtomicEnvironment]</span><span class="w"> </span>
+</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">cna/graph</span>
+</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="na">rnei</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">3.0</span><span class="w"> </span>
+</span><span id="__span-9-13"><a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="na">rcut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">6.5</span><span class="w"> </span>
+</span><span id="__span-9-14"><a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="na">neighbors_add</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1</span><span class="w">  </span>
+</span><span id="__span-9-15"><a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>
+</span><span id="__span-9-16"><a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="k">[EventSearch]</span><span class="w"> </span>
+</span><span id="__span-9-17"><a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">partn</span><span class="w"> </span>
+</span><span id="__span-9-18"><a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="na">nsearch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">50</span><span class="w">  </span>
+</span><span id="__span-9-19"><a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>
+</span><span id="__span-9-20"><a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="k">[pARTn]</span><span class="w"> </span>
+</span><span id="__span-9-21"><a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="na">delr_thr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.1</span>
+</span><span id="__span-9-22"><a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a><span class="na">r_eigval_th</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-0.02</span>
+</span><span id="__span-9-23"><a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a>
+</span><span id="__span-9-24"><a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a><span class="k">[RateConstant]</span>
+</span><span id="__span-9-25"><a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">constant</span><span class="w"> </span>
+</span><span id="__span-9-26"><a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a><span class="na">k0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1e12</span><span class="w"> </span>
+</span><span id="__span-9-27"><a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a><span class="na">T</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">300</span><span class="w">  </span>
+</span><span id="__span-9-28"><a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a>
+</span><span id="__span-9-29"><a id="__codelineno-9-29" name="__codelineno-9-29" href="#__codelineno-9-29"></a><span class="k">[PSR]</span>
+</span><span id="__span-9-30"><a id="__codelineno-9-30" name="__codelineno-9-30" href="#__codelineno-9-30"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">ira</span><span class="w"> </span>
+</span><span id="__span-9-31"><a id="__codelineno-9-31" name="__codelineno-9-31" href="#__codelineno-9-31"></a><span class="na">matching_score_thr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.3</span><span class="w">  </span>
+</span><span id="__span-9-32"><a id="__codelineno-9-32" name="__codelineno-9-32" href="#__codelineno-9-32"></a>
+</span><span id="__span-9-33"><a id="__codelineno-9-33" name="__codelineno-9-33" href="#__codelineno-9-33"></a><span class="k">[IRA]</span><span class="w"> </span>
+</span></code></pre></div>
+<h2 id="running-a-simulation">Running a simulation</h2>
+<p>Once both the input file and the initial configuration file are ready, launch the simulation by executing:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pykmc<span class="w"> </span>-in<span class="w"> </span>&lt;your_input_file_name&gt;<span class="w"> </span>
+</span></code></pre></div>
+<h2 id="using-multiple-lammps-instances">Using multiple lammps instances</h2>
+<p>To speed up event searches and the refinement part of the KMC loop, it is possible to use multiple LAMMPS instances.
+Each instance runs independently on a separate set of cores.</p>
+<p>The number of instances is defined by the n_sessions parameter in the [Control] section of the input file.
+The main KMC loop always runs on the main rank (rank 0), but you can choose whether the LAMMPS instances should use all other ranks only, or include rank 0 as well.
+This behavior is controlled by the engine_use_rank_0 parameter in the [Control] section.
+Note that enabling the use of rank 0 may slightly slow down the simulation, since that instance communicates via threads rather than MPI messages.</p>
+<p>For example, if you have 8 cores available and want to run 4 LAMMPS instances, each on different ranks than the master one, your input file should contain the following parameters:</p>
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">[Control]</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="na">...</span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="na">n_sessions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">4</span><span class="w"> </span>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="na">engine_use_rank_0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">False</span><span class="w"> </span>
+</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="na">... </span>
+</span></code></pre></div>
+<p>You can then start the simulation with:
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>mpirun<span class="w"> </span>-n<span class="w"> </span><span class="m">8</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pykmc<span class="w"> </span>-in<span class="w"> </span>&lt;your_input_file&gt;<span class="w"> </span>
+</span></code></pre></div>
+The available cores will be automatically split according to your configuration.
+In this example, the LAMMPS instances will run on ranks 1–2, 3–4, 5–6, and 7, while the main KMC loop runs on rank 0.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["content.code.copy", "content.code.annotate", "content.code.highlight"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
