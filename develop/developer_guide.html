@@ -8,9 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://hugomoison.github.io/pyKMC/develop/tutorials.html">
+        <link rel="canonical" href="https://hugomoison.github.io/pyKMC/develop/developer_guide.html">
       
       
+        <link rel="prev" href="parameters.html">
+      
+      
+        <link rel="next" href="api/system.html">
       
       
         
@@ -21,7 +25,7 @@
     
     
       
-        <title>Basic KMC simulation - pyKMC</title>
+        <title>Developer Guide - pyKMC</title>
       
     
     
@@ -76,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#basic-kmc-simulation" class="md-skip">
+        <a href="#developer-guide" class="md-skip">
           Skip to content
         </a>
       
@@ -116,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Basic KMC simulation
+              Developer Guide
             
           </span>
         </div>
@@ -333,15 +337,8 @@
 
               
             
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
+              
+                
   
   
   
@@ -363,6 +360,14 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -425,6 +430,43 @@
       
   
   
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="developer_guide.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
   
   
     
@@ -446,7 +488,7 @@
   <span class="md-ellipsis">
     
   
-    Tutorial
+    API Reference
   
 
     
@@ -459,116 +501,6 @@
         
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_6">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Tutorial
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="0-pyKMC-workflow.html" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    pyKMC Workflow
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="1-pyKMC-simple.html" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Simple example
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
-        
-          
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    API Reference
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1193,25 +1125,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#input-file" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Input file
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -1227,22 +1140,8 @@
 
 
 
-<h1 id="basic-kmc-simulation">Basic KMC simulation</h1>
-<p>This tutorial provides a first overview of pyKMC's features and explains how to run a simple simulation.</p>
-<p>We will use an FCC Ni system with a vacancy and basic input parameters to see how the algorithm works.</p>
-<h2 id="input-file">Input file</h2>
-<p>To run a KMC simulation, an input file, with a format readable by <a href="https://docs.python.org/3/library/configparser.html">configparser</a> is used. </p>
-<p>It is separated in different sections, each one controlling a part of the KMC simulation. </p>
-<ul>
-<li>The [Control] section : 
-    This section is used to define general KMC parameters and resources. </li>
-<li>The [Potential] section : 
-    To define the potential used by the E/F engine (e.g. Lammps) </li>
-<li>The [Minimization] section : 
-    defines parameters related to the minimization of the system done a each KMC step. </li>
-<li>The [AtomicEnvironment] section : 
-    pyKMC </li>
-</ul>
+<h1 id="developer-guide">Developer Guide</h1>
+<p>Coming soon.</p>
 
 
 

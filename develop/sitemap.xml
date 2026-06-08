@@ -5,19 +5,15 @@
          <lastmod>2026-06-08</lastmod>
     </url>
     <url>
-         <loc>https://hugomoison.github.io/pyKMC/develop/0-pyKMC-workflow.html</loc>
-         <lastmod>2026-06-08</lastmod>
-    </url>
-    <url>
-         <loc>https://hugomoison.github.io/pyKMC/develop/1-pyKMC-simple.html</loc>
-         <lastmod>2026-06-08</lastmod>
-    </url>
-    <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/active_volumes.html</loc>
          <lastmod>2026-06-08</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/basins.html</loc>
+         <lastmod>2026-06-08</lastmod>
+    </url>
+    <url>
+         <loc>https://hugomoison.github.io/pyKMC/develop/developer_guide.html</loc>
          <lastmod>2026-06-08</lastmod>
     </url>
     <url>
@@ -42,10 +38,6 @@
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/troubleshooting.html</loc>
-         <lastmod>2026-06-08</lastmod>
-    </url>
-    <url>
-         <loc>https://hugomoison.github.io/pyKMC/develop/tutorials.html</loc>
          <lastmod>2026-06-08</lastmod>
     </url>
     <url>
