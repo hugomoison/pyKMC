@@ -18,12 +18,15 @@ class Job:
 class Manager:
     """A class to manage a pool of Lammps sessions."""
 
-    def __init__(self, sessions: list[MpiApiSession], global_session: MpiApiSession = None) -> None:
+    def __init__(self, sessions: list[MpiApiSession], global_session: MpiApiSession = None,
+                 n_global_sessions: int | None = None) -> None:
         """
         Initialize the LammpsPoolManager with a specified number of sessions.
         """
         self.sessions = sessions
         self.global_session = global_session
+        # Only the first n_global_sessions chunks belong to the global LAMMPS comm.
+        self.n_global_sessions = len(sessions) if n_global_sessions is None else n_global_sessions
         self.using_global = True
         self.job_queue: queue.Queue[Job] = queue.Queue()
         #Thread that dispatch job to workers
@@ -75,10 +78,12 @@ class Manager:
 
     def use_global(self):
         """
-        Have engines switch from local pools to global pool
+        Have engines switch from local pools to global pool.
+        Only the global-subset chunks (first n_global_sessions) switch; the
+        remaining chunks stay in local mode and idle during the global phase.
         """
         if not self.using_global:
-            for session in self.sessions :
+            for session in self.sessions[: self.n_global_sessions] :
                 session.use_global()
             self.using_global = True
     def _worker_loop(self, session: MpiApiSession):

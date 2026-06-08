@@ -14,6 +14,9 @@ class MpiApiEngine() :
         local_messenger, local_engine_comm: MPI.Comm, local_engine_id: int,
         global_messenger, global_engine_comm: MPI.Comm, global_engine_id: int
     ) -> None :
+        # World rank: when an engine lives on rank 0, that same process is also the
+        # orchestrator, so the engine loop must run in a background thread.
+        self.world_rank = MPI.COMM_WORLD.Get_rank()
         self.local_messenger = local_messenger
         self.local_engine_comm = local_engine_comm
         if local_engine_comm is not None:
@@ -25,14 +28,20 @@ class MpiApiEngine() :
 
         self.global_messenger = global_messenger
         self.global_engine_comm = global_engine_comm
-        if global_engine_comm is not None:
+        # is_global: does this rank participate in the global LAMMPS subset?
+        self.is_global = global_engine_comm is not None
+        if self.is_global:
             self.global_rank = global_engine_comm.Get_rank() #Ranks of the current process in the engine communicator
         else:
             self.global_rank = 0
         self.global_engine_id = global_engine_id #Identifier
         self.global_lmp = None #Placeholder for Lammps instance
 
-        self.use_global()   #Start with active properties mapped to global Lammps
+        # Boot global-subset ranks in global mode; local-only ranks in local mode.
+        if self.is_global:
+            self.use_global()   #Start with active properties mapped to global Lammps
+        else:
+            self.use_local()
 
         self._is_alive = False 
         self._is_busy = False 
@@ -60,26 +69,34 @@ class MpiApiEngine() :
 
 
 
-    def start(self) -> None : 
+    def start(self) -> None :
         """Start Lammps"""
-        self.start_engine() 
-        if self.rank == 0 and isinstance(self.messenger, QueueMessenger):
-            # TODO: this only with engine_use_rank_0=True so can probably cut without that option
-            t = threading.Thread(target=self.run_engine_loop, daemon=True)
-            t.start()
+        self.start_engine()
+        # When this engine lives on world rank 0 (engine_use_rank_0=True), the same
+        # process must also act as the orchestrator, so run the engine loop in a
+        # background thread and let the main thread return to build the Manager.
+        # NOTE: the previous check `self.rank == 0 and isinstance(self.messenger,
+        # QueueMessenger)` was mode-dependent and always False at boot (engines boot
+        # in global mode -> MPI messenger), so rank 0 blocked here -> deadlock.
+        if self.world_rank == 0:
+            self.message_reader_thread = threading.Thread(target=self.run_engine_loop, daemon=True)
+            self.message_reader_thread.start()
         else:
             self.run_engine_loop()
 
     def start_engine(self) -> None :
-        if self.global_engine_comm is None :
-            raise RuntimeError("Missing engine_comm for global LAMMPS")
         if self.local_engine_comm is None :
             raise RuntimeError("Missing engine_comm for local LAMMPS")
 
-
-        self.global_lmp = lammps(comm=self.global_engine_comm, cmdargs=['-screen', 'none', '-log', 'lammps.log.'+str(self.global_engine_id)])
+        # Only ranks in the global subset create the global LAMMPS instance.
+        if self.is_global :
+            self.global_lmp = lammps(comm=self.global_engine_comm, cmdargs=['-screen', 'none', '-log', 'lammps.log.'+str(self.global_engine_id)])
         self.local_lmp = lammps(comm=self.local_engine_comm, cmdargs=['-screen', 'none', '-log', 'lammps.log.'+str(self.local_engine_id)])
-        self.lmp = self.global_lmp
+        # Wire the active LAMMPS handle to the current boot mode.
+        if self.is_global :
+            self.use_global()
+        else :
+            self.use_local()
         self._is_alive = True
 
     #RUN ON RANK 0
@@ -240,7 +257,10 @@ class MpiApiEngine() :
 
         self._is_alive = False
 
-        if self.message_reader_thread is not None :
+        # On rank 0 close() runs inside the engine thread itself; don't self-join
+        # (the loop exits on its own once _is_alive is False). Only join from outside.
+        if self.message_reader_thread is not None \
+                and threading.current_thread() is not self.message_reader_thread:
             self.message_reader_thread.join(timeout=1)
             self.message_reader_thread = None
 

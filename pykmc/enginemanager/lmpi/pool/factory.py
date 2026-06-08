@@ -11,17 +11,25 @@ class ManagerFactory:
     Responsible for splitting ranks and instantiating Engines, Sessions,
     and returning a configured PoolSessionManager.
     """
-    def __init__(self, n_sessions: int, use_rank_0: bool, has_global: bool = True):
+    def __init__(self, n_sessions: int, use_rank_0: bool, has_global: bool = True,
+                 n_global_sessions: int | None = None):
         self.world = MPI.COMM_WORLD
         self.world_rank = self.world.Get_rank()
         self.world_size = self.world.Get_size()
         self.n_sessions = n_sessions
         self.use_rank_0 = use_rank_0
         self.has_global = has_global
+        # Number of leading sessions (chunks) whose ranks form the GLOBAL comm.
+        # None -> all sessions (legacy behaviour: global spans every engine rank).
+        self.n_global_sessions = n_sessions if n_global_sessions is None else n_global_sessions
+        if not (1 <= self.n_global_sessions <= n_sessions):
+            raise ValueError(
+                f"n_global_sessions must be in [1, {n_sessions}], got {self.n_global_sessions}"
+            )
 
-        if self.use_rank_0 : 
+        if self.use_rank_0 :
             self.start_rank = 0
-        else : 
+        else :
             self.start_rank = 1
 
         if self.world_size < n_sessions + self.start_rank:
@@ -29,6 +37,9 @@ class ManagerFactory:
 
         self.available_ranks = list(range(self.start_rank, self.world_size))
         self.chunks = self._split_ranks()
+        # Ranks that belong to the global LAMMPS = union of the first K whole chunks.
+        # Chunk-aligned so the local->global relay (per-chunk session) stays valid.
+        self.global_ranks = [r for chunk in self.chunks[: self.n_global_sessions] for r in chunk]
 
     def _split_ranks(self) -> list[list[int]]:
         split_arrays = np.array_split(self.available_ranks, self.n_sessions)
@@ -60,11 +71,15 @@ class ManagerFactory:
                 messengers.append(MpiMessenger(comm=self.world))
 
         
-        # communicator and messenger for global
-        if self.world_rank < self.start_rank:
-            global_comm = self.world.Split(color=MPI.UNDEFINED, key=self.world_rank)
-        else:
+        # communicator and messenger for global.
+        # Only ranks in the global subset (first K chunks) join the global comm;
+        # everyone else passes MPI.UNDEFINED (collective: ALL world ranks call Split).
+        is_global = self.world_rank in self.global_ranks
+        if is_global:
             global_comm = self.world.Split(color=1, key=self.world_rank)
+        else:
+            self.world.Split(color=MPI.UNDEFINED, key=self.world_rank)  # returns COMM_NULL
+            global_comm = None  # normalize: local-only ranks have no global comm
         global_messenger = MpiMessenger(comm=self.world)
 
 
@@ -96,5 +111,5 @@ class ManagerFactory:
                 )
                 sessions.append(session)
 
-            global_session = MpiApiSession(messenger=global_messenger, engine_ranks=list(range(self.start_rank, self.world_size)), session_id=0)
-            return Manager(sessions=sessions, global_session=global_session)
+            global_session = MpiApiSession(messenger=global_messenger, engine_ranks=self.global_ranks, session_id=0)
+            return Manager(sessions=sessions, global_session=global_session, n_global_sessions=self.n_global_sessions)

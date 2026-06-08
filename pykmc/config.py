@@ -72,8 +72,18 @@ class ControlConfig(BaseModel):
     )
 
     n_sessions: Optional[int] = Field(
-        default=1, 
+        default=1,
         description="Number of Sessions"
+    )
+
+    n_global_sessions: Optional[int] = Field(
+        default=None,
+        description="Number of leading sessions (workers) whose ranks form the "
+        "GLOBAL LAMMPS communicator. The global instance runs on the union of the "
+        "first K chunks; the remaining workers are local-only (no global LAMMPS). "
+        "None = all sessions (legacy: global spans every engine rank). Set this "
+        "below n_sessions to run the full-system minimize on fewer cores (avoids "
+        "lost atoms / communication overhead when n_sessions is large).",
     )
 
     engine_use_rank_0: Optional[bool] = Field(
