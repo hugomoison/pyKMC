@@ -2,10 +2,20 @@ code, pre {
   font-weight: 600;
 }
 
-/* Details/summary color */
-.md-typeset details summary {
-  color: #fe8019;
+/* Details/summary */
+.md-typeset details {
+  border-color: #ff5722;
+  background-color: #fff3e0;
 }
+.md-typeset details summary {
+  border-color: #ff5722;
+  background-color: #ffe0b2;
+}
+.md-typeset details summary::after {
+  border-color: #ff5722;
+  background-color: #fff3e0;
+}
+
 
 /* Gruvbox Light */
 [data-md-color-scheme="default"] {
