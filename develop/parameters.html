@@ -575,6 +575,39 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#inactive_atoms-section-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inactive_atoms Section (optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frozen_atoms-section-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frozen_atoms Section (optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bias-section-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bias Section (optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1388,6 +1421,39 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#inactive_atoms-section-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Inactive_atoms Section (optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#frozen_atoms-section-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Frozen_atoms Section (optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bias-section-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Bias Section (optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1524,6 +1590,13 @@
 <br />
 <details><summary>Description</summary>
   Incorporate AV's into simulations, recommended for large systems
+  </details></p>
+</li>
+<li>
+<p><strong><code>bias</code></strong> : <code>bool</code>, default = <code>False</code>
+<br />
+<details><summary>Description</summary>
+  Enable event selection bias. Requires a [Bias] section.
   </details>
 </p>
 </li>
@@ -1536,7 +1609,7 @@
 
 <ul>
 <li>
-<p><strong><code>style</code></strong> : <code>Literal['cna', 'graph', 'cna/graph']</code>, mandatory
+<p><strong><code>style</code></strong> : <code>Literal['cna', 'graph', 'cna/graph', 'diamond/graph']</code>, mandatory
 <br />
 <details><summary>Description</summary>
   Method used to characterize and assign an ID to an atom's local atomic environment
@@ -1750,13 +1823,6 @@
   </details></p>
 </li>
 <li>
-<p><strong><code>evalf_max</code></strong> : <code>int</code>, default = <code>9999</code>
-<br />
-<details><summary>Description</summary>
-  to stop an artn search before end when the number of force evaluations by the force engine is greater to nevalf_max.
-  </details></p>
-</li>
-<li>
 <p><strong><code>zseed</code></strong> : <code>int</code>, default = <code>0</code>
 <br />
 <details><summary>Description</summary>
@@ -1892,7 +1958,7 @@
   </details></p>
 </li>
 <li>
-<p><strong><code>nevalf_max</code></strong> : <code>int</code>, default = <code>500</code>
+<p><strong><code>nevalf_max</code></strong> : <code>int</code>, default = <code>9999</code>
 <br />
 <details><summary>Description</summary>
   Stop an artn search before end when the number of force evaluations by the force engine is greater to nevalf_max
@@ -1914,10 +1980,10 @@
   </details></p>
 </li>
 <li>
-<p><strong><code>r_evalf_max</code></strong> : <code>int</code>, default = <code>300</code>
+<p><strong><code>r_nevalf_max</code></strong> : <code>int</code>, default = <code>300</code>
 <br />
 <details><summary>Description</summary>
-  to stop an artn refinement before end when the number of force evaluations by the force engine is greater to nevalf_max.
+  Stop an artn refinement before end when the number of force evaluations by the force engine is greater to nevalf_max.
   </details></p>
 </li>
 <li>
@@ -2127,6 +2193,265 @@
 <br />
 <details><summary>Description</summary>
   Debug flag for active volume size checks
+  </details>
+</p>
+</li>
+</ul>
+<hr />
+<h2 id="inactive_atoms-section-optional"><code>Inactive_atoms</code> Section (optional)</h2>
+<details><summary>Section Overview</summary>
+  Selects atoms by type, index, or geometric region (union semantics).
+
+  Used for ``inactive_atoms`` and ``frozen_atoms`` config sections.
+  Runtime geometric queries (e.g. ``contains(positions)``) live in
+  ``pykmc/region.py``.
+</details>
+
+<ul>
+<li>
+<p><strong><code>region_type</code></strong> : <code>Literal['sphere', 'shell', 'box', 'plane']</code>, optional
+<br />
+<details><summary>Description</summary>
+  Shape of the geometric region.
+  </details></p>
+</li>
+<li>
+<p><strong><code>center</code></strong> : <code>list[float]</code>, optional
+<br />
+<details><summary>Description</summary>
+  Center [x, y, z] for sphere or shell regions.
+  </details></p>
+</li>
+<li>
+<p><strong><code>radius</code></strong> : <code>float</code>, optional
+<br />
+<details><summary>Description</summary>
+  Outer radius for sphere or shell regions.
+  </details></p>
+</li>
+<li>
+<p><strong><code>inner_radius</code></strong> : <code>float</code>, optional
+<br />
+<details><summary>Description</summary>
+  Inner (hollow) radius for shell regions.
+  </details></p>
+</li>
+<li>
+<p><strong><code>lo</code></strong> : <code>list[float]</code>, optional
+<br />
+<details><summary>Description</summary>
+  Lower corner [xlo, ylo, zlo] for box regions.
+  </details></p>
+</li>
+<li>
+<p><strong><code>hi</code></strong> : <code>list[float]</code>, optional
+<br />
+<details><summary>Description</summary>
+  Upper corner [xhi, yhi, zhi] for box regions.
+  </details></p>
+</li>
+<li>
+<p><strong><code>normal</code></strong> : <code>Literal['x', 'y', 'z']</code>, optional
+<br />
+<details><summary>Description</summary>
+  Axis normal to the cutting plane.
+  </details></p>
+</li>
+<li>
+<p><strong><code>threshold</code></strong> : <code>float</code>, optional
+<br />
+<details><summary>Description</summary>
+  Position along the normal axis defining the plane.
+  </details></p>
+</li>
+<li>
+<p><strong><code>side</code></strong> : <code>Literal['inside', 'outside', 'above', 'below']</code>, default = <code>'inside'</code>
+<br />
+<details><summary>Description</summary>
+  Membership side: 'inside'/'outside' for sphere/shell/box, 'above'/'below' for plane.
+  </details></p>
+</li>
+<li>
+<p><strong><code>types</code></strong> : <code>list[str]</code>, default = <code>PydanticUndefined</code>
+<br />
+<details><summary>Description</summary>
+  Chemical symbols of atom types to select (e.g. ['Fe', 'O']).
+  </details></p>
+</li>
+<li>
+<p><strong><code>indices</code></strong> : <code>list[int]</code>, default = <code>PydanticUndefined</code>
+<br />
+<details><summary>Description</summary>
+  0-based atom indices to select.
+  </details>
+</p>
+</li>
+</ul>
+<hr />
+<h2 id="frozen_atoms-section-optional"><code>Frozen_atoms</code> Section (optional)</h2>
+<details><summary>Section Overview</summary>
+  Selects atoms by type, index, or geometric region (union semantics).
+
+  Used for ``inactive_atoms`` and ``frozen_atoms`` config sections.
+  Runtime geometric queries (e.g. ``contains(positions)``) live in
+  ``pykmc/region.py``.
+</details>
+
+<ul>
+<li>
+<p><strong><code>region_type</code></strong> : <code>Literal['sphere', 'shell', 'box', 'plane']</code>, optional
+<br />
+<details><summary>Description</summary>
+  Shape of the geometric region.
+  </details></p>
+</li>
+<li>
+<p><strong><code>center</code></strong> : <code>list[float]</code>, optional
+<br />
+<details><summary>Description</summary>
+  Center [x, y, z] for sphere or shell regions.
+  </details></p>
+</li>
+<li>
+<p><strong><code>radius</code></strong> : <code>float</code>, optional
+<br />
+<details><summary>Description</summary>
+  Outer radius for sphere or shell regions.
+  </details></p>
+</li>
+<li>
+<p><strong><code>inner_radius</code></strong> : <code>float</code>, optional
+<br />
+<details><summary>Description</summary>
+  Inner (hollow) radius for shell regions.
+  </details></p>
+</li>
+<li>
+<p><strong><code>lo</code></strong> : <code>list[float]</code>, optional
+<br />
+<details><summary>Description</summary>
+  Lower corner [xlo, ylo, zlo] for box regions.
+  </details></p>
+</li>
+<li>
+<p><strong><code>hi</code></strong> : <code>list[float]</code>, optional
+<br />
+<details><summary>Description</summary>
+  Upper corner [xhi, yhi, zhi] for box regions.
+  </details></p>
+</li>
+<li>
+<p><strong><code>normal</code></strong> : <code>Literal['x', 'y', 'z']</code>, optional
+<br />
+<details><summary>Description</summary>
+  Axis normal to the cutting plane.
+  </details></p>
+</li>
+<li>
+<p><strong><code>threshold</code></strong> : <code>float</code>, optional
+<br />
+<details><summary>Description</summary>
+  Position along the normal axis defining the plane.
+  </details></p>
+</li>
+<li>
+<p><strong><code>side</code></strong> : <code>Literal['inside', 'outside', 'above', 'below']</code>, default = <code>'inside'</code>
+<br />
+<details><summary>Description</summary>
+  Membership side: 'inside'/'outside' for sphere/shell/box, 'above'/'below' for plane.
+  </details></p>
+</li>
+<li>
+<p><strong><code>types</code></strong> : <code>list[str]</code>, default = <code>PydanticUndefined</code>
+<br />
+<details><summary>Description</summary>
+  Chemical symbols of atom types to select (e.g. ['Fe', 'O']).
+  </details></p>
+</li>
+<li>
+<p><strong><code>indices</code></strong> : <code>list[int]</code>, default = <code>PydanticUndefined</code>
+<br />
+<details><summary>Description</summary>
+  0-based atom indices to select.
+  </details>
+</p>
+</li>
+</ul>
+<hr />
+<h2 id="bias-section-optional"><code>Bias</code> Section (optional)</h2>
+<details><summary>Section Overview</summary>
+  Event selection bias parameters.
+</details>
+
+<ul>
+<li>
+<p><strong><code>style</code></strong> : <code>Literal['direction', 'point', 'topo']</code>, mandatory
+<br />
+<details><summary>Description</summary>
+  Bias style: 'direction' (DirectionBias), 'point' (PointBias), or 'topo' (TopoBias).
+  </details></p>
+</li>
+<li>
+<p><strong><code>mode</code></strong> : <code>Literal['filter', 'boost']</code>, default = <code>'filter'</code>
+<br />
+<details><summary>Description</summary>
+  Selection mode. 'filter': rejection-loop removes non-accepted events. 'boost': multiplies desired event rates by a dynamic factor so they fire with probability bias_weight, without blocking other events.
+  </details></p>
+</li>
+<li>
+<p><strong><code>bias_weight</code></strong> : <code>float</code>, default = <code>0.5</code>
+<br />
+<details><summary>Description</summary>
+  Target probability in (0, 1) that a desired event is selected at each step. Only used in boost mode.
+  </details></p>
+</li>
+<li>
+<p><strong><code>pass_unlisted</code></strong> : <code>bool</code>, default = <code>False</code>
+<br />
+<details><summary>Description</summary>
+  Whether atoms not in atom_indices pass through the bias predicate unchanged. False (default): non-listed atoms are rejected/undesired. True: non-listed atoms always pass; only valid in filter mode.
+  </details></p>
+</li>
+<li>
+<p><strong><code>direction</code></strong> : <code>list[float]</code>, optional
+<br />
+<details><summary>Description</summary>
+  Direction vector [x, y, z] for 'direction' bias.
+  </details></p>
+</li>
+<li>
+<p><strong><code>target_point</code></strong> : <code>list[float]</code>, optional
+<br />
+<details><summary>Description</summary>
+  Target point [x, y, z] for 'point' bias.
+  </details></p>
+</li>
+<li>
+<p><strong><code>atom_indices</code></strong> : <code>list[int]</code>, optional
+<br />
+<details><summary>Description</summary>
+  Global atom indices to bias. None means all atoms.
+  </details></p>
+</li>
+<li>
+<p><strong><code>threshold</code></strong> : <code>float</code>, default = <code>0.0</code>
+<br />
+<details><summary>Description</summary>
+  Minimum projection onto the bias direction for acceptance.
+  </details></p>
+</li>
+<li>
+<p><strong><code>topo_source</code></strong> : <code>str</code>, optional
+<br />
+<details><summary>Description</summary>
+  Source topology ID for 'topo' bias (e.g. vacancy).
+  </details></p>
+</li>
+<li>
+<p><strong><code>topo_target</code></strong> : <code>str</code>, optional
+<br />
+<details><summary>Description</summary>
+  Target topology ID for 'topo' bias (e.g. interstitial).
   </details>
 </p>
 </li>

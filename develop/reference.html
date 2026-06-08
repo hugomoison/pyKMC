@@ -1308,6 +1308,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pykmc.AtomicEnvironment.compute_region" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        compute_region
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pykmc.AtomicEnvironment.get_atoms_with_id" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1491,6 +1502,17 @@
         
       </ul>
     </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pykmc.BiasConfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BiasConfig
+      
+    </span>
+  </a>
   
 </li>
         
@@ -1811,6 +1833,17 @@
     <span class="md-ellipsis">
       
         initialize_atomic_environments
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pykmc.Initializer.initialize_bias" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        initialize_bias
       
     </span>
   </a>
@@ -2714,6 +2747,45 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pykmc.RegionConfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RegionConfig
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RegionConfig">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pykmc.RegionConfig.check_fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        check_fields
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pykmc.RegionConfig.collect_region_keys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        collect_region_keys
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pykmc.System" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2786,10 +2858,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#pykmc.cna" class="md-nav__link">
+  <a href="#pykmc.cna_signature" class="md-nav__link">
     <span class="md-ellipsis">
       
-        cna
+        cna_signature
       
     </span>
   </a>
@@ -3917,6 +3989,26 @@ based on the chosen <code>style</code>.</p>
 <div class="doc doc-object doc-function">
 
 
+<h4 id="pykmc.AtomicEnvironment.compute_region" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">compute_region</span>
+
+
+</h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">compute_region</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">positions</span><span class="p">,</span> <span class="n">atom_types</span><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>See :py:func:<code>.environments.region</code> for details.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="pykmc.AtomicEnvironment.get_atoms_with_id" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">get_atoms_with_id</span>
 
@@ -4534,7 +4626,9 @@ based on the chosen <code>style</code>.</p>
 
 
 </h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">system_from_state</span><span class="p">(</span><span class="n">from_state</span><span class="p">,</span> <span class="n">event_idx</span><span class="p">,</span> <span class="n">central_atom</span><span class="p">,</span> <span class="n">sym_idx</span><span class="p">)</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">system_from_state</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">from_state</span><span class="p">,</span> <span class="n">event_idx</span><span class="p">,</span> <span class="n">central_atom</span><span class="p">,</span> <span class="n">sym_idx</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4545,6 +4639,54 @@ based on the chosen <code>style</code>.</p>
     </div>
 
 </div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="pykmc.BiasConfig" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">BiasConfig</span>
+
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+
+
+
+        <p>Event selection bias parameters.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
 
 
 
@@ -5219,7 +5361,12 @@ included, formatted in red for easy visibility, followed by the message.</p>
 
 
 </h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">detect</span><span class="p">(</span><span class="n">pds_selected_active_event</span><span class="p">,</span> <span class="n">df_reference_table</span><span class="p">,</span> <span class="n">energy_threshold</span><span class="p">,</span> <span class="n">is_refined</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">detect</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">pds_selected_active_event</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">df_reference_table</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">energy_threshold</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">is_refined</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -6302,6 +6449,26 @@ has a barrier below this threshold.</p>
 <div class="doc doc-object doc-function">
 
 
+<h4 id="pykmc.Initializer.initialize_bias" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">initialize_bias</span>
+
+
+</h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">initialize_bias</span><span class="p">()</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Instantiate the bias object from the config, or set it to None.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="pykmc.Initializer.initialize_loggers" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">initialize_loggers</span>
 
@@ -7187,7 +7354,9 @@ minimization, logging, and termination.</p>
 
 
 </h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_info_reference_event_searches</span><span class="p">(</span><span class="n">results_reference_event_searches</span><span class="p">)</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">get_info_reference_event_searches</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">results_reference_event_searches</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -7899,7 +8068,9 @@ Provides convenience methods for KMC-specific log messages.</p>
 
 
 </h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">progress_bar</span><span class="p">(</span><span class="n">logger_name</span><span class="p">,</span> <span class="n">current_step</span><span class="p">,</span> <span class="n">total_steps</span><span class="p">,</span> <span class="n">bar_length</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">progress_bar</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">logger_name</span><span class="p">,</span> <span class="n">current_step</span><span class="p">,</span> <span class="n">total_steps</span><span class="p">,</span> <span class="n">bar_length</span><span class="o">=</span><span class="mi">40</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -9693,7 +9864,15 @@ Refer to <code>logging.Logger.debug()</code> documentation for <code>*args</code
 
 
 </h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">reconstruct</span><span class="p">(</span><span class="n">supposed_min1_positions</span><span class="p">,</span> <span class="n">supposed_min2_positions</span><span class="p">,</span> <span class="n">saddle_positions</span><span class="p">,</span> <span class="n">cell</span><span class="p">,</span> <span class="n">delr_thr</span><span class="p">,</span> <span class="n">neighbors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fraction</span><span class="o">=</span><span class="mf">0.15</span><span class="p">)</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">reconstruct</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">supposed_min1_positions</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">supposed_min2_positions</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">saddle_positions</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">cell</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">delr_thr</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">neighbors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">fraction</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -10445,7 +10624,15 @@ typically the neighors list of the in the atomic environment of the atom on whic
 
 
 </h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">is_valid_new_event</span><span class="p">(</span><span class="n">min1_positions</span><span class="p">,</span> <span class="n">saddle_positions</span><span class="p">,</span> <span class="n">min2_positions</span><span class="p">,</span> <span class="n">move_atom_idx</span><span class="p">,</span> <span class="n">dE_forward</span><span class="p">,</span> <span class="n">dE_backward</span><span class="p">,</span> <span class="n">cell</span><span class="p">)</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">is_valid_new_event</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">min1_positions</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">saddle_positions</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">min2_positions</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">move_atom_idx</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">dE_forward</span><span class="p">,</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">dE_backward</span><span class="p">,</span>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">cell</span><span class="p">,</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -10990,7 +11177,9 @@ typically the neighors list of the in the atomic environment of the atom on whic
 
 
 </h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">check_refinement_energy</span><span class="p">(</span><span class="n">result_refine</span><span class="p">,</span> <span class="n">energy_mismatch</span><span class="p">,</span> <span class="n">refined_energy_thr</span><span class="p">)</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">check_refinement_energy</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">result_refine</span><span class="p">,</span> <span class="n">energy_mismatch</span><span class="p">,</span> <span class="n">refined_energy_thr</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -11300,7 +11489,9 @@ typically the neighors list of the in the atomic environment of the atom on whic
 
 
 </h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">refine_single</span><span class="p">(</span><span class="n">at_idx</span><span class="p">,</span> <span class="n">dfevent</span><span class="p">,</span> <span class="n">total_energy</span><span class="p">,</span> <span class="n">future_context</span><span class="p">,</span> <span class="n">e_thr</span><span class="p">)</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">refine_single</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">at_idx</span><span class="p">,</span> <span class="n">dfevent</span><span class="p">,</span> <span class="n">total_energy</span><span class="p">,</span> <span class="n">future_context</span><span class="p">,</span> <span class="n">e_thr</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -11510,6 +11701,101 @@ typically the neighors list of the in the atomic environment of the atom on whic
 
 
 
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="pykmc.RegionConfig" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">RegionConfig</span>
+
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+
+
+
+        <p>Selects atoms by type, index, or geometric region (union semantics).</p>
+<p>Used for <code>inactive_atoms</code> and <code>frozen_atoms</code> config sections.
+Runtime geometric queries (e.g. <code>contains(positions)</code>) live in
+<code>pykmc/region.py</code>.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pykmc.RegionConfig.check_fields" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">check_fields</span>
+
+
+</h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">check_fields</span><span class="p">()</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Validate required fields per region_type.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pykmc.RegionConfig.collect_region_keys" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">collect_region_keys</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+</h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">collect_region_keys</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Strip <code>region_</code> prefix from flat INI keys.</p>
+
+
+    </div>
+
+</div>
 
 
 
@@ -12142,12 +12428,12 @@ Defaults to True (all directions).</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="pykmc.cna" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">cna</span>
+<h3 id="pykmc.cna_signature" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">cna_signature</span>
 
 
 </h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">cna</span><span class="p">(</span><span class="n">neighbors_list</span><span class="p">)</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">cna_signature</span><span class="p">(</span><span class="n">neighbors_list</span><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -12588,7 +12874,9 @@ $$</p>
 
 
 </h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">info_active_events</span><span class="p">(</span><span class="n">system_types</span><span class="p">,</span> <span class="n">reference_table</span><span class="p">,</span> <span class="n">active_table</span><span class="p">)</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">info_active_events</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">system_types</span><span class="p">,</span> <span class="n">reference_table</span><span class="p">,</span> <span class="n">active_table</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -12703,7 +12991,12 @@ $$</p>
 
 
 </h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">info_basin_events</span><span class="p">(</span><span class="n">system_types</span><span class="p">,</span> <span class="n">reference_table</span><span class="p">,</span> <span class="n">connectivity_table</span><span class="p">,</span> <span class="n">exit_state</span><span class="p">)</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">info_basin_events</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">system_types</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">reference_table</span><span class="p">,</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">connectivity_table</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">exit_state</span><span class="p">,</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -12812,7 +13105,9 @@ $$</p>
 
 
 </h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">info_reference_event_searches</span><span class="p">(</span><span class="n">results_reference_event_searches</span><span class="p">)</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">info_reference_event_searches</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">results_reference_event_searches</span><span class="p">,</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -13272,7 +13567,9 @@ for compact and readable YAML output.</p>
 
 
 </h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">unique_symmetries</span><span class="p">(</span><span class="n">initial_positions</span><span class="p">,</span> <span class="n">final_positions</span><span class="p">,</span> <span class="n">sym_thr</span><span class="p">)</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">unique_symmetries</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">initial_positions</span><span class="p">,</span> <span class="n">final_positions</span><span class="p">,</span> <span class="n">sym_thr</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
