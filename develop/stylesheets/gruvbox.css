@@ -1,0 +1,49 @@
+code, pre {
+  font-weight: 600;
+}
+
+/* Gruvbox Light */
+[data-md-color-scheme="default"] {
+  --md-code-bg-color: #ebebeb;
+  --md-code-fg-color: #3c3836;
+  --md-code-hl-keyword-color: #9d0006;
+  --md-code-hl-name-color: #3c3836;
+  --md-code-hl-comment-color: #7c6f64;
+  --md-code-hl-string-color: #79740e;
+  --md-code-hl-special-string-color: #b57614;
+  --md-code-hl-number-color: #8f3f71;
+  --md-code-hl-operator-color: #af3a03;
+  --md-code-hl-punctuation-color: #3c3836;
+  --md-code-hl-function-color: #427b58;
+  --md-code-hl-variable-color: #076678;
+  --md-code-hl-constant-color: #8f3f71;
+  --md-code-hl-class-color: #b57614;
+  --md-code-hl-namespace-color: #076678;
+  --md-code-hl-entity-color: #427b58;
+  --md-code-hl-tag-color: #9d0006;
+  --md-code-hl-attribute-color: #b57614;
+  --md-code-hl-generic-color: #3c3836;
+}
+
+/* Gruvbox Dark */
+[data-md-color-scheme="slate"] {
+  --md-code-bg-color: #1e1e1e;
+  --md-code-fg-color: #ebdbb2;
+  --md-code-hl-keyword-color: #fb4934;
+  --md-code-hl-name-color: #ebdbb2;
+  --md-code-hl-comment-color: #928374;
+  --md-code-hl-string-color: #b8bb26;
+  --md-code-hl-special-string-color: #fabd2f;
+  --md-code-hl-number-color: #d3869b;
+  --md-code-hl-operator-color: #fe8019;
+  --md-code-hl-punctuation-color: #ebdbb2;
+  --md-code-hl-function-color: #8ec07c;
+  --md-code-hl-variable-color: #83a598;
+  --md-code-hl-constant-color: #d3869b;
+  --md-code-hl-class-color: #fabd2f;
+  --md-code-hl-namespace-color: #83a598;
+  --md-code-hl-entity-color: #8ec07c;
+  --md-code-hl-tag-color: #fb4934;
+  --md-code-hl-attribute-color: #fabd2f;
+  --md-code-hl-generic-color: #ebdbb2;
+}
