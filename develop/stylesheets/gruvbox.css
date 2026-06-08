@@ -3,11 +3,7 @@ code, pre {
 }
 
 /* Details/summary color */
-[data-md-color-scheme="default"] details summary {
-  color: #fe8019;
-}
-
-[data-md-color-scheme="slate"] details summary {
+.md-typeset details summary {
   color: #fe8019;
 }
 
