@@ -2,134 +2,134 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/index.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/active_volumes.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/basins.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/developer_guide.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/general_algorithm.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/parameters.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/parameters_details.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/reference.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/symmetries.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/troubleshooting.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/user_guide.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/api/algorithms.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/api/atomic_environment.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/api/config.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/api/environments.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/api/event_table.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/api/eventsearch.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/api/info_simulation.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/api/initialized.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/api/kmc.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/api/log.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/api/neighbors_list.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/api/point_set_registration.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/api/rate_constant.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/api/refinement.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/api/result.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/api/run.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/api/symmetries.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/api/system.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/api/utils.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/install/installation.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/install/pykmc_linux_Compile_Instructions.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
     <url>
          <loc>https://hugomoison.github.io/pyKMC/develop/install/pykmc_mac_Compile_Instructions.html</loc>
-         <lastmod>2026-06-08</lastmod>
+         <lastmod>2026-06-09</lastmod>
     </url>
 </urlset>
