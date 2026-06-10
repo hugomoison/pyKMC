@@ -1409,7 +1409,9 @@
 <p>Or simply source the activation script created by the installer:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="nb">source</span><span class="w"> </span>activate.sh
 </span></code></pre></div>
-<p>Run with MPI (<code>n = n_sessions + 1</code> when <code>engine_use_rank_0 = False</code>):</p>
+<p>Run with MPI — use at least <code>n_sessions + 1</code> ranks: rank 0 runs the main KMC loop and
+the remaining ranks are split among the <code>n_sessions</code> LAMMPS instances (<code>[Control]</code>
+section of the input file):</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-25-1"><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a>mpirun<span class="w"> </span>-n<span class="w"> </span><span class="m">8</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pykmc<span class="w"> </span>-in<span class="w"> </span>input.in
 </span></code></pre></div>
 

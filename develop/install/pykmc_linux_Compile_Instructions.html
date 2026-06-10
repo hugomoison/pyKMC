@@ -1201,10 +1201,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-fix-python-version-constraint" class="md-nav__link">
+  <a href="#2-python-version" class="md-nav__link">
     <span class="md-ellipsis">
       
-        2. Fix Python version constraint
+        2. Python version
       
     </span>
   </a>
@@ -1335,7 +1335,7 @@
 
 <h1 id="pykmc-linux-installation-instructions">pyKMC Linux Installation Instructions</h1>
 <p><strong>Tested for:</strong> Ubuntu/Debian and RHEL/CentOS-based systems
-<strong>Python:</strong> 3.9–3.13
+<strong>Python:</strong> 3.10–3.13
 <strong>LAMMPS:</strong> <code>stable_22Jul2025_update3</code></p>
 <blockquote>
 <p><strong>Tip:</strong> For an automated install, run <a href="install_pykmc_linux.sh"><code>install_pykmc_linux.sh</code></a> instead of following the manual steps below — the script does everything automatically. See <strong>Automated install</strong> below for how to run it. To install manually, skip to <a href="#0-system-prerequisites">Section 0</a>.</p>
@@ -1363,6 +1363,12 @@
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>/path/to/install_pykmc_linux.sh<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>tee<span class="w"> </span>install.log
 </span></code></pre></div>
 <p>The script will prompt <strong>once</strong> for your <code>sudo</code> password so it can <code>apt</code>/<code>dnf</code> install any missing system packages (<code>build-essential</code>, <code>gfortran</code>, <code>cmake</code>, <code>libopenmpi-dev</code>, <code>openmpi-bin</code>, <code>libfftw3-dev</code>, <code>liblapack-dev</code>, <code>python3-venv</code>, <code>python3-dev</code> on Debian/Ubuntu). After that it runs unattended for roughly 10–20 minutes while LAMMPS compiles.</p>
+<blockquote>
+<p><strong>DRAC/Alliance HPC clusters:</strong> there is <strong>no</strong> <code>sudo</code> prompt — the script auto-detects the
+cluster and skips the package-install stage entirely. Load the toolchain modules <strong>before</strong>
+running it (see the <a href="#drac-alliance-hpc-clusters">cluster notes</a>), run it on a <strong>login node</strong>
+(compute nodes have no internet), and run it from a directory under <code>$SCRATCH</code>.</p>
+</blockquote>
 <p>To use a specific Python interpreter, set <code>PYTHON_BIN</code> before running:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nv">PYTHON_BIN</span><span class="o">=</span>/usr/bin/python3.12<span class="w"> </span>/path/to/install_pykmc_linux.sh
 </span></code></pre></div>
@@ -1387,12 +1393,32 @@
 </span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="nb">export</span><span class="w"> </span><span class="nv">PATH</span><span class="o">=</span>/usr/lib64/openmpi/bin:<span class="nv">$PATH</span>
 </span></code></pre></div>
 <h3 id="drac-alliance-hpc-clusters">DRAC / Alliance HPC clusters</h3>
+<blockquote>
+<p>Validated end-to-end on <strong>Trillium</strong> (2026-06). Module versions below are Trillium's;
+check yours with <code>module spider &lt;name&gt;</code>.</p>
+</blockquote>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>module<span class="w"> </span>load<span class="w"> </span>StdEnv/2023
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>module<span class="w"> </span>load<span class="w"> </span>python/3.12.4
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>module<span class="w"> </span>load<span class="w"> </span>openmpi
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>module<span class="w"> </span>load<span class="w"> </span>mpi4py
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>module<span class="w"> </span>load<span class="w"> </span>cmake
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>module<span class="w"> </span>load<span class="w"> </span>gcc/12.3<span class="w">        </span><span class="c1"># must come first: openmpi/mpi4py are hidden until a compiler is loaded</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>module<span class="w"> </span>load<span class="w"> </span>openmpi/4.1.5
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>module<span class="w"> </span>load<span class="w"> </span>python/3.12.4
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>module<span class="w"> </span>load<span class="w"> </span>mpi4py/4.1.0<span class="w">    </span><span class="c1"># pyKMC needs mpi4py &gt;= 4.0.2 — mpi4py/4.0.0 is too old</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>module<span class="w"> </span>load<span class="w"> </span>cmake/3.31.0
 </span></code></pre></div>
+<p>Cluster ground rules (they shape every step below):</p>
+<ul>
+<li><strong>Login vs compute nodes:</strong> login nodes have internet; compute nodes do <strong>not</strong>. All <code>git clone</code>
+  and <code>pip</code> steps (including <code>make install-python</code>, which downloads build tools) must run on a
+  <strong>login node</strong>. Only the pure compile (<code>make</code> / <code>cmake --build</code>) benefits from a compute node.</li>
+<li><strong>Filesystems:</strong> install under <strong><code>$SCRATCH</code></strong> on Trillium — <code>$HOME</code> and <code>$PROJECT</code> are read-only
+  from compute jobs, and jobs must also <em>run</em> from <code>$SCRATCH</code>.</li>
+<li><strong>Fresh job shells are empty:</strong> <code>salloc</code>/<code>debugjob</code> shells start with no modules, no venv, no
+  exported variables. Re-run the module loads + <code>source .../activate</code> in every new job shell.</li>
+<li><strong>Accounts differ per cluster:</strong> e.g. <code>rrg-xxxx_cpu</code> on Narval/Beluga but plain <code>rrg-xxxx</code> on
+  Trillium. Check yours with <code>sshare -U $USER</code>.</li>
+<li><strong>Do not test MPI imports bare on a compute node:</strong> <code>python -c "from mpi4py import MPI"</code> (or
+  creating a <code>lammps()</code> object) hangs in an allocation unless launched via <code>srun --ntasks=1 …</code>.
+  On login nodes it works as a singleton.</li>
+</ul>
 <h3 id="verify-compilers">Verify compilers</h3>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>gfortran<span class="w"> </span>--version
 </span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>mpicc<span class="w"> </span>--version
@@ -1412,30 +1438,44 @@
 <p><strong>Note:</strong> pyKMC <strong>must</strong> use the <code>develop</code> branch.</p>
 </blockquote>
 <hr />
-<h2 id="2-fix-python-version-constraint">2. Fix Python version constraint</h2>
-<p>Only needed if using Python 3.13. Edit <code>pyKMC/pyproject.toml</code>:</p>
-<ul>
-<li><strong>Change:</strong> <code>requires-python = "&lt;3.13,&gt;=3.9"</code></li>
-<li><strong>To:</strong> <code>requires-python = "&lt;3.14,&gt;=3.9"</code></li>
-</ul>
-<p>On Linux with GNU <code>sed</code>:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">&#39;s/requires-python = &quot;&lt;3.13,&gt;=3.9&quot;/requires-python = &quot;&lt;3.14,&gt;=3.9&quot;/&#39;</span><span class="w"> </span>pyKMC/pyproject.toml
-</span></code></pre></div>
+<h2 id="2-python-version">2. Python version</h2>
+<p>pyKMC requires <strong>Python ≥ 3.10</strong> (<code>requires-python = "&gt;=3.10"</code> in
+<code>pyKMC/pyproject.toml</code>), with no upper bound — Python 3.13 installs without any
+edit. If one of the dependencies does not yet ship a wheel for your Python
+version, fall back to the most recent version that does (3.12 is a safe choice).</p>
 <hr />
 <h2 id="3-create-virtual-environment-and-install-pykmc">3. Create virtual environment and install pyKMC</h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>python3<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>./pykmc_env
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="nb">source</span><span class="w"> </span>pykmc_env/bin/activate
+<blockquote>
+<p><strong>DRAC/Alliance clusters: stop — don't run the default commands below.</strong> Load the toolchain
+modules first (Section 0), then follow the cluster pattern in the callout at the end of this
+section instead: the venv must be created with <code>virtualenv --no-download</code> <strong>after</strong> the
+<code>mpi4py</code> module is loaded, and mpi4py must <strong>not</strong> be pip-installed.</p>
+</blockquote>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>python3<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>./pykmc_env
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="nb">source</span><span class="w"> </span>pykmc_env/bin/activate
 </span></code></pre></div>
 <p>After activation, use bare <code>python</code> (the venv resolves the correct version):</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip
-</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>./pyKMC
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>pip
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>./pyKMC
 </span></code></pre></div>
 <p>Rebuild <code>mpi4py</code> from source to match your system MPI:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">CC</span><span class="o">=</span>mpicc<span class="w"> </span><span class="nv">CXX</span><span class="o">=</span>mpicxx<span class="w"> </span><span class="nv">FC</span><span class="o">=</span>mpif90
-</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-binary<span class="w"> </span>mpi4py<span class="w"> </span>mpi4py<span class="w"> </span>--force-reinstall
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">CC</span><span class="o">=</span>mpicc<span class="w"> </span><span class="nv">CXX</span><span class="o">=</span>mpicxx<span class="w"> </span><span class="nv">FC</span><span class="o">=</span>mpif90
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-binary<span class="w"> </span>mpi4py<span class="w"> </span>mpi4py<span class="w"> </span>--force-reinstall
 </span></code></pre></div>
 <blockquote>
-<p><strong>Note:</strong> On DRAC clusters with the <code>mpi4py</code> module loaded, skip the <code>mpi4py</code> pip install.</p>
+<p><strong>DRAC/Alliance clusters:</strong> do <strong>not</strong> pip-install mpi4py — the <code>mpi4py</code> module provides an
+ABI-matched build (the Alliance wheelhouse deliberately has no real mpi4py wheel). Load the
+module <strong>before</strong> creating the venv, and create the venv with <code>virtualenv --no-download</code> so
+the module's mpi4py is visible inside it:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>virtualenv<span class="w"> </span>--no-download<span class="w"> </span>./pykmc_env
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="nb">source</span><span class="w"> </span>pykmc_env/bin/activate
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-index<span class="w"> </span>--upgrade<span class="w"> </span>pip
+</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;from mpi4py import MPI; print(MPI.Get_library_version())&quot;</span><span class="w">   </span><span class="c1"># login node only</span>
+</span></code></pre></div>
+<p>The check must print the Open MPI version of the loaded <code>openmpi</code> module (e.g. 4.1.5).
+If it shows a different MPI, the venv was created before the module load — recreate it.
+<code>pip install -e ./pyKMC</code> then resolves most dependencies from the Alliance wheelhouse and
+reports mpi4py as already satisfied by the module.</p>
 </blockquote>
 <hr />
 <h2 id="4-build-lammps">4. Build LAMMPS</h2>
@@ -1451,18 +1491,33 @@
 </span><span id="__span-14-10"><a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="w">  </span>-DPKG_RIGID<span class="o">=</span>on<span class="w"> </span><span class="se">\</span>
 </span><span id="__span-14-11"><a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="w">  </span>-DPKG_MOLECULE<span class="o">=</span>on<span class="w"> </span><span class="se">\</span>
 </span><span id="__span-14-12"><a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a><span class="w">  </span>-DPKG_EXTRA-COMPUTE<span class="o">=</span>on<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-14-13"><a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="w">  </span>-DPKG_PLUGIN<span class="o">=</span>on<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-14-14"><a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="w">  </span>-DCMAKE_BUILD_TYPE<span class="o">=</span>Release<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-14-15"><a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a><span class="w">  </span>-DCMAKE_CXX_COMPILER<span class="o">=</span>mpicxx<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-14-16"><a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a><span class="w">  </span>-DCMAKE_C_COMPILER<span class="o">=</span>mpicc<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-14-17"><a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a><span class="w">  </span>-DCMAKE_Fortran_COMPILER<span class="o">=</span>mpif90<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-14-18"><a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a><span class="w">  </span>-DPython_EXECUTABLE<span class="o">=</span><span class="k">$(</span>which<span class="w"> </span>python<span class="k">)</span>
-</span><span id="__span-14-19"><a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a>
-</span><span id="__span-14-20"><a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a>make<span class="w"> </span>-j<span class="k">$(</span>nproc<span class="k">)</span>
-</span><span id="__span-14-21"><a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a>make<span class="w"> </span>install-python
-</span><span id="__span-14-22"><a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a>
-</span><span id="__span-14-23"><a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a><span class="nb">cd</span><span class="w"> </span>../..
+</span><span id="__span-14-13"><a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="w">  </span>-DPKG_PHONON<span class="o">=</span>on<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-14-14"><a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="w">  </span>-DPKG_PLUGIN<span class="o">=</span>on<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-14-15"><a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a><span class="w">  </span>-DCMAKE_BUILD_TYPE<span class="o">=</span>Release<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-14-16"><a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a><span class="w">  </span>-DCMAKE_CXX_COMPILER<span class="o">=</span>mpicxx<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-14-17"><a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a><span class="w">  </span>-DCMAKE_C_COMPILER<span class="o">=</span>mpicc<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-14-18"><a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a><span class="w">  </span>-DCMAKE_Fortran_COMPILER<span class="o">=</span>mpif90<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-14-19"><a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a><span class="w">  </span>-DPython_EXECUTABLE<span class="o">=</span><span class="k">$(</span>which<span class="w"> </span>python<span class="k">)</span>
+</span><span id="__span-14-20"><a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a>
+</span><span id="__span-14-21"><a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a>make<span class="w"> </span>-j<span class="k">$(</span>nproc<span class="k">)</span>
+</span><span id="__span-14-22"><a id="__codelineno-14-22" name="__codelineno-14-22" href="#__codelineno-14-22"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>uninstall<span class="w"> </span>-y<span class="w"> </span>lammps<span class="w">   </span><span class="c1"># drop the PyPI wheel pulled in by pyKMC&#39;s dependencies</span>
+</span><span id="__span-14-23"><a id="__codelineno-14-23" name="__codelineno-14-23" href="#__codelineno-14-23"></a>make<span class="w"> </span>install-python
+</span><span id="__span-14-24"><a id="__codelineno-14-24" name="__codelineno-14-24" href="#__codelineno-14-24"></a>
+</span><span id="__span-14-25"><a id="__codelineno-14-25" name="__codelineno-14-25" href="#__codelineno-14-25"></a><span class="nb">cd</span><span class="w"> </span>../..
 </span></code></pre></div>
+<blockquote>
+<p><code>PKG_PHONON</code> provides the <code>dynamical_matrix</code> command required by the HTST rate-constant
+prefactor — without it HTST silently falls back to the constant <code>k0</code>.</p>
+<p><code>pip install -e ./pyKMC</code> (step 3) pulls a generic <code>lammps</code> wheel from PyPI to satisfy the
+<code>lammps&gt;=…</code> dependency. That wheel has no PLUGIN/PHONON support — the <code>pip uninstall</code> above
+removes it so <code>make install-python</code> installs the wheel built from <strong>this</strong> LAMMPS.</p>
+<p><strong>DRAC/Alliance clusters:</strong> run the compile (<code>make -j</code>) on a compute node if you like
+(<code>debugjob</code> gives a full node), but <strong><code>make install-python</code> must run on a login node</strong> — it
+creates an isolated build environment and downloads <code>build</code>/<code>wheel</code> from PyPI, which fails on
+compute nodes (<code>Network is unreachable</code> after long retries that look like a hang). The build
+directory under <code>$SCRATCH</code> is shared, so compiling on a compute node and then running
+<code>make install-python</code> from a login shell works seamlessly.</p>
+</blockquote>
 <p>Verify:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;from lammps import lammps; print(&#39;LAMMPS OK&#39;)&quot;</span>
 </span></code></pre></div>
@@ -1475,14 +1530,26 @@
 <p>Verify:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import ira_mod; print(&#39;IRA OK&#39;)&quot;</span>
 </span></code></pre></div>
+<blockquote>
+<p><code>import pykmc</code> itself requires <code>ira_mod</code> (imported at package top level), so install IRA
+<strong>before</strong> testing any pyKMC import.</p>
+</blockquote>
 <hr />
 <h2 id="6-build-partn-plugin">6. Build pARTn plugin</h2>
 <p>The following will directly install the <code>pypARTn</code> python module into the venv path. If you need a custom location for the package, specify additional <code>-DCMAKE_INSTALL_PREFIX=&lt;your/custom/path&gt;</code>.
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-18-1"><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="nb">cd</span><span class="w"> </span>artn-plugin
-</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>cmake<span class="w"> </span>-B<span class="w"> </span>build<span class="w"> </span>-DWITH_LAMMPS<span class="o">=</span>ON<span class="w"> </span>-DLAMMPS_PATH<span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/../lammps/build<span class="w"> </span>-DARTN_INSTALL_PYTHON<span class="o">=</span>ON
-</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>cmake<span class="w"> </span>--build<span class="w"> </span>build
-</span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>cmake<span class="w"> </span>--install<span class="w"> </span>build
+</span><span id="__span-18-2"><a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>cmake<span class="w"> </span>-B<span class="w"> </span>build<span class="w"> </span>-DWITH_LAMMPS<span class="o">=</span>ON<span class="w"> </span>-DLAMMPS_PATH<span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/../lammps/build<span class="w"> </span>-DARTN_INSTALL_PYTHON<span class="o">=</span>ON<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-18-3"><a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">      </span>-DCMAKE_CXX_FLAGS_INIT<span class="o">=</span><span class="s2">&quot;-std=c++17&quot;</span>
+</span><span id="__span-18-4"><a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>cmake<span class="w"> </span>--build<span class="w"> </span>build
+</span><span id="__span-18-5"><a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>cmake<span class="w"> </span>--install<span class="w"> </span>build
 </span></code></pre></div></p>
+<blockquote>
+<p>With <code>pypARTn</code> installed into the venv this way, pyKMC input files need <strong>no <code>path_artnso</code></strong>
+(the <code>[pARTn]</code> section can stay empty) and <strong>no <code>PYTHONPATH</code> exports</strong> — both <code>pypARTn</code> and
+<code>ira_mod</code> are resolved from the venv. If you are migrating from an older PYTHONPATH-based
+install, drop the old <code>export PYTHONPATH=…/artn-plugin/interface</code> and
+<code>…/IterativeRotationsAssignments/interface</code> lines: they would shadow the venv packages.</p>
+</blockquote>
 <p>Verify:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-19-1"><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import pypARTn; a=pypARTn.artn(engine=&#39;lmp&#39;); print(&#39;pypARTn OK&#39;)&quot;</span>
 </span></code></pre></div>
@@ -1508,18 +1575,48 @@
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-22-1"><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="nb">source</span><span class="w"> </span>activate.sh
 </span></code></pre></div>
 <h3 id="drac-alliance-hpc-cluster-sbatch-script">DRAC / Alliance HPC cluster (sbatch script)</h3>
+<p>The Slurm geometry differs per cluster:</p>
+<p><strong>Trillium (whole-node scheduling — no partial nodes, no <code>--mem*</code> flags).</strong>
+The install was validated on Trillium (2026-06) with an 8-task smoke test
+(<code>srun --ntasks=8 --cpu-bind=cores python -m pykmc -in input.in</code> for <code>n_sessions = 7</code>);
+the template below scales the same pattern to a full node:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-23-1"><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="ch">#!/bin/bash</span>
-</span><span id="__span-23-2"><a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="c1">#SBATCH --nodes=1</span>
-</span><span id="__span-23-3"><a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="c1">#SBATCH --ntasks=24</span>
-</span><span id="__span-23-4"><a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="c1">#SBATCH --cpus-per-task=1</span>
-</span><span id="__span-23-5"><a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="c1">#SBATCH --mem-per-cpu=2048M</span>
+</span><span id="__span-23-2"><a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="c1">#SBATCH --account=rrg-xxxx           # no _cpu suffix on Trillium; check `sshare -U $USER`</span>
+</span><span id="__span-23-3"><a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="c1">#SBATCH --nodes=1                    # whole node = 192 cores</span>
+</span><span id="__span-23-4"><a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="c1">#SBATCH --ntasks-per-node=192</span>
+</span><span id="__span-23-5"><a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="c1">#SBATCH --time=01:00:00</span>
 </span><span id="__span-23-6"><a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>
-</span><span id="__span-23-7"><a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>module<span class="w"> </span>load<span class="w"> </span>StdEnv/2023<span class="w"> </span>python/3.12.4<span class="w"> </span>openmpi<span class="w"> </span>mpi4py
-</span><span id="__span-23-8"><a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a><span class="nb">source</span><span class="w"> </span>/home/<span class="nv">$USER</span>/pykmc/pykmc_env/bin/activate
-</span><span id="__span-23-9"><a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a>
-</span><span id="__span-23-10"><a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a>srun<span class="w"> </span>--ntasks<span class="o">=</span><span class="nv">$SLURM_NTASKS</span><span class="w"> </span>--distribution<span class="o">=</span>block:block<span class="w"> </span><span class="se">\</span>
-</span><span id="__span-23-11"><a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a><span class="w">     </span>--cpu-bind<span class="o">=</span>cores<span class="w"> </span>--mem-bind<span class="o">=</span><span class="nb">local</span><span class="w"> </span><span class="se">\</span>
-</span><span id="__span-23-12"><a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a><span class="w">     </span>python<span class="w"> </span>-m<span class="w"> </span>pykmc<span class="w"> </span>-in<span class="w"> </span>input.in
+</span><span id="__span-23-7"><a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>module<span class="w"> </span>purge
+</span><span id="__span-23-8"><a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>module<span class="w"> </span>load<span class="w"> </span>StdEnv/2023<span class="w"> </span>gcc/12.3<span class="w"> </span>openmpi/4.1.5<span class="w"> </span>python/3.12.4<span class="w"> </span>mpi4py/4.1.0<span class="w"> </span>cmake/3.31.0
+</span><span id="__span-23-9"><a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="nb">source</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$SCRATCH</span><span class="s2">/pykmc/pykmc_env/bin/activate&quot;</span>
+</span><span id="__span-23-10"><a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a><span class="nb">export</span><span class="w"> </span><span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span><span class="s2">&quot;</span><span class="nv">$SCRATCH</span><span class="s2">/pykmc/lammps/build:</span><span class="si">${</span><span class="nv">LD_LIBRARY_PATH</span><span class="k">:-</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="__span-23-11"><a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a>
+</span><span id="__span-23-12"><a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a><span class="nb">cd</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$SCRATCH</span><span class="s2">/your_run_dir&quot;</span><span class="w">           </span><span class="c1"># run from $SCRATCH — $HOME/$PROJECT are read-only in jobs</span>
+</span><span id="__span-23-13"><a id="__codelineno-23-13" name="__codelineno-23-13" href="#__codelineno-23-13"></a>
+</span><span id="__span-23-14"><a id="__codelineno-23-14" name="__codelineno-23-14" href="#__codelineno-23-14"></a>srun<span class="w"> </span>--ntasks<span class="o">=</span><span class="nv">$SLURM_NTASKS</span><span class="w"> </span>--distribution<span class="o">=</span>block:block<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-23-15"><a id="__codelineno-23-15" name="__codelineno-23-15" href="#__codelineno-23-15"></a><span class="w">     </span>--cpu-bind<span class="o">=</span>cores<span class="w"> </span>--mem-bind<span class="o">=</span><span class="nb">local</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-23-16"><a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a><span class="w">     </span>python<span class="w"> </span>-m<span class="w"> </span>pykmc<span class="w"> </span>-in<span class="w"> </span>input.in
+</span></code></pre></div>
+<p>Set <code>n_sessions</code> (the number of parallel LAMMPS instances, <code>[Control]</code> section) to at
+most <code>ntasks − 1</code>: rank 0 runs the main KMC loop and the remaining ranks are split
+among the instances. With <code>n_sessions = ntasks − 1</code> each instance gets a single rank
+(e.g. the example input with <code>n_sessions = 7</code> runs as <code>srun --ntasks=8</code>; a full
+Trillium node supports up to <code>n_sessions = 191</code>).</p>
+<p><strong>Narval / Beluga (per-core scheduling)</strong> — the pattern used by existing production
+sbatch scripts (not re-exercised in the Trillium validation):</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-24-1"><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="ch">#!/bin/bash</span>
+</span><span id="__span-24-2"><a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="c1">#SBATCH --account=rrg-xxxx_cpu</span>
+</span><span id="__span-24-3"><a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="c1">#SBATCH --nodes=1</span>
+</span><span id="__span-24-4"><a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="c1">#SBATCH --ntasks=24</span>
+</span><span id="__span-24-5"><a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="c1">#SBATCH --cpus-per-task=1</span>
+</span><span id="__span-24-6"><a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="c1">#SBATCH --mem-per-cpu=2048M</span>
+</span><span id="__span-24-7"><a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>
+</span><span id="__span-24-8"><a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>module<span class="w"> </span>load<span class="w"> </span>StdEnv/2023<span class="w"> </span>python/3.12.4<span class="w"> </span>openmpi<span class="w"> </span>mpi4py
+</span><span id="__span-24-9"><a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="nb">source</span><span class="w"> </span>/home/<span class="nv">$USER</span>/pykmc/pykmc_env/bin/activate
+</span><span id="__span-24-10"><a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a>
+</span><span id="__span-24-11"><a id="__codelineno-24-11" name="__codelineno-24-11" href="#__codelineno-24-11"></a>srun<span class="w"> </span>--ntasks<span class="o">=</span><span class="nv">$SLURM_NTASKS</span><span class="w"> </span>--distribution<span class="o">=</span>block:block<span class="w"> </span><span class="se">\</span>
+</span><span id="__span-24-12"><a id="__codelineno-24-12" name="__codelineno-24-12" href="#__codelineno-24-12"></a><span class="w">     </span>--cpu-bind<span class="o">=</span>cores<span class="w"> </span>--mem-bind<span class="o">=</span><span class="nb">local</span><span class="w"> </span><span class="se">\</span>
+</span><span id="__span-24-13"><a id="__codelineno-24-13" name="__codelineno-24-13" href="#__codelineno-24-13"></a><span class="w">     </span>python<span class="w"> </span>-m<span class="w"> </span>pykmc<span class="w"> </span>-in<span class="w"> </span>input.in
 </span></code></pre></div>
 <hr />
 <h2 id="differences-from-macos">Differences from macOS</h2>
