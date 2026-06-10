@@ -777,10 +777,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#pykmc.environments.cna" class="md-nav__link">
+  <a href="#pykmc.environments.cna_signature" class="md-nav__link">
     <span class="md-ellipsis">
       
-        cna
+        cna_signature
       
     </span>
   </a>
@@ -1233,10 +1233,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#pykmc.environments.cna" class="md-nav__link">
+  <a href="#pykmc.environments.cna_signature" class="md-nav__link">
     <span class="md-ellipsis">
       
-        cna
+        cna_signature
       
     </span>
   </a>
@@ -1325,12 +1325,12 @@
 <div class="doc doc-object doc-function">
 
 
-<h3 id="pykmc.environments.cna" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">cna</span>
+<h3 id="pykmc.environments.cna_signature" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">cna_signature</span>
 
 
 </h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">cna</span><span class="p">(</span><span class="n">neighbors_list</span><span class="p">)</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">cna_signature</span><span class="p">(</span><span class="n">neighbors_list</span><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -1438,12 +1438,7 @@ or 'noncrystal'.</p>
 <span class="normal"><a href="#__codelineno-0-42">42</a></span>
 <span class="normal"><a href="#__codelineno-0-43">43</a></span>
 <span class="normal"><a href="#__codelineno-0-44">44</a></span>
-<span class="normal"><a href="#__codelineno-0-45">45</a></span>
-<span class="normal"><a href="#__codelineno-0-46">46</a></span>
-<span class="normal"><a href="#__codelineno-0-47">47</a></span>
-<span class="normal"><a href="#__codelineno-0-48">48</a></span>
-<span class="normal"><a href="#__codelineno-0-49">49</a></span>
-<span class="normal"><a href="#__codelineno-0-50">50</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">cna</span><span class="p">(</span><span class="n">neighbors_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="p">:</span> 
+<span class="normal"><a href="#__codelineno-0-45">45</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3"></a><span class="k">def</span><span class="w"> </span><span class="nf">cna_signature</span><span class="p">(</span><span class="n">neighbors_list</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="p">:</span> 
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Classify atomic environments by neighbor count.</span>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5"></a>
 </span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6"></a><span class="sd">    Determine if each atom&#39;s environment is &#39;crystal&#39; (12, 8, or 6 neighbors)</span>
@@ -1461,7 +1456,7 @@ or 'noncrystal'.</p>
 </span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18"></a>
 </span><span id="__span-0-19"><a id="__codelineno-0-19" name="__codelineno-0-19"></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="__span-0-20"><a id="__codelineno-0-20" name="__codelineno-0-20"></a>
-</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21"></a>    <span class="nb">hash</span> <span class="o">=</span> <span class="p">[]</span> 
+</span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21"></a>    <span class="n">all_signatures</span> <span class="o">=</span> <span class="p">[]</span>
 </span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22"></a>    <span class="c1">#Compute signature</span>
 </span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23"></a>    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">neighbors_i</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">neighbors_list</span><span class="p">):</span>
 </span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24"></a>        <span class="n">signatures</span> <span class="o">=</span> <span class="p">{}</span> <span class="c1">#signature for all i,j pairs</span>
@@ -1484,13 +1479,8 @@ or 'noncrystal'.</p>
 </span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41"></a>            <span class="c1">#Signature (n_common, n_bonds)</span>
 </span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42"></a>            <span class="n">sig</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_common</span><span class="p">,</span> <span class="n">n_bonds</span><span class="p">)</span>
 </span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43"></a>            <span class="n">signatures</span><span class="p">[</span><span class="n">sig</span><span class="p">]</span> <span class="o">=</span> <span class="n">signatures</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sig</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span><span class="mi">1</span> <span class="c1">#counter of same signature</span>
-</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44"></a>
-</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45"></a>        <span class="c1">#Compute hash : </span>
-</span><span id="__span-0-46"><a id="__codelineno-0-46" name="__codelineno-0-46"></a>        <span class="k">if</span> <span class="n">is_crystal</span><span class="p">(</span><span class="n">signatures</span><span class="p">)</span> <span class="p">:</span> 
-</span><span id="__span-0-47"><a id="__codelineno-0-47" name="__codelineno-0-47"></a>            <span class="nb">hash</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;crystal&quot;</span><span class="p">)</span>
-</span><span id="__span-0-48"><a id="__codelineno-0-48" name="__codelineno-0-48"></a>        <span class="k">else</span> <span class="p">:</span> 
-</span><span id="__span-0-49"><a id="__codelineno-0-49" name="__codelineno-0-49"></a>            <span class="nb">hash</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;noncrystal&quot;</span><span class="p">)</span>
-</span><span id="__span-0-50"><a id="__codelineno-0-50" name="__codelineno-0-50"></a>    <span class="k">return</span> <span class="nb">hash</span>
+</span><span id="__span-0-44"><a id="__codelineno-0-44" name="__codelineno-0-44"></a>        <span class="n">all_signatures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">signatures</span><span class="p">)</span>
+</span><span id="__span-0-45"><a id="__codelineno-0-45" name="__codelineno-0-45"></a>    <span class="k">return</span> <span class="n">all_signatures</span>
 </span></code></pre></div></td></tr></table></div>
             </details>
     </div>
