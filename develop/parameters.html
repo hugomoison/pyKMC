@@ -587,6 +587,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#eventrecycling-section-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Eventrecycling Section (optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#inactive_atoms-section-optional" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1444,6 +1455,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#eventrecycling-section-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Eventrecycling Section (optional)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#inactive_atoms-section-optional" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1612,6 +1634,13 @@
 <br />
 <details><summary>Description</summary>
   Incorporate AV's into simulations, recommended for large systems
+  </details></p>
+</li>
+<li>
+<p><strong><code>recycle</code></strong> : <code>bool</code>, default = <code>False</code>
+<br />
+<details><summary>Description</summary>
+  Recycle non-perturbed events from the previous KMC step instead of re-searching them. Requires an [EventRecycling] section.
   </details></p>
 </li>
 <li>
@@ -2238,6 +2267,36 @@
 <br />
 <details><summary>Description</summary>
   Debug flag for active volume size checks
+  </details>
+</p>
+</li>
+</ul>
+<hr />
+<h2 id="eventrecycling-section-optional"><code>Eventrecycling</code> Section (optional)</h2>
+<details><summary>Section Overview</summary>
+  Event recycling parameters. Required when control.recycle = True.
+</details>
+
+<ul>
+<li>
+<p><strong><code>style</code></strong> : <code>Literal['displacement']</code>, mandatory
+<br />
+<details><summary>Description</summary>
+  Method used to decide which events can be recycled. 'displacement' = central atom moved less than movement_thr AND is farther than distance_thr from the executed event.
+  </details></p>
+</li>
+<li>
+<p><strong><code>movement_thr</code></strong> : <code>float</code>, default = <code>0.02</code>
+<br />
+<details><summary>Description</summary>
+  Angstroms. Central atoms whose displacement from pre- to post-execution is below this are considered 'unmoved'.
+  </details></p>
+</li>
+<li>
+<p><strong><code>distance_thr</code></strong> : <code>float</code>, default = <code>10.0</code>
+<br />
+<details><summary>Description</summary>
+  Angstroms. Candidate events whose central atom is farther than this (PBC-aware minimum-image) from the executed event's central atom pass the distance check.
   </details>
 </p>
 </li>

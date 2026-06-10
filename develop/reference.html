@@ -1186,6 +1186,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pykmc.ActiveEventTable.existing_pairs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        existing_pairs
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pykmc.ActiveEventTable.prune_for_recycling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        prune_for_recycling
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pykmc.ActiveEventTable.remove" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1662,6 +1684,34 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pykmc.DistanceRecycling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DistanceRecycling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DistanceRecycling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pykmc.DistanceRecycling.select_recyclable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        select_recyclable
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pykmc.Err" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1716,6 +1766,17 @@
     <span class="md-ellipsis">
       
         ErrorType
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pykmc.EventRecyclingConfig" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EventRecyclingConfig
       
     </span>
   </a>
@@ -2533,6 +2594,34 @@
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pykmc.Recycling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recycling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recycling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pykmc.Recycling.select_recyclable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        select_recyclable
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -3429,6 +3518,50 @@
           </tr>
       </tbody>
     </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pykmc.ActiveEventTable.existing_pairs" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">existing_pairs</span>
+
+
+</h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">existing_pairs</span><span class="p">()</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return <code>(atom_index, num_reference_event)</code> tuples already in the table.</p>
+<p>Used by <code>Refinement.execute</code> to skip pairs that survived the last step
+and don't need to be refined again.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pykmc.ActiveEventTable.prune_for_recycling" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">prune_for_recycling</span>
+
+
+</h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">prune_for_recycling</span><span class="p">(</span><span class="n">executed_idx</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">positions_pre</span><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Replace <code>self.table</code> with the rows that survive the recycler's filter.</p>
+<p>If no recycler is attached, clear the table (matches the prior
+end-of-step <code>del active_table</code> behavior).</p>
 
 
     </div>
@@ -5483,6 +5616,85 @@ has a barrier below this threshold.</p>
 
 
 
+<h3 id="pykmc.DistanceRecycling" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">DistanceRecycling</span>
+
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="Recycling (pykmc.event_recycling.Recycling)" href="#pykmc.Recycling">Recycling</a></code></p>
+
+
+
+        <p>Recycle events whose central atom (a) did not move and (b) is far from the executed event.</p>
+<p>A candidate event survives iff BOTH:</p>
+<ol>
+<li>its central atom's pre→post displacement (PBC minimum-image) is below
+     <code>movement_thr</code>, AND</li>
+<li>its central atom's distance to the executed event's central atom
+     (PBC-aware minimum-image) is above <code>distance_thr</code>.</li>
+</ol>
+<p>Otherwise the event is dropped and step N+1 will re-search / re-refine it.
+Both thresholds are in Angstroms.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pykmc.DistanceRecycling.select_recyclable" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">select_recyclable</span>
+
+
+</h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">select_recyclable</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">active_table</span><span class="p">,</span> <span class="n">executed_idx</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">positions_pre</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Apply the two-fold check; see class docstring.</p>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
 <h3 id="pykmc.Err" class="doc doc-heading">
             <span class="doc doc-object-name doc-class-name">Err</span>
 
@@ -5718,6 +5930,54 @@ has a barrier below this threshold.</p>
 
 
         <p>Enumeration of all error types that may occur during the simulation.</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
+<h3 id="pykmc.EventRecyclingConfig" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">EventRecyclingConfig</span>
+
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="pydantic.BaseModel">BaseModel</span></code></p>
+
+
+
+        <p>Event recycling parameters. Required when control.recycle = True.</p>
 
 
 
@@ -7121,7 +7381,9 @@ minimization, logging, and termination.</p>
 
 
 </h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">execute_refinements</span><span class="p">(</span><span class="n">df_reference_events</span><span class="p">)</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">execute_refinements</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">df_reference_events</span><span class="p">,</span> <span class="n">existing_pairs</span><span class="o">=</span><span class="kc">None</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -7154,6 +7416,24 @@ minimization, logging, and termination.</p>
             </td>
             <td>
                 <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>existing_pairs</code>
+            </td>
+            <td>
+                  <code><span title="set">set</span>[<span title="tuple">tuple</span>[<span title="int">int</span>, <span title="int">int</span>]] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>(atom_index, num_reference_event)</code> pairs already present in the
+persistent active table (carried over from the previous step).
+These are skipped during refinement.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>
@@ -10124,6 +10404,188 @@ typically the neighors list of the in the atomic environment of the atom on whic
 
 
 
+<h3 id="pykmc.Recycling" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">Recycling</span>
+
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><span title="abc.ABC">ABC</span></code></p>
+
+
+
+        <p>Abstract interface for event recycling strategies.</p>
+<p>A recycling strategy decides, given the active event table from step N
+together with system position snapshots taken before and after the
+executed event, which rows can be reused at step N+1 (i.e. carried
+over without a fresh search + refinement).</p>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pykmc.Recycling.select_recyclable" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">select_recyclable</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-abstractmethod"><code>abstractmethod</code></small>
+  </span>
+
+</h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">select_recyclable</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">active_table</span><span class="p">,</span> <span class="n">executed_idx</span><span class="p">,</span> <span class="n">system</span><span class="p">,</span> <span class="n">positions_pre</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Return the subset of <code>active_table.table</code> that can be reused next step.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>active_table</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="ActiveEventTable (pykmc.event_table.ActiveEventTable)" href="api/event_table.html#pykmc.event_table.ActiveEventTable">ActiveEventTable</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The active event table built at step N (post-refinement).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>executed_idx</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Row index in <code>active_table.table</code> of the event that was executed.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>system</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="System (pykmc.system.System)" href="api/system.html#pykmc.system.System">System</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The atomic system, positions already advanced to post-execution.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>positions_pre</code>
+            </td>
+            <td>
+                  <code><span title="numpy.ndarray">ndarray</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Snapshot of <code>system.positions</code> taken just before the event was
+applied (same atom ordering as <code>system.positions</code>).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="pandas.DataFrame">DataFrame</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Subset of <code>active_table.table</code> to carry into step N+1. Empty
+DataFrame if nothing is recyclable.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
 <h3 id="pykmc.ReferenceEventSearchInfo" class="doc doc-heading">
             <span class="doc doc-object-name doc-class-name">ReferenceEventSearchInfo</span>
 
@@ -11357,7 +11819,9 @@ typically the neighors list of the in the atomic environment of the atom on whic
 
 
 </h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">execute</span><span class="p">(</span><span class="n">df_reference_events</span><span class="p">,</span> <span class="n">total_energy</span><span class="p">)</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">execute</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">df_reference_events</span><span class="p">,</span> <span class="n">total_energy</span><span class="p">,</span> <span class="n">existing_pairs</span><span class="o">=</span><span class="kc">None</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -11391,6 +11855,24 @@ typically the neighors list of the in the atomic environment of the atom on whic
             </td>
             <td>
                 <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>existing_pairs</code>
+            </td>
+            <td>
+                  <code><span title="set">set</span>[<span title="tuple">tuple</span>[<span title="int">int</span>, <span title="int">int</span>]] | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>(atom_index, num_reference_event)</code> pairs already present in the
+active event table (carried over from the previous step). These
+are skipped during refinement.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>
