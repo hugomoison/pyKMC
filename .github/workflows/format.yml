@@ -1,0 +1,19 @@
+name: format
+
+on: [push, pull_request]
+
+jobs:
+  ruff:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+      - uses: astral-sh/ruff-action@v3
+        with:
+          args: "format"
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "style: auto-format with ruff"
