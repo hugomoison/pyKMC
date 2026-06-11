@@ -38,8 +38,9 @@ class StateData:
         if self.system is not None : 
             if self.neighbors_list is None : 
                 self.neighbors_list = NeighborsList(self.system, config.atomicenvironment.rnei, config.atomicenvironment.rcut)  
-            if self.environment is None : 
-                self.environment = AtomicEnvironment(config.atomicenvironment.style, self.neighbors_list.neighbors_list['rnei'], self.neighbors_list.neighbors_list['rcut'], config.atomicenvironment.neighbors_add)
+            if self.environment is None :
+                types = self.system.types if config.atomicenvironment.atom_coloring_mode == "full" else None
+                self.environment = AtomicEnvironment(config.atomicenvironment.style, self.neighbors_list.neighbors_list['rnei'], self.neighbors_list.neighbors_list['rcut'], config.atomicenvironment.neighbors_add, types=types, coordination_threshold=config.atomicenvironment.coordination_threshold)
 
 
 class BasinsGenericEvents() : 
@@ -254,7 +255,7 @@ class BasinsGenericEvents() :
         self.states[from_state].ensure_full_state(self.config)
 
             #We start from the from_state
-        new_system = System(positions=self.states[from_state].system.positions.copy(), types=self.states[from_state].system.types, cell=self.states[from_state].system.cell, pbc=True, index=np.arange(len(self.states[from_state].system.types)))
+        new_system = System(positions=self.states[from_state].system.positions.copy(), types=self.states[from_state].system.types, cell=self.states[from_state].system.cell, pbc=self.states[from_state].system.pbc, index=np.arange(len(self.states[from_state].system.types)))
         #new_system = copy.deepcopy(self.states[from_state].system)
 
             #Apply PSR between event initial position and environment positions of the central_atoms
@@ -296,7 +297,7 @@ class BasinsGenericEvents() :
             #future = self.manager.minimize_with_results(self.config, positions=new_system.positions)
             #min_pos, _ = future.result()
 
-            result = Reconstruction(self.config, self.manager).reconstruct(supposed_initial_positions, supposed_final_positions, new_system.positions, new_system.cell, self.config.psr.matching_score_thr, neighbors)
+            result = Reconstruction(self.config, self.manager).reconstruct(supposed_initial_positions, supposed_final_positions, new_system.positions, new_system.cell, self.config.psr.matching_score_thr, neighbors, pbc=new_system.pbc)
             if not result.is_ok() :
                 return result
             new_system.update_positions(result.ok_value().min2_positions)
@@ -314,7 +315,7 @@ class BasinsGenericEvents() :
         for idx, row in self.connectivity_table.df.iterrows() : 
             if row['transient']  == False : #need to refine
                 #tmp_system = copy.deepcopy(self.states[row["state"]].system)
-                tmp_system = System(positions=self.states[row["state"]].system.positions.copy(), types=self.states[row["state"]].system.types, cell=self.states[row["state"]].system.cell, pbc=True, index=np.arange(len(self.states[row["state"]].system.types)))
+                tmp_system = System(positions=self.states[row["state"]].system.positions.copy(), types=self.states[row["state"]].system.types, cell=self.states[row["state"]].system.cell, pbc=self.states[row["state"]].system.pbc, index=np.arange(len(self.states[row["state"]].system.types)))
                 #get tmp_system energy 
                 future1 = self.manager.get_total_energy(positions=tmp_system.positions.copy()) #Send copy not reference
                 #move to generic saddle positions 
@@ -399,20 +400,32 @@ class BasinsGenericEvents() :
         #Loop over all other system in self.states to see if system is already known
 
         for state_index, state_data in self.states.items():
-            are_equivalent = self.are_structures_equivalent(system.positions, state_data.system.positions, cell = system.cell) 
+            are_equivalent = self.are_structures_equivalent(system.positions, state_data.system.positions, cell = system.cell, pbc=system.pbc)
             if are_equivalent : 
                 return state_index
         return -1 
 
 
-    def are_structures_equivalent(self, pos1, pos2, cell, tol=0.3):
+    def are_structures_equivalent(self, pos1, pos2, cell, pbc=None, tol=0.3):
 
         if len(pos1) != len(pos2):
             return False
 
-        box = np.diag(cell).tolist()
-        tree2 = cKDTree(pos2, boxsize=box)
-        distances, _ = tree2.query(pos1, k=1)
+        if pbc is None or np.all(pbc):
+            # Fully periodic: use boxsize (existing fast path)
+            box = np.diag(cell).tolist()
+            tree2 = cKDTree(pos2, boxsize=box)
+            distances, _ = tree2.query(pos1, k=1)
+        else:
+            # Mixed PBC: manual minimum-image distance
+            box = np.diag(cell)
+            distances = np.zeros(len(pos1))
+            for i, p in enumerate(pos1):
+                diffs = pos2 - p
+                for dim in range(3):
+                    if pbc[dim]:
+                        diffs[:, dim] -= np.round(diffs[:, dim] / box[dim]) * box[dim]
+                distances[i] = np.min(np.linalg.norm(diffs, axis=1))
 
         return np.max(distances) < tol
 
@@ -430,7 +443,8 @@ class BasinsGenericEvents() :
 
         if full == True : 
             neighbors_list = NeighborsList(system, self.config.atomicenvironment.rnei, self.config.atomicenvironment.rcut)  
-            atomic_environment = AtomicEnvironment(self.config.atomicenvironment.style, neighbors_list.neighbors_list['rnei'], neighbors_list.neighbors_list['rcut'], self.config.atomicenvironment.neighbors_add)
+            types = system.types if self.config.atomicenvironment.atom_coloring_mode == "full" else None
+            atomic_environment = AtomicEnvironment(self.config.atomicenvironment.style, neighbors_list.neighbors_list['rnei'], neighbors_list.neighbors_list['rcut'], self.config.atomicenvironment.neighbors_add, types=types, coordination_threshold=self.config.atomicenvironment.coordination_threshold)
         else : 
             neighbors_list = None 
             atomic_environment = None 

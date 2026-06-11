@@ -84,56 +84,23 @@ class PointSetRegistration:
         coords1 = self.system.positions[neighbor_list]
 
 
-        #GREY ALLOY
-        typ1 = ['X']*len(coords1)
-        typ2 = typ1 
+        if self.config.atomicenvironment.atom_coloring_mode == "full":
+            typ1 = list(np.array(self.system.types)[neighbor_list])
+            typ2 = list(self.dfevent.at["initial_types"]) if "initial_types" in self.dfevent.index else typ1
+        else:
+            # Grey alloy: all atoms treated as identical
+            typ1 = ['X'] * len(coords1)
+            typ2 = typ1
 
-        #typ1 = np.array(self.system.types)[neighbor_list]
-
-        #typ2 = typ1  # If they have same topology id should be always true ?
-
-        # unwrap if close to cell limits :
-        alat = self.system.cell[0][0]
+        # unwrap if close to cell limits (only in periodic directions):
+        pbc = self.system.pbc if self.system.pbc is not None else np.array([True, True, True])
+        cell_lengths = [self.system.cell[d][d] for d in range(3)]
         for i in range(len(coords1)):
-            if (
-                np.linalg.norm(
-                    coords1[i][0] - self.system.positions[central_atom_index][0]
-                )
-                > alat / 2
-            ):
-                coords1[i][0] = (
-                    coords1[i][0]
-                    + np.sign(
-                        self.system.positions[central_atom_index][0] - coords1[i][0]
-                    )
-                    * alat
-                )
-            if (
-                np.linalg.norm(
-                    coords1[i][1] - self.system.positions[central_atom_index][1]
-                )
-                > alat / 2
-            ):
-                coords1[i][1] = (
-                    coords1[i][1]
-                    + np.sign(
-                        self.system.positions[central_atom_index][1] - coords1[i][1]
-                    )
-                    * alat
-                )
-            if (
-                np.linalg.norm(
-                    coords1[i][2] - self.system.positions[central_atom_index][2]
-                )
-                > alat / 2
-            ):
-                coords1[i][2] = (
-                    coords1[i][2]
-                    + np.sign(
-                        self.system.positions[central_atom_index][2] - coords1[i][2]
-                    )
-                    * alat
-                )
+            for dim in range(3):
+                if pbc[dim]:
+                    diff = coords1[i][dim] - self.system.positions[central_atom_index][dim]
+                    if abs(diff) > cell_lengths[dim] / 2:
+                        coords1[i][dim] += np.sign(-diff) * cell_lengths[dim]
         nat1 = len(coords1)
         kmax_factor = self.config.ira.kmax_factor
 

@@ -8,6 +8,7 @@ def graph(
     neighbors_list: list[list[int]],
     environment_list: list[list[int]],
     atom_idx: list[int] = None,
+    types: list[str] = None,
 ) -> list[str]:
     """Compute atoms's graph ID.
 
@@ -43,7 +44,7 @@ def graph(
     #else:
     #    split = np.array_split(atom_idx, nprocs)  # when using cna/graph
     #local_index = split[rank]
-    list_g = make_graph(local_index, neighbors_list, environment_list)
+    list_g = make_graph(local_index, neighbors_list, environment_list, types)
 
     list_hash = []
 
@@ -58,7 +59,8 @@ def graph(
 
 
 def make_graph(
-    atoms_idx: int, neighbors_list: list[list[int]], environment_list: list[list[int]]
+    atoms_idx: int, neighbors_list: list[list[int]], environment_list: list[list[int]],
+    types: list[str] = None,
 ) -> list[pynauty.Graph]:
     """Create graphs.
 
@@ -92,12 +94,23 @@ def make_graph(
             for neighbor in neighbors_list[at]:
                 if neighbor in environment_list[idx]:
                     adjacency_dict[i].append(global_to_local[neighbor])
-        graph = pynauty.Graph(
+        # Build vertex coloring from element types if provided
+        vertex_coloring = []
+        if types is not None:
+            local_types = [types[global_idx] for global_idx in environment_list[idx]]
+            unique_types = sorted(set(local_types))
+            for element in unique_types:
+                vertex_coloring.append(
+                    {i for i, t in enumerate(local_types) if t == element}
+                )
+
+        g = pynauty.Graph(
             number_of_vertices=len(environment_list[idx]),
             adjacency_dict=adjacency_dict,
             directed=False,
+            vertex_coloring=vertex_coloring,
         )
 
-        list_g.append(graph)
+        list_g.append(g)
 
     return list_g

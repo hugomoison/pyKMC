@@ -45,22 +45,27 @@ class Manager:
         for session in self.sessions:
             session.command(cmd)
 
-    def initialize_sessions(self, config, system) : 
-        """ 
+    def initialize_sessions(self, config, system) :
+        """
         Initialize engines with the same system and config
         """
+        from ....config import pbc_to_lammps_boundary
+        if config.lammps.boundary is not None:
+            boundary = config.lammps.boundary
+        else:
+            boundary = pbc_to_lammps_boundary(system.pbc) if system.pbc is not None else "p p p"
         print("[Manager] use local")
         self.use_local()
         print("[Manager] Initializing all Lammps engines")
-        for session in self.sessions : 
-            session.initialize_parameters() 
+        for session in self.sessions :
+            session.initialize_parameters(boundary=boundary)
             session.initialize_system(system)
             session.initialize_potential(config)
         print("[Manager] use global")
         self.use_global()
         print("[Manager] Initializing global Lammps engines")
         if self.global_session is not None :
-            self.global_initialize_parameters()
+            self.global_initialize_parameters(boundary=boundary)
             self.global_initialize_system(system)
             self.global_initialize_potential(config)
 
@@ -138,7 +143,16 @@ class Manager:
     #    except Exception as e :
     #        job.future.set_exception(e)
 
-    def set_all_positions(self, positions) : 
+    def reinitialize_all_sessions(self, config, system):
+        """Reinitialize all LAMMPS sessions with a new system after atom removal."""
+        self.use_local()
+        for session in self.sessions:
+            session.reinitialize_system(config, system)
+        self.use_global()
+        if self.global_session is not None:
+            self.global_session.reinitialize_system(config, system)
+
+    def set_all_positions(self, positions) :
         #print("[Manager] Setting positions to all sessions.")
         for session in self.sessions : 
             session.set_positions(positions=positions)

@@ -129,14 +129,55 @@ class System:
             )
             # Clamp small negative positions to zero to avoid issues with KD-trees.
             # This handles floating-point inaccuracies that might result in values like -1e-10.
-            self.positions[self.positions < 0] = 0
+            # Only clamp in periodic dimensions; non-periodic z can have valid negative coords.
+            self._clamp_negative_positions()
 
         else:
             self.positions[atom_idx] = new_positions
             self.positions = self.wrap_positions(
                 self.positions, cell=self.cell, pbc=self.pbc
             )
+            self._clamp_negative_positions()
+
+    def _clamp_negative_positions(self) -> None:
+        """Clamp small negative positions to zero in periodic dimensions only."""
+        if self.pbc is not None and hasattr(self.pbc, '__iter__') and not np.all(self.pbc):
+            for dim in range(3):
+                if self.pbc[dim]:
+                    self.positions[:, dim] = np.where(
+                        self.positions[:, dim] < 0, 0, self.positions[:, dim]
+                    )
+        else:
             self.positions[self.positions < 0] = 0
+
+    def remove_atom(self, atom_idx: int) -> None:
+        """Remove an atom from the system.
+
+        Deletes the atom at the given index from positions, types, and index arrays.
+
+        Parameters
+        ----------
+        atom_idx : int
+            Index of the atom to remove.
+
+        Raises
+        ------
+        IndexError
+            If atom_idx is out of range.
+
+        """
+        if atom_idx < 0 or atom_idx >= len(self.positions):
+            raise IndexError(
+                f"atom_idx {atom_idx} out of range for system with "
+                f"{len(self.positions)} atoms"
+            )
+        self.positions = np.delete(self.positions, atom_idx, axis=0)
+        if isinstance(self.types, np.ndarray):
+            self.types = np.delete(self.types, atom_idx, axis=0)
+        elif isinstance(self.types, list):
+            del self.types[atom_idx]
+        if self.index is not None:
+            self.index = np.delete(self.index, atom_idx, axis=0)
 
     def wrap_positions(
         self, positions: np.ndarray, cell: np.ndarray, pbc: bool | np.ndarray = True

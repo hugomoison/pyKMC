@@ -38,6 +38,7 @@ class Initializer:
         self.initialize_atomic_environments()
         self.initialize_reference_table()
         self._initialize_visited_environments()
+        self._initialize_dealloying()
         self.initialize_bias()
 
         self.kmc.loggers.new_line("log")
@@ -90,6 +91,8 @@ class Initializer:
             self.kmc.neighbors_list.neighbors_list["rnei"],
             self.kmc.neighbors_list.neighbors_list["rcut"],
             self.kmc.config.atomicenvironment.neighbors_add,
+            types=self.kmc.system.types if self.kmc.config.atomicenvironment.atom_coloring_mode == "full" else None,
+            coordination_threshold=self.kmc.config.atomicenvironment.coordination_threshold,
         )
 
     def initialize_reference_table(self) -> None:
@@ -152,4 +155,16 @@ class Initializer:
             self.kmc.loggers.warning(
                 "log",
                 "Visited environments are read from file while no reference table was provided",
+            )
+
+    def _initialize_dealloying(self) -> None:
+        """Initialize dealloying settings if configured."""
+        if self.kmc.config.dealloying is not None:
+            self.kmc.loggers.info(
+                "log",
+                ":=> Dealloying enabled: coordination_threshold={}, rate_constant={}, eligible_types={}".format(
+                    self.kmc.config.dealloying.coordination_threshold,
+                    self.kmc.config.dealloying.rate_constant,
+                    self.kmc.config.dealloying.eligible_types,
+                ),
             )

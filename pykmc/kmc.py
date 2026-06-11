@@ -17,6 +17,7 @@ from .result import (
     RefinementsInfo,
     EventRefinementOutput,
     ReconstructionOutput,
+    DealloyingOutput,
     Err,
     Ok
 )
@@ -123,6 +124,8 @@ class KMC:
                 self.neighbors_list.neighbors_list["rnei"],
                 self.neighbors_list.neighbors_list["rcut"],
                 self.config.atomicenvironment.neighbors_add,
+                types=self.system.types if self.config.atomicenvironment.atom_coloring_mode == "full" else None,
+                coordination_threshold=self.config.atomicenvironment.coordination_threshold,
             )
         self.inactive_ae = (
             AtomicEnvironment(
@@ -240,109 +243,141 @@ class KMC:
             active_table.remove_duplicates(self.system.cell, self.neighbors_list)  #To be sure
             self.loggers.info("log", "\t :=> {} active events after removing duplicates.".format(len(active_table.table)))
 
+            # == ADD DEALLOYING EVENTS ==
+            if self.config.dealloying is not None:
+                dealloying_atoms = self._get_dealloying_eligible_atoms()
+                if dealloying_atoms:
+                    active_table.add_dealloying_events(
+                        dealloying_atoms, self.config.dealloying.rate_constant
+                    )
+                    self.loggers.info(
+                        "log",
+                        "\t :=> {} dealloying events added.".format(len(dealloying_atoms)),
+                    )
+
 
             # == Update System ==
             self.manager.use_global()
             result_reconstruction, delta_t, ktot, idx_selected_event, err_reference, err_ae = self.reconstruction(active_table)
-            events_info = info_active_events(self.system.types, self.reference_table, active_table)
+
+            # Determine if this is a dealloying event
+            is_dealloying = isinstance(result_reconstruction.ok_value(), DealloyingOutput) if result_reconstruction.is_ok() else False
+
+            if not is_dealloying:
+                events_info = info_active_events(self.system.types, self.reference_table, active_table)
+            else:
+                events_info = None
+
             if len(err_reference) != 0 :
                 self.loggers.info("log", "\t :=> Removing reference event from which reconstruction failed.")
                 self.reference_table.remove(list(set(err_reference)))
                 self.loggers.info("log", "\t :=> Removing topology from known environments from which reconstruction failed.")
                 self.visited_environments = self.visited_environments.difference(set(err_ae))
-            events_info = events_info.output_msg()
-
-
-
 
             #INFO :
             self.loggers.events_file_step_first_line("events", step)
             self.loggers.events_applicable_info_line("events", idx_selected_event)
-            self.loggers.info("events", events_info)
+            if events_info is not None:
+                self.loggers.info("events", events_info.output_msg())
 
+            if is_dealloying:
+                # == DEALLOYING EVENT ==
+                atom_to_remove = result_reconstruction.ok_value().atom_index
+                self.loggers.info(
+                    "log",
+                    "\t :=> Dealloying: removing atom {} (type: {})".format(
+                        atom_to_remove, self.system.types[atom_to_remove]
+                    ),
+                )
+                self.system.remove_atom(atom_to_remove)
+                self.manager.reinitialize_all_sessions(self.config, self.system)
+                self.minimize_system()
+
+            else:
+                # == MIGRATION EVENT (existing logic) ==
                 #TODO: Temporary, need to unified kmc main loop and basin operations + ugly
-            detector = DetectorThreshold()
-            # Pre-execution snapshot for event recycling (needed before update_positions below)
-            if self.config.control.recycle:
-                self._pre_exec_positions = self.system.positions.copy()
-                #IF selected event shows we are in a basin
-            if self.config.control.basin and detector.detect(active_table.table.iloc[idx_selected_event], self.reference_table.table, self.config.basin.energy_thr, True) :
-                self.loggers.info("log","\t :=> System is in a Basin." )
-                self.loggers.info("log","\t :=> Exploring the Basin." )
-                #get basin info/explore
-                basin = BasinsGenericEvents(self.config, self.reference_table, self.visited_environments, self.manager)
-                self.system.update_positions(result_reconstruction.ok_value().min1_positions)
-                result_basin = basin.execute(self.system)
-                if result_basin.is_ok() : #Basin did no fail
-                #move system to a state connected to the exit_state
-                    self.system.update_positions(result_basin.ok_value().initial_system_positions)
-                    self.neighbors_list = basin.states[result_basin.ok_value().from_state].neighbors_list
-                #construct new active table with only event : new_actual_state - > exit_state
-                    tmp_active_table = ActiveEventTable(self.config)
-                    tmp_event = EventRefinementOutput(central_atom_index=result_basin.ok_value().central_atom,
-                                                      saddle_positions=result_basin.ok_value().saddle_positions,
-                                                      E_saddle=-1,
-                                                      min2_positions=result_basin.ok_value().final_positions,
-                                                      dE_forward=result_basin.ok_value().energy_barrier,
-                                                      num_reference_event=result_basin.ok_value().num_reference_event)
-                    neighbors = result_basin.ok_value().neighbors
-                    tmp_active_table.add_events(tmp_event)
-                #reconstruct event
-                    self.manager.use_global()
-                    result_basin_reconstruction = self._reconstruction_active_event(0, tmp_active_table)
-                    if result_basin_reconstruction.is_ok() :
-                        self.system.update_positions(result_basin_reconstruction.ok_value().min2_positions)
-                        self.total_energy = result_basin_reconstruction.ok_value().min2_etot
-                        delta_t = result_basin.ok_value().t_exit
-                        ktot = result_basin.ok_value().k_tot
-                        idx_selected_event = 0
-                        active_table.table = tmp_active_table.table
-
-                        #INFO
-                        idx_exit_event, basin_info = info_basin_events(self.system.types, self.reference_table, basin.connectivity_table, result_basin.ok_value().exit_state)
-                        basin_info = basin_info.output_msg()
-                        self.loggers.events_basin_info_line("events",idx_exit_event )
-                        self.loggers.info("events", basin_info)
-
-
-                    else :
-                       self.loggers.info("log", "\t :=> Reconstruction Exit State Basin fails with error {}, back to original event".format(result_basin_reconstruction.err_value()))
-                       self.system.update_positions(basin.states[0].system.positions)
-                       self.system.update_positions(result_reconstruction.ok_value().min2_positions)
-                else :
-                    self.loggers.info("log", "\t :=> Basin fails with error : {}, back to original event".format(result_basin.err_value()))
-                    self.system.update_positions(result_reconstruction.ok_value().min2_positions)
-                if basin.connectivity_table is not None :
-                    basin.connectivity_table.save('basin_connectivity_'+str(step)+'.pickle')
-                #update delta_t, ktot (use basin infos)
-                # Basin super-event spans many atoms; detach the recycler so
-                # prune_for_recycling clears the table (recycling deferred).
-                saved_recycler = self.active_table.recycler
-                self.active_table.recycler = None
-                self.active_table.prune_for_recycling(
-                    idx_selected_event, self.system, self._pre_exec_positions,
-                )
-                self.active_table.recycler = saved_recycler
-            else :
-                self.system.update_positions(result_reconstruction.ok_value().min2_positions)
-                self.total_energy = result_reconstruction.ok_value().min2_etot
-                # == Event recycling: prune the active table for next step ==
-                self.active_table.prune_for_recycling(
-                    idx_selected_event, self.system, self._pre_exec_positions,
-                )
+                detector = DetectorThreshold()
+                # Pre-execution snapshot for event recycling (needed before update_positions below)
                 if self.config.control.recycle:
-                    self.loggers.info(
-                        "log",
-                        "\t :=> {} events flagged for recycling".format(
-                            len(self.active_table.table)
-                        ),
+                    self._pre_exec_positions = self.system.positions.copy()
+                    #IF selected event shows we are in a basin
+                if self.config.control.basin and detector.detect(active_table.table.iloc[idx_selected_event], self.reference_table.table, self.config.basin.energy_thr, True) :
+                    self.loggers.info("log","\t :=> System is in a Basin." )
+                    self.loggers.info("log","\t :=> Exploring the Basin." )
+                    #get basin info/explore
+                    basin = BasinsGenericEvents(self.config, self.reference_table, self.visited_environments, self.manager)
+                    self.system.update_positions(result_reconstruction.ok_value().min1_positions)
+                    result_basin = basin.execute(self.system)
+                    if result_basin.is_ok() : #Basin did no fail
+                    #move system to a state connected to the exit_state
+                        self.system.update_positions(result_basin.ok_value().initial_system_positions)
+                        self.neighbors_list = basin.states[result_basin.ok_value().from_state].neighbors_list
+                    #construct new active table with only event : new_actual_state - > exit_state
+                        tmp_active_table = ActiveEventTable(self.config)
+                        tmp_event = EventRefinementOutput(central_atom_index=result_basin.ok_value().central_atom,
+                                                          saddle_positions=result_basin.ok_value().saddle_positions,
+                                                          E_saddle=-1,
+                                                          min2_positions=result_basin.ok_value().final_positions,
+                                                          dE_forward=result_basin.ok_value().energy_barrier,
+                                                          num_reference_event=result_basin.ok_value().num_reference_event)
+                        neighbors = result_basin.ok_value().neighbors
+                        tmp_active_table.add_events(tmp_event)
+                    #reconstruct event
+                        self.manager.use_global()
+                        result_basin_reconstruction = self._reconstruction_active_event(0, tmp_active_table)
+                        if result_basin_reconstruction.is_ok() :
+                            self.system.update_positions(result_basin_reconstruction.ok_value().min2_positions)
+                            self.total_energy = result_basin_reconstruction.ok_value().min2_etot
+                            delta_t = result_basin.ok_value().t_exit
+                            ktot = result_basin.ok_value().k_tot
+                            idx_selected_event = 0
+                            active_table.table = tmp_active_table.table
+
+                            #INFO
+                            idx_exit_event, basin_info = info_basin_events(self.system.types, self.reference_table, basin.connectivity_table, result_basin.ok_value().exit_state)
+                            basin_info = basin_info.output_msg()
+                            self.loggers.events_basin_info_line("events",idx_exit_event )
+                            self.loggers.info("events", basin_info)
+
+
+                        else :
+                           self.loggers.info("log", "\t :=> Reconstruction Exit State Basin fails with error {}, back to original event".format(result_basin_reconstruction.err_value()))
+                           self.system.update_positions(basin.states[0].system.positions)
+                           self._apply_original_migration_event(result_reconstruction)
+                    else :
+                        self.loggers.info("log", "\t :=> Basin fails with error : {}, back to original event".format(result_basin.err_value()))
+                        self._apply_original_migration_event(result_reconstruction)
+                    if basin.connectivity_table is not None :
+                        basin.connectivity_table.save('basin_connectivity_'+str(step)+'.pickle')
+                    #update delta_t, ktot (use basin infos)
+                    # Basin super-event spans many atoms; detach the recycler so
+                    # prune_for_recycling clears the table (recycling deferred).
+                    saved_recycler = self.active_table.recycler
+                    self.active_table.recycler = None
+                    self.active_table.prune_for_recycling(
+                        idx_selected_event, self.system, self._pre_exec_positions,
                     )
-            total_time += delta_t * 10**-12  # time is in seconds
+                    self.active_table.recycler = saved_recycler
+                else :
+                    self._apply_original_migration_event(result_reconstruction)
+                    # == Event recycling: prune the active table for next step ==
+                    self.active_table.prune_for_recycling(
+                        idx_selected_event, self.system, self._pre_exec_positions,
+                    )
+                    if self.config.control.recycle:
+                        self.loggers.info(
+                            "log",
+                            "\t :=> {} events flagged for recycling".format(
+                                len(self.active_table.table)
+                            ),
+                        )
 
             ###=> Synchronise all lammps instances with new positions
             self.manager.use_local()
             self.manager.set_all_positions(positions=self.system.positions)
             ##=>Minimize
+
+            total_time += delta_t * 10**-12  # time is in seconds
 
             # == Log informations ==
             atomic_environment_info = self.get_info_atomic_environments(
@@ -382,6 +417,11 @@ class KMC:
                 elapsed_real
             )
 
+            if is_dealloying:
+                # Placed after the output logging above, which still reads the
+                # executed dealloying row from the table.
+                self._drop_stale_active_events()
+
             # == Update variables ==
             self.neighbors_list = NeighborsList(
                 self.system,
@@ -393,6 +433,8 @@ class KMC:
                 self.neighbors_list.neighbors_list["rnei"],
                 self.neighbors_list.neighbors_list["rcut"],
                 self.config.atomicenvironment.neighbors_add,
+                types=self.system.types if self.config.atomicenvironment.atom_coloring_mode == "full" else None,
+                coordination_threshold=self.config.atomicenvironment.coordination_threshold,
             )
             self.inactive_ae = (
                 AtomicEnvironment(
@@ -525,7 +567,7 @@ class KMC:
             List of event dataframe that has been added to the reference event table.
 
         """
-        results_is_valid_events = self.reference_table.add_events(events)
+        results_is_valid_events = self.reference_table.add_events(events, pbc=self.system.pbc)
         self.loggers.info(
             "log",
             "\t :=> Adding {} events to the reference table".format(
@@ -590,6 +632,28 @@ class KMC:
         self.active_table.add_events(events)
         return self.active_table
 
+    def _get_dealloying_eligible_atoms(self) -> list[int]:
+        """Find atoms eligible for dealloying based on coordination number.
+
+        Returns
+        -------
+        list[int]
+            Indices of atoms eligible for removal.
+
+        """
+        threshold = self.config.dealloying.coordination_threshold
+        eligible_types = self.config.dealloying.eligible_types
+        eligible = []
+        for i in range(len(self.system.positions)):
+            n_neighbors = len(self.neighbors_list.get_neighbors("rnei", i))
+            if n_neighbors < threshold:
+                if eligible_types is not None:
+                    atom_type = self.system.types[i] if isinstance(self.system.types, list) else str(self.system.types[i])
+                    if atom_type not in eligible_types:
+                        continue
+                eligible.append(i)
+        return eligible
+
     def _select_event(
         self,
         active_table: ActiveEventTable,
@@ -635,6 +699,14 @@ class KMC:
             while len(active_table.table) > 0 :
                 ##=>Select event
                 idx_selected_event, delta_t, ktot = self._select_event(active_table)
+
+                ##=>Check if dealloying event
+                event_row = active_table.table.iloc[idx_selected_event]
+                if event_row.get("event_type") == "dealloying":
+                    self.loggers.info("log", "\t :=> Dealloying event selected for atom {}".format(int(event_row["atom_index"])))
+                    result_reconstruction = Ok(DealloyingOutput(atom_index=int(event_row["atom_index"])))
+                    break
+
                 ##=>Reconstruct event
                 self.loggers.info("log", "\t :=> Event Reconstruction")
                 result_reconstruction = self._reconstruction_active_event(idx_selected_event, active_table)
@@ -668,7 +740,7 @@ class KMC:
         self.system.update_positions(new_positions= saddle_positions, atom_idx = neighbors)
 
         #try to reconstruct
-        result = Reconstruction(self.config, self.manager, types=self.system.types).reconstruct(supposed_initial_positions, supposed_final_positions, self.system.positions, self.system.cell, self.config.psr.matching_score_thr, neighbors)
+        result = Reconstruction(self.config, self.manager, types=self.system.types).reconstruct(supposed_initial_positions, supposed_final_positions, self.system.positions, self.system.cell, self.config.psr.matching_score_thr, neighbors, pbc=self.system.pbc)
         #result with min1, saddle, min2 pos
 
         #Back to original positions, in case reconstruction fails
@@ -690,6 +762,21 @@ class KMC:
         """
         new_positions = active_table.table.loc[idx_selected_event].at["final_positions"]
         self.system.update_positions(new_positions)
+
+    def _apply_original_migration_event(self, result_reconstruction: Ok[ReconstructionOutput]) -> None:
+        reconstruction_output = result_reconstruction.ok_value()
+        self.system.update_positions(reconstruction_output.min2_positions)
+        self.total_energy = reconstruction_output.min2_etot
+
+    def _drop_stale_active_events(self) -> None:
+        """Empty the active table after an atom-count change (dealloying).
+
+        remove_atom shifts every index above the removed atom, so any
+        carried-over active events (recycled or not) would point at the wrong
+        atoms. The active table is the only persistent structure holding
+        absolute atom indices across steps; drop all rows, keep the schema.
+        """
+        self.active_table.table = self.active_table.table.iloc[0:0].reset_index(drop=True)
 
     def minimize_system(self, positions = None) -> None:
         """Minimize the system and update its positions."""

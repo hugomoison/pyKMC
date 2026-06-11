@@ -3,12 +3,16 @@ initial_config = ./initial_config.xyz
 n_steps = 100
 engine = lammps
 verbosity = 2
-n_sessions = 7
+n_sessions = 1
 engine_use_rank_0 = False
 
+
+
 [Lammps] 
+#pair_style = mlip load_from=12.almtp  
 pair_style = eam/alloy 
-pair_coeff = * * ./Ni_v6_2.0_LKBeland2016.eam Ni
+pair_coeff = * * Ni_v6_2.0_LKBeland2016.eam Ni
+#pair_coeff = * * 
 min_style = cg 
 minimize = 1e-10 1e-12 10000 10000
 
@@ -22,8 +26,10 @@ style = partn
 nsearch = 20
 emax_event = 5.0
 emin_event = 0.0
+atom_coloring_mode = full
 
-[pARTn] 
+
+[pARTn]
 
 [RateConstant] 
 style = constant

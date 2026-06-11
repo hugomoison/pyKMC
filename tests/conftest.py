@@ -79,6 +79,45 @@ def system_single_type_fcc() -> System:
     return system
 
 @pytest.fixture
+def system_binary_fcc() -> System:
+    """4x4x4 FCC with alternating Ni/Fe types (L1_0-like ordering)."""
+    system = System()
+
+    a = 3.52
+    repeat = 4
+
+    basis = np.array([
+        [0.0, 0.0, 0.0],
+        [0.5, 0.5, 0.0],
+        [0.5, 0.0, 0.5],
+        [0.0, 0.5, 0.5],
+    ]) * a
+
+    positions = []
+    types = []
+    for i in range(repeat):
+        for j in range(repeat):
+            for k in range(repeat):
+                shift = np.array([i, j, k]) * a
+                for b, atom in enumerate(basis):
+                    positions.append(atom + shift)
+                    # Alternate types: basis sites 0,1 = Ni, 2,3 = Fe
+                    types.append('Ni' if b < 2 else 'Fe')
+
+    system.positions = np.array(positions)
+    system.types = np.array(types)
+    system.cell = np.array([
+        [repeat * a, 0.0, 0.0],
+        [0.0, repeat * a, 0.0],
+        [0.0, 0.0, repeat * a]
+    ])
+    system.pbc = np.array([True, True, True])
+    system.index = np.arange(len(system.positions))
+
+    return system
+
+
+@pytest.fixture
 def system_single_type_fcc_vacancy(system_single_type_fcc: System) -> System:
 
     system = deepcopy(system_single_type_fcc)

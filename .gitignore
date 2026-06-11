@@ -9,6 +9,7 @@ examples/**
 !examples/**/Ni_v6_2.0_LKBeland2016.eam
 !examples/**/Cu01.eam.alloy
 !examples/**/FeC-Becquart2013.eam
+!examples/**/input.in
 !examples/**/Si.sw
 
 
@@ -34,3 +35,52 @@ __pycache__/
 *SOURCES.txt 
 *requires.txt
 *__pycache__
+
+
+# ----------------------------
+# Local / research artefacts (do not commit)
+# ----------------------------
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Documents / slides
+*.pdf
+*.pptx
+*.ppt
+*.docx
+*.pages
+*.key
+
+# LaTeX build artefacts
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+
+# Jupyter / Python noise
+.ipynb_checkpoints/
+*.ipynb
+__pycache__/
+*.py[cod]
+
+# Simulation data directories
+Ni_Slab/
+
+# Visualization outputs
+utils/visualize/
+*.gv
+*.png
+
+# Stray logs
+lammps.log.*

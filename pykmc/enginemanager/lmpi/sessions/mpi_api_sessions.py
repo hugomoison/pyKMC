@@ -110,12 +110,17 @@ class MpiApiSession :
     
     #ACTIONS 
     #@session_locked
-    def initialize_parameters(self) -> None :
-        """ 
+    def reinitialize_system(self, config, system) -> None:
+        """Reinitialize LAMMPS with a new system after atom removal."""
+        self.send_message({"type": "reinitialize_system", "value": {"config": config, "system": system}})
+
+    #@session_locked
+    def initialize_parameters(self, boundary="p p p") -> None :
+        """
         Initialize LAMMPS engine with default parameters
         """
         #print(f"[Session {self.session_id}] Initializing Lammps parameters")
-        self.send_message({"type": "initialize_parameters"})
+        self.send_message({"type": "initialize_parameters", "value": {"boundary": boundary}})
 
     #@session_locked
     def initialize_system(self, system) -> None :

@@ -21,6 +21,7 @@ style = cna/graph
 rnei = 2.9
 rcut = 6.5
 #neighbors_add = 1
+atom_coloring_mode = full
 
 [EventSearch] 
 style = partn
@@ -28,7 +29,7 @@ nsearch = 10
 emin_event = 0.0
 r_nnewchance = 3
 
-[pARTn] 
+[pARTn]
 
 [RateConstant] 
 style = constant

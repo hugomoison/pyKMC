@@ -86,9 +86,9 @@
   Atomic environments parameters.
 </details>
 
-- **`style`** : `Literal['cna', 'graph', 'cna/graph', 'diamond/graph']`, mandatory
+- **`style`** : `Literal['cna', 'graph', 'cna/graph', 'coordination', 'coordination/graph', 'diamond/graph']`, mandatory
   <details><summary>Description</summary>
-  Method used to characterize and assign an ID to an atom's local atomic environment
+  Method used to characterize and assign an ID to an atom's local atomic environment. 'coordination' classifies atoms based on nearest-neighbor count against a threshold. 'coordination/graph' first filters by coordination, then computes graph IDs for non-crystal atoms.
   </details>
 - **`rnei`** : `float`, mandatory
   <details><summary>Description</summary>
@@ -101,6 +101,14 @@
 - **`neighbors_add`** : `int`, default = `0`
   <details><summary>Description</summary>
   When `style` is 'cna/graph', specifies the N-th shell of neighbors whose graph IDs should also be computed.
+  </details>
+- **`coordination_threshold`** : `int`, optional
+  <details><summary>Description</summary>
+  When style is 'coordination' or 'coordination/graph', atoms with fewer neighbors (within rnei) than this value are classified as 'noncrystal'. Atoms with this many or more neighbors are classified as 'crystal'. Required when style is 'coordination' or 'coordination/graph'.
+  </details>
+- **`atom_coloring_mode`** : `Literal['grey', 'full']`, default = `'grey'`
+  <details><summary>Description</summary>
+  Controls whether element types are used in environment matching. 'grey': all atoms treated identically (grey alloy approximation). 'full': element types used in graph hashing, PSR matching, and symmetry detection.
   </details>
 
 ---
@@ -210,6 +218,10 @@
 - **`minimize`** : `str`, default = `'1.0e-6 1.0e-8 1000 1000'`
   <details><summary>Description</summary>
   Lammps minimize command
+  </details>
+- **`boundary`** : `str`, optional
+  <details><summary>Description</summary>
+  LAMMPS boundary string (e.g. 'p p p' or 'p p f'). If None, derived from the input structure's PBC flags.
   </details>
 
 ---
@@ -431,9 +443,26 @@
   Basin parameters
 </details>
 
+- **`style`** : `Literal['global', 'global/reconstruction']`, default = `'global'`
+  <details><summary>Description</summary>
+  Basin style used.
+  </details>
 - **`energy_thr`** : `float`, default = `0.0`
   <details><summary>Description</summary>
   Energy threshold
+  </details>
+
+---
+
+## `Reconstruction` Section (mandatory)
+
+<details><summary>Section Overview</summary>
+  Reconstruction parameters.
+</details>
+
+- **`push_fraction`** : `float`, default = `0.15`
+  <details><summary>Description</summary>
+  Fraction used to push the system from the saddle point toward each minimum during reconstruction.
   </details>
 
 ---
@@ -455,6 +484,30 @@
 - **`AV_debug`** : `bool`, default = `False`
   <details><summary>Description</summary>
   Debug flag for active volume size checks
+  </details>
+
+---
+
+## `Dealloying` Section (optional)
+
+<details><summary>Section Overview</summary>
+  Dealloying event parameters.
+  
+  When enabled, atoms with coordination number below the threshold
+  are eligible for removal via a fixed-rate dealloying event.
+</details>
+
+- **`coordination_threshold`** : `int`, mandatory
+  <details><summary>Description</summary>
+  Atoms with fewer neighbors (within rnei) than this value are eligible for dealloying.
+  </details>
+- **`rate_constant`** : `float`, mandatory
+  <details><summary>Description</summary>
+  Fixed rate constant (ps^-1) for dealloying events.
+  </details>
+- **`eligible_types`** : `list[str]`, optional
+  <details><summary>Description</summary>
+  If provided, only atoms of these element types are eligible for dealloying. If None, all under-coordinated atoms are eligible.
   </details>
 
 ---

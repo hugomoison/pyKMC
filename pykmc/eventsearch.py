@@ -89,23 +89,22 @@ class EventSearch:
         """
         # Translate atoms so that the atom that moves the most is at the center of the cell at start event, prevent pbc problem with psr
         cell = self.system.cell
+        pbc = self.system.pbc if self.system.pbc is not None else np.array([True, True, True])
         ax, ay, az = cell[0][0], cell[1][1], cell[2][2]
-        # displacement
+        # displacement — only center in periodic directions
         move_atom_idx = event_search_output.move_atom_index
-        dx, dy, dz = (
-            ax / 2 - event_search_output.min1_positions[move_atom_idx][0],
-            ay / 2 - event_search_output.min1_positions[move_atom_idx][1],
-            az / 2 - event_search_output.min1_positions[move_atom_idx][2],
-        )
+        dx = (ax / 2 - event_search_output.min1_positions[move_atom_idx][0]) if pbc[0] else 0.0
+        dy = (ay / 2 - event_search_output.min1_positions[move_atom_idx][1]) if pbc[1] else 0.0
+        dz = (az / 2 - event_search_output.min1_positions[move_atom_idx][2]) if pbc[2] else 0.0
         displacement = np.array([dx, dy, dz])
         event_search_output.min1_positions = translate(
-            event_search_output.min1_positions, displacement, cell
+            event_search_output.min1_positions, displacement, cell, pbc=pbc
         )
         event_search_output.saddle_positions = translate(
-            event_search_output.saddle_positions, displacement, cell
+            event_search_output.saddle_positions, displacement, cell, pbc=pbc
         )
         event_search_output.min2_positions = translate(
-            event_search_output.min2_positions, displacement, cell
+            event_search_output.min2_positions, displacement, cell, pbc=pbc
         )
         event_search_output.cell = cell
         return event_search_output

@@ -189,43 +189,62 @@ def info_refinements(
     return RefinementsInfo(n_attempts, n_successes, n_fails)
 
 
-def info_active_events(system_types, reference_table, active_table) -> EventsInfo: 
-    """Construct dataclass with active events information"""
+def info_active_events(system_types, reference_table, active_table) -> EventsInfo:
+    """Construct dataclass with active events information.
+
+    Filters out dealloying events (which have no reference table entry).
+    """
+
+    # Filter to migration events only (dealloying events have no reference table entry)
+    if "event_type" in active_table.table.columns:
+        migration_mask = active_table.table["event_type"] != "dealloying"
+        migration_table = active_table.table[migration_mask]
+    else:
+        migration_table = active_table.table
+
+    if len(migration_table) == 0:
+        return EventsInfo(
+            types=np.array([]), central_atom=np.array([]),
+            initial_topologies=np.array([]), reference_events=np.array([]),
+            dE_forward=np.array([]), dE_backward=np.array([]),
+            dE_asym=np.array([]), k=np.array([]),
+            dra_i=np.array([]), dra_f=np.array([]), refined=np.array([]),
+        )
 
     # active table data
-    central_atom = active_table.table['atom_index'].to_numpy(dtype=int, copy=True)
-    types = np.array(system_types)[central_atom] 
-    reference_events = active_table.table['num_reference_event'].to_numpy(copy=True)
-    dE_forward = active_table.table['energy_barrier'].to_numpy(copy=True)
-    k = active_table.table["k"].to_numpy(copy=True)
-    refined = active_table.table['refined'].to_numpy(copy=True)
-    
+    central_atom = migration_table['atom_index'].to_numpy(dtype=int, copy=True)
+    types = np.array(system_types)[central_atom]
+    reference_events = migration_table['num_reference_event'].to_numpy(copy=True)
+    dE_forward = migration_table['energy_barrier'].to_numpy(copy=True)
+    k = migration_table["k"].to_numpy(copy=True)
+    refined = migration_table['refined'].to_numpy(copy=True)
+
     # Needed mapping to access reference table info
     idx_ref = reference_table.table['idx_ref'].values
     mapping_event_id = dict(zip(idx_ref, reference_table.table['event_id'].values))
     mapping_dra = dict(zip(idx_ref, reference_table.table['dra'].values))
     mapping_backward = dict(zip(idx_ref, reference_table.table['idx_backward'].values))
     mapping_energy = dict(zip(idx_ref, reference_table.table['energy_barrier'].values))
-    
-    #get info applying mapping 
+
+    #get info applying mapping
     initial_topologies = np.array([mapping_event_id[ref] for ref in reference_events])
     dra_i = np.array([mapping_dra[ref] for ref in reference_events])
     backward_events = np.array([mapping_backward[ref] for ref in reference_events])
     dE_backward = np.array([mapping_energy[ref] for ref in backward_events])
     dra_f = np.array([mapping_dra[ref] for ref in backward_events])
-    
+
     dE_asym = np.abs(dE_forward - dE_backward)
 
-    return EventsInfo(types=types, 
-                      central_atom=central_atom, 
-                      initial_topologies=initial_topologies, 
+    return EventsInfo(types=types,
+                      central_atom=central_atom,
+                      initial_topologies=initial_topologies,
                       reference_events=reference_events,
-                      dE_forward=dE_forward, 
-                      dE_backward=dE_backward, 
-                      dE_asym=dE_asym, 
-                      k=k, 
-                      dra_i=dra_i, 
-                      dra_f=dra_f, 
+                      dE_forward=dE_forward,
+                      dE_backward=dE_backward,
+                      dE_asym=dE_asym,
+                      k=k,
+                      dra_i=dra_i,
+                      dra_f=dra_f,
                       refined=refined)
 
 def info_basin_events(system_types, reference_table, connectivity_table, exit_state) -> EventsInfo: 

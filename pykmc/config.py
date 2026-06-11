@@ -14,7 +14,7 @@ from dataclasses import dataclass
 
 @dataclass
 class PhysicalConstants:
-    """Store physical constants."""
+    """Store physical constants for rate constant calculations for events added to the reference table."""
 
     kb = 8.6173303e-05  # eV.K^-1
     h = 4.135667e-3  # eV.ps
@@ -113,9 +113,11 @@ class ControlConfig(BaseModel):
 class AtomicEnvironmentConfig(BaseModel):
     """Atomic environments parameters."""
 
-    style: Literal["cna", "graph", "cna/graph", "diamond/graph"] = Field(
+    style: Literal["cna", "graph", "cna/graph", "coordination", "coordination/graph", "diamond/graph"] = Field(
         ...,
-        description="Method used to characterize and assign an ID to an atom's local atomic environment",
+        description="Method used to characterize and assign an ID to an atom's local atomic environment. "
+        "'coordination' classifies atoms based on nearest-neighbor count against a threshold. "
+        "'coordination/graph' first filters by coordination, then computes graph IDs for non-crystal atoms.",
     )
 
     rnei: float = Field(
@@ -132,6 +134,31 @@ class AtomicEnvironmentConfig(BaseModel):
         default=0,
         description="When `style` is 'cna/graph', specifies the N-th shell of neighbors whose graph IDs should also be computed.",
     )
+
+    coordination_threshold: Optional[int] = Field(
+        default=None,
+        description="When style is 'coordination' or 'coordination/graph', atoms with fewer neighbors "
+        "(within rnei) than this value are classified as 'noncrystal'. Atoms with this many or more "
+        "neighbors are classified as 'crystal'. Required when style is 'coordination' or 'coordination/graph'.",
+    )
+
+    atom_coloring_mode: Literal["grey", "full"] = Field(
+        default="grey",
+        description="Controls whether element types are used in environment matching. "
+        "'grey': all atoms treated identically (grey alloy approximation). "
+        "'full': element types used in graph hashing, PSR matching, and symmetry detection.",
+    )
+
+    @model_validator(mode="after")
+    def validate_coordination_threshold(self) -> "AtomicEnvironmentConfig":
+        """Ensure coordination_threshold is set when style requires it."""
+        if self.style in ("coordination", "coordination/graph"):
+            if self.coordination_threshold is None:
+                raise ValueError(
+                    "coordination_threshold is required when style is '{}'. "
+                    "Set it in the [AtomicEnvironment] section of your INI file.".format(self.style)
+                )
+        return self
 
 
 class EventSearchConfig(BaseModel):
@@ -519,6 +546,16 @@ class LammpsConfig(BaseModel):
         default="1.0e-6 1.0e-8 1000 1000",
         description="Lammps minimize command",
     )
+    boundary: Optional[str] = Field(
+        default=None,
+        description="LAMMPS boundary string (e.g. 'p p p' or 'p p f'). "
+        "If None, derived from the input structure's PBC flags.",
+    )
+
+
+def pbc_to_lammps_boundary(pbc) -> str:
+    """Convert a PBC boolean array to a LAMMPS boundary string."""
+    return " ".join("p" if p else "f" for p in pbc)
 
 
 class IraConfig(BaseModel):
@@ -551,6 +588,38 @@ class BasinConfig(BaseModel):
     )
 
 
+class DealloyingConfig(BaseModel):
+    """Dealloying event parameters.
+
+    When enabled, atoms with coordination number below the threshold
+    are eligible for removal via a fixed-rate dealloying event.
+    """
+
+    coordination_threshold: int = Field(
+        default=...,
+        description="Atoms with fewer neighbors (within rnei) than this value are eligible for dealloying.",
+    )
+
+    rate_constant: float = Field(
+        default=...,
+        description="Fixed rate constant (ps^-1) for dealloying events.",
+        gt=0.0,
+    )
+
+    eligible_types: Optional[list[str]] = Field(
+        default=None,
+        description="If provided, only atoms of these element types are eligible for dealloying. If None, all under-coordinated atoms are eligible.",
+    )
+
+    @field_validator("eligible_types", mode="before")
+    @classmethod
+    def parse_types_list(cls, v: Any) -> list[str] | None:
+        """Parse comma-separated string into list."""
+        if isinstance(v, str):
+            return [x.strip() for x in v.split(",") if x.strip()]
+        return v
+
+
 class EventRecyclingConfig(BaseModel):
     """Event recycling parameters. Required when control.recycle = True."""
 
@@ -572,7 +641,6 @@ class EventRecyclingConfig(BaseModel):
         description="Angstroms. Candidate events whose central atom is farther than this (PBC-aware minimum-image) from the executed event's central atom pass the distance check.",
         gt=0.0,
     )
-
 
 class RegionConfig(BaseModel):
     """Selects atoms by type, index, or geometric region (union semantics).
@@ -802,6 +870,8 @@ class Config(BaseModel):
     reconstruction: ReconstructionConfig = Field(default_factory=ReconstructionConfig, description="Reconstruction parameters")
 
     activevolume: Optional[ActiveVolume] = Field(default=None, description="Active volume parameters")
+
+    dealloying: Optional[DealloyingConfig] = Field(default=None, description="Dealloying event parameters. If provided, atom removal events are enabled.")
 
     eventrecycling: Optional[EventRecyclingConfig] = Field(
         default=None,

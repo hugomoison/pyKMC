@@ -154,6 +154,7 @@ class EventSearchOutput:
     move_atom_index: int
     #map: np.ndarray
     cell: Optional[np.ndarray] = None
+    types: Optional[list] = None
 
 
 @dataclass
@@ -209,13 +210,18 @@ class PSROutput:
     permutation_matrix: np.ndarray
     matching_score: float
 
-@dataclass 
-class ReconstructionOutput : 
+@dataclass
+class ReconstructionOutput :
     """Store the result of a reconstruction"""
-    min1_positions: np.ndarray 
-    saddle_positions: np.ndarray 
+    min1_positions: np.ndarray
+    saddle_positions: np.ndarray
     min2_positions: np.ndarray
     min2_etot: float
+
+@dataclass
+class DealloyingOutput:
+    """Store the result of a dealloying event selection."""
+    atom_index: int
 
 @dataclass 
 class BasinSelectorOutput : 

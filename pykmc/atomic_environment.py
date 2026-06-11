@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
-from .environments import cna, graph, identify_diamond, region
+from .environments import cna, coordination, graph, identify_diamond, region
 from .config import RegionConfig
 
 
@@ -37,6 +37,8 @@ class AtomicEnvironment:
         neighbors_list: list[list[int]] | None = None,
         environment_list: list[list[int]] | None = None,
         neighbors_add: int = 0,
+        types: list[str] | None = None,
+        coordination_threshold: int | None = None,
         region: RegionConfig | None = None,
         positions: np.ndarray | None = None,
         atom_types: list[str] | None = None,
@@ -45,11 +47,15 @@ class AtomicEnvironment:
         self.neighbors_list = neighbors_list
         self.environment_list = environment_list
         self.neighbors_add = neighbors_add
+        self.types = types
+        self.coordination_threshold = coordination_threshold
 
         # Compute the atomic environment ID and store it in self.atomic_environment_list
         match self.style:
             case "cna":
                 self.atomic_environment_list = self.compute_cna()
+            case "coordination":
+                self.atomic_environment_list = self.compute_coordination()
             case "graph":
                 self.atomic_environment_list = self.compute_graph(
                     neighbors_list, environment_list
@@ -58,7 +64,11 @@ class AtomicEnvironment:
                 self.atomic_environment_list = self.compute_cnagraph(
                     neighbors_list, environment_list
                 )
-            case "diamond/graph" : 
+            case "coordination/graph":
+                self.atomic_environment_list = self.compute_coordinationgraph(
+                    neighbors_list, environment_list
+                )
+            case "diamond/graph" :
                 self.atomic_environment_list = self.compute_diamondgraph(neighbors_list, environment_list)
             case "region":
                 self.atomic_environment_list = self.compute_region(
@@ -103,11 +113,15 @@ class AtomicEnvironment:
         """See :py:func:`.environments.cna` for details on CNA computation."""
         return cna(self.neighbors_list)
 
+    def compute_coordination(self) -> list[str]:
+        """See :py:func:`.environments.coordination` for details on coordination classification."""
+        return coordination(self.neighbors_list, self.coordination_threshold)
+
     def compute_graph(
         self, neighbors_list: list[list[int]], environment_list: list[list[int]]
     ) -> list[str]:
         """See :py:func:`.environment.graph` for detail on Graph Topology computation."""
-        return graph(neighbors_list, environment_list)
+        return graph(neighbors_list, environment_list, types=self.types)
 
     def compute_cnagraph(
         self, neighbors_list: list[list[int]], environment_list: list[list[int]]
@@ -142,7 +156,47 @@ class AtomicEnvironment:
             non_crystal_idx += tmp
             non_crystal_idx = list(set(non_crystal_idx))
         # Compute graph topo for all non cristalline atoms
-        list_graphs_hash = graph(neighbors_list, environment_list, non_crystal_idx)
+        list_graphs_hash = graph(neighbors_list, environment_list, non_crystal_idx, types=self.types)
+        for i, idx in enumerate(non_crystal_idx):
+            list_hash[idx] = list_graphs_hash[i]
+
+        return list_hash
+
+    def compute_coordinationgraph(
+        self, neighbors_list: list[list[int]], environment_list: list[list[int]]
+    ) -> list[str]:
+        """Compute coordination-based classification, then Graph Topology for non-crystal atoms.
+
+        Parameters
+        ----------
+        neighbors_list : list[list[int]]
+            first neighbors lists
+        environment_list : list[list[int]]
+            lists of atoms in environments (used for graph computation).
+
+        Returns
+        -------
+        list[str]
+            atomic environment ID for each atom
+
+        """
+        # Compute coordination-based classification
+        list_hash = coordination(neighbors_list, self.coordination_threshold)
+        non_crystal_idx = (
+            np.where(np.array(list_hash) == "noncrystal")[0].astype(int).tolist()
+        )
+
+        # If neighbors_add > 0, expand non-crystal set to include neighbors
+        if self.neighbors_add > 0:
+            tmp = []
+            for _i in range(self.neighbors_add):
+                for idx in non_crystal_idx:
+                    tmp += neighbors_list[idx]
+            non_crystal_idx += tmp
+            non_crystal_idx = list(set(non_crystal_idx))
+
+        # Compute graph topo for all non-crystal atoms
+        list_graphs_hash = graph(neighbors_list, environment_list, non_crystal_idx, types=self.types)
         for i, idx in enumerate(non_crystal_idx):
             list_hash[idx] = list_graphs_hash[i]
 

@@ -5,7 +5,8 @@ import numpy as np
 
 
 def unique_symmetries(
-    initial_positions: np.ndarray, final_positions: np.ndarray, sym_thr: float
+    initial_positions: np.ndarray, final_positions: np.ndarray, sym_thr: float,
+    types: list = None,
 ) -> tuple[list[np.ndarray], list[np.ndarray]]:
     """Identify the unique symmetry operations of an event based on atomic displacements.
 
@@ -20,6 +21,9 @@ def unique_symmetries(
         Final atomic positions (N, 3).
     sym_thr : float
         Symmetry tolerance threshold for the `ira_mod` symmetry detection.
+    types : list, optional
+        Element types for each atom. When provided, symmetry detection respects
+        element types (fewer symmetries for multi-element systems).
 
     Returns
     -------
@@ -32,7 +36,7 @@ def unique_symmetries(
     """
     # Find all symmetries of initial_positions
     nat = len(initial_positions)
-    typ = nat * [1]
+    typ = list(types) if types is not None else nat * [1]
 
     sofi = ira_mod.SOFI()
     sym = sofi.compute(nat, typ, initial_positions, sym_thr)  # sym data ira object

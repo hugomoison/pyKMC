@@ -236,7 +236,7 @@ class Refinement:
 
                 #NOTE: TEMPORARY, NEED TO FIND A BETTER WAY
                 future_context[f] = {
-                    "min2_positions": ase.geometry.wrap_positions(new_positions_final, cell = self.system.cell, pbc=True),
+                    "min2_positions": ase.geometry.wrap_positions(new_positions_final, cell = self.system.cell, pbc=self.system.pbc if self.system.pbc is not None else True),
                     "num_reference_event": dfevent["idx_ref"],
                     "reference_energy_barrier": dfevent["energy_barrier"],
                     "neighbors": neighbors.copy()

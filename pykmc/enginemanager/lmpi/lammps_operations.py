@@ -18,11 +18,11 @@ from ...result import  (
 )
 
 
-def initialize_parameters(engine) : 
+def initialize_parameters(engine, boundary="p p p") :
     engine.command("units metal")
     engine.command("atom_style atomic")
     engine.command("dimension 3")
-    engine.command("boundary p p p")
+    engine.command(f"boundary {boundary}")
     engine.command("atom_modify map array") #! necessary for scatter atoms
     engine.command("atom_modify sort 0 0.0") #! necessary for partn
 
@@ -68,6 +68,21 @@ def initialize_potential(engine, config) :
     engine.command("pair_style {}".format(pair_style))
     engine.command("pair_coeff {}".format(pair_coeff))
 
+
+def reinitialize_system(engine, config, system):
+    """Clear and reinitialize LAMMPS with a new system.
+
+    Used after atom removal to rebuild LAMMPS state with updated atom count.
+    """
+    from ...config import pbc_to_lammps_boundary
+    if config.lammps.boundary is not None:
+        boundary = config.lammps.boundary
+    else:
+        boundary = pbc_to_lammps_boundary(system.pbc) if system.pbc is not None else "p p p"
+    engine.lmp.command("clear")
+    initialize_parameters(engine, boundary=boundary)
+    initialize_system(engine, system)
+    initialize_potential(engine, config)
 
 def minimize(engine, config, positions=None) :
     if positions is not None :
@@ -329,6 +344,7 @@ def partn_search(engine, config, central_atom_idx: int, positions = None, cell =
                             saddle_positions=saddlepositions,
                             min2_positions=min2positions,
                             move_atom_index=index_move,
+                            types=types,
                         )
                     )
                 else:
@@ -341,6 +357,7 @@ def partn_search(engine, config, central_atom_idx: int, positions = None, cell =
                             saddle_positions=saddlepositions,
                             min2_positions=min1positions,
                             move_atom_index=index_move,
+                            types=types,
                         )
                     )
             else:
