@@ -255,21 +255,21 @@ LOGGING_CONFIG = {
             "formatter": "file_formatter",
             "level": "DEBUG",
             "filename": "pykmc.out",
-            "mode" : "a"
+            "mode": "a",
         },
         "step_informations": {
             "class": "logging.FileHandler",
             "formatter": "file_formatter",
             "level": "DEBUG",
             "filename": "pykmc.info",
-            "mode" : "a"
+            "mode": "a",
         },
-        "events_output":{
+        "events_output": {
             "class": "logging.FileHandler",
-            "formatter": "file_formatter", 
-            "level": "DEBUG", 
-            "filename" : "pykmc.events",
-            "mode" : "a"
+            "formatter": "file_formatter",
+            "level": "DEBUG",
+            "filename": "pykmc.events",
+            "mode": "a",
         },
         "progress_bar_handler": {
             "class": "pykmc.log.ProgressHandler",
@@ -287,9 +287,9 @@ LOGGING_CONFIG = {
             "handlers": ["general_output_file"],
         },
         "info": {"handlers": ["step_informations"]},
-        "events" : {"handlers": ["events_output"]},
+        "events": {"handlers": ["events_output"]},
         "progress": {
-            #"handlers": ["log_file", "progress_bar_handler"],
+            # "handlers": ["log_file", "progress_bar_handler"],
             "handlers": ["progress_bar_handler"],
         },
     },
@@ -318,7 +318,7 @@ class LogKMC(LogManager):
         # apply verbosity option modifying logger and handlers level
         self._apply_verbosity_level()
 
-    #TODO : set level should be more robust, especially for the progress bar
+    # TODO : set level should be more robust, especially for the progress bar
     def _apply_verbosity_level(self) -> None:
         """Modify loggers and their handlers levels.
 
@@ -340,10 +340,16 @@ class LogKMC(LogManager):
         for logger_name in self._logger:
             logger = self._get_active_logger(logger_name)
             logger.setLevel(level)
-            if logger_name == "progress" and self._verbosity >= 2 :  # To pass debug level for progress bar
+            if (
+                logger_name == "progress" and self._verbosity >= 2
+            ):  # To pass debug level for progress bar
                 logger.setLevel(logging.DEBUG)
             for handler in logger.handlers:
-                if logger_name == "progress" and isinstance(handler, ProgressHandler) and self._verbosity >= 2 :
+                if (
+                    logger_name == "progress"
+                    and isinstance(handler, ProgressHandler)
+                    and self._verbosity >= 2
+                ):
                     handler.setLevel(
                         logging.DEBUG
                     )  # always display bar in stdout bug only debug level for log_file
@@ -389,20 +395,20 @@ class LogKMC(LogManager):
             logger_name, "\n{}\n{}\n{}".format(separator, centered_title, separator)
         )
 
-        max_key_len = 0 
-        for section, model in config :
-            if model is not None : 
-                for key, value in model : 
+        max_key_len = 0
+        for section, model in config:
+            if model is not None:
+                for key, value in model:
                     max_key_len = max(max_key_len, len(str(key)))
 
         for section, model in config:
             self.info(logger_name, section)
-            if model is not None : 
+            if model is not None:
                 for key, value in model:
                     self.info(
-                    logger_name,
-                    "{}{:<{}} : {}".format(" " * indent, key, max_key_len, value),
-                )
+                        logger_name,
+                        "{}{:<{}} : {}".format(" " * indent, key, max_key_len, value),
+                    )
         self.new_line(logger_name)
 
     def output_file_header(self, logger_name: str) -> None:
@@ -423,7 +429,10 @@ class LogKMC(LogManager):
             logger_name, "\t# dT(s)         : Time elapsed for this specific step."
         )
         self.info(logger_name, "\t# T(s)          : Total time since simulation start.")
-        self.info(logger_name, "\t# Ref event     : Index in the reference talbe of the selected event.")
+        self.info(
+            logger_name,
+            "\t# Ref event     : Index in the reference talbe of the selected event.",
+        )
         self.info(logger_name, "\t# Ea(eV)        : Event activation energy barrier.")
         self.info(
             logger_name, "\t# k_evt(ps-1)   : Rate constant of the selected event."
@@ -440,7 +449,16 @@ class LogKMC(LogManager):
         self.info(
             logger_name,
             "{:<10s} {:<14s} {:<14s} {:<14s} {:<14s} {:<14s} {:<14s} {:<14s} {:<14s} {:<14s}".format(
-                "Step", "dT(s)", "T(s)", "Ref event", "Ea(eV)", "k_evt(ps-1)", "k_tot(ps-1)", "E(eV)", "Cpu time(s)", "Wall time(s)"
+                "Step",
+                "dT(s)",
+                "T(s)",
+                "Ref event",
+                "Ea(eV)",
+                "k_evt(ps-1)",
+                "k_tot(ps-1)",
+                "E(eV)",
+                "Cpu time(s)",
+                "Wall time(s)",
             ),
         )
         self.info(logger_name, "{:s}".format(110 * "-"))
@@ -483,7 +501,7 @@ class LogKMC(LogManager):
         ]
         self.info(logger_name, " ".join(formatted_values))
 
-    def events_file_header(self, logger_name:str) -> None : 
+    def events_file_header(self, logger_name: str) -> None:
         """Write header of the events file
 
         Parameters
@@ -493,20 +511,36 @@ class LogKMC(LogManager):
         """
         self.info(logger_name, "#Actif Events Informations File")
         self.info(logger_name, "\t #Type: The central atom's type.")
-        self.info(logger_name, "\t #Central Atom: Index of the central atom of the event.")
-        self.info(logger_name, "\t #Ref Event: Index of reference event in the reference table.")
-        self.info(logger_name, "\t #dE forward: Energy barrier of the forward reaction (eV).")
-        self.info(logger_name, "\t #dE backward: Energy barrier of the backward reaction (eV).")
+        self.info(
+            logger_name, "\t #Central Atom: Index of the central atom of the event."
+        )
+        self.info(
+            logger_name,
+            "\t #Ref Event: Index of reference event in the reference table.",
+        )
+        self.info(
+            logger_name, "\t #dE forward: Energy barrier of the forward reaction (eV)."
+        )
+        self.info(
+            logger_name,
+            "\t #dE backward: Energy barrier of the backward reaction (eV).",
+        )
         self.info(logger_name, "\t #dE asym: |dE forward - dE backward| (eV).")
         self.info(logger_name, "\t #k: rate of the forward reaction (ps-1)")
-        self.info(logger_name, "\t #dra_i: displacement between the initial positions and the saddle positions.")
-        self.info(logger_name, "\t #dra_i: displacement between the final positions and the saddle positions.")
+        self.info(
+            logger_name,
+            "\t #dra_i: displacement between the initial positions and the saddle positions.",
+        )
+        self.info(
+            logger_name,
+            "\t #dra_i: displacement between the final positions and the saddle positions.",
+        )
         self.info(logger_name, "\t #Refined: - T : The event has been refined.")
         self.info(logger_name, "\t #         - F : The event has not been refined.")
         self.new_line(logger_name)
 
-    def events_file_step_first_line(self, logger_name:str, step: int) -> None : 
-        """Write the first line with step informations 
+    def events_file_step_first_line(self, logger_name: str, step: int) -> None:
+        """Write the first line with step informations
 
         Parameters
         ----------
@@ -515,12 +549,24 @@ class LogKMC(LogManager):
         """
         self.info(logger_name, "#Step: {}".format(step))
 
-    def events_applicable_info_line(self, logger_name:str, selected_event:int) -> None : 
-        self.info(logger_name, "========== Applicable Events (Selected={}) ==========".format(selected_event))
+    def events_applicable_info_line(
+        self, logger_name: str, selected_event: int
+    ) -> None:
+        self.info(
+            logger_name,
+            "========== Applicable Events (Selected={}) ==========".format(
+                selected_event
+            ),
+        )
 
-    def events_basin_info_line(self, logger_name:str, selected_event: int) -> None : 
+    def events_basin_info_line(self, logger_name: str, selected_event: int) -> None:
 
-        self.info(logger_name, "========== Basin Exit Events (Selected={}) ==========".format(selected_event))
+        self.info(
+            logger_name,
+            "========== Basin Exit Events (Selected={}) ==========".format(
+                selected_event
+            ),
+        )
 
     def new_line(self, logger_name: str) -> None:
         """Write a new line in the logger.
@@ -579,5 +625,5 @@ class LogKMC(LogManager):
 
         # Envoi du message via le logger
         self.debug(logger_name, progress_message)
-        if bar_length == filled_length : 
-            self.debug(logger_name, '\n')
+        if bar_length == filled_length:
+            self.debug(logger_name, "\n")

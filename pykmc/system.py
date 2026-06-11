@@ -88,7 +88,7 @@ class System:
         new_system.pbc = atoms.get_pbc()
         new_system.index = np.arange(len(new_system.types))
 
-        #Wrap positions
+        # Wrap positions
         new_system.update_positions(new_system.positions)
 
         return new_system

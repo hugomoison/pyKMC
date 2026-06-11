@@ -24,13 +24,17 @@ def main() -> None:
     # Config
     config = Config.from_ini_file(args.input)
     # KMC
-    factory = ManagerFactory(n_sessions=config.control.n_sessions, use_rank_0=config.control.engine_use_rank_0, has_global=True)
+    factory = ManagerFactory(
+        n_sessions=config.control.n_sessions,
+        use_rank_0=config.control.engine_use_rank_0,
+        has_global=True,
+    )
     manager = factory.launch()
-    if manager is not None: #On rank 0
-        kmc = KMC(config) 
+    if manager is not None:  # On rank 0
+        kmc = KMC(config)
         kmc._initialize()
         kmc.manager = manager
-#        kmc = KMC(config)
+        #        kmc = KMC(config)
         kmc.run()
 
 

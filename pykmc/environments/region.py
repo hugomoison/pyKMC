@@ -9,7 +9,9 @@ if TYPE_CHECKING:
     from pykmc.config import RegionConfig
 
 
-def region(r: "RegionConfig", positions: np.ndarray, atom_types: list[str]) -> list[str]:
+def region(
+    r: "RegionConfig", positions: np.ndarray, atom_types: list[str]
+) -> list[str]:
     """Classify each atom as ``'in'`` or ``'out'``.
 
     Union semantics: an atom is ``'in'`` if it matches any of
@@ -65,9 +67,12 @@ def _resolve_geometric(r: "RegionConfig", positions: np.ndarray) -> set[int]:
         lo = r.lo
         hi = r.hi
         mask = (
-            (positions[:, 0] >= lo[0]) & (positions[:, 0] <= hi[0]) &
-            (positions[:, 1] >= lo[1]) & (positions[:, 1] <= hi[1]) &
-            (positions[:, 2] >= lo[2]) & (positions[:, 2] <= hi[2])
+            (positions[:, 0] >= lo[0])
+            & (positions[:, 0] <= hi[0])
+            & (positions[:, 1] >= lo[1])
+            & (positions[:, 1] <= hi[1])
+            & (positions[:, 2] >= lo[2])
+            & (positions[:, 2] <= hi[2])
         )
         base = set(np.where(mask)[0].tolist())
 

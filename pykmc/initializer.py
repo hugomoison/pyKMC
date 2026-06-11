@@ -45,19 +45,21 @@ class Initializer:
         self.kmc.loggers.info("log", "= Starting KMC simulation =")
         self.kmc.loggers.info("log", "===========================")
 
-        if self.kmc.config.control.restart_file is None : 
+        if self.kmc.config.control.restart_file is None:
             self.kmc.loggers.table_line_info_kmc(
-            "output", 0, 0.0, 0.0, None, None, None, None, self.kmc.total_energy
-        )
-        else : 
+                "output", 0, 0.0, 0.0, None, None, None, None, self.kmc.total_energy
+            )
+        else:
             self.kmc.loggers.info("log", ":=> Restarting")
 
     def initialize_loggers(self) -> None:
         """Initialize the loggers and create their files."""
-        self.kmc.loggers = LogKMC(LOGGING_CONFIG, verbosity=self.kmc.config.control.verbosity)
+        self.kmc.loggers = LogKMC(
+            LOGGING_CONFIG, verbosity=self.kmc.config.control.verbosity
+        )
         self.kmc.loggers.title("log")
         self.kmc.loggers.write_parameters("log", self.kmc.config)
-        if self.kmc.config.control.restart_file is None : 
+        if self.kmc.config.control.restart_file is None:
             self.kmc.loggers.output_file_header("output")
             self.kmc.loggers.events_file_header("events")
 
@@ -114,18 +116,29 @@ class Initializer:
         match bc.style:
             case "direction":
                 self.kmc.bias = DirectionBias(
-                    bc.direction, bc.atom_indices, bc.threshold,
-                    mode=bc.mode, bias_weight=bc.bias_weight, pass_unlisted=bc.pass_unlisted,
+                    bc.direction,
+                    bc.atom_indices,
+                    bc.threshold,
+                    mode=bc.mode,
+                    bias_weight=bc.bias_weight,
+                    pass_unlisted=bc.pass_unlisted,
                 )
             case "point":
                 self.kmc.bias = PointBias(
-                    bc.target_point, bc.atom_indices, bc.threshold,
-                    mode=bc.mode, bias_weight=bc.bias_weight, pass_unlisted=bc.pass_unlisted,
+                    bc.target_point,
+                    bc.atom_indices,
+                    bc.threshold,
+                    mode=bc.mode,
+                    bias_weight=bc.bias_weight,
+                    pass_unlisted=bc.pass_unlisted,
                 )
             case "topo":
                 self.kmc.bias = TopoBias(
-                    bc.topo_source, bc.topo_target,
-                    mode=bc.mode, bias_weight=bc.bias_weight, pass_unlisted=bc.pass_unlisted,
+                    bc.topo_source,
+                    bc.topo_target,
+                    mode=bc.mode,
+                    bias_weight=bc.bias_weight,
+                    pass_unlisted=bc.pass_unlisted,
                 )
 
     def _initialize_visited_environments(self) -> None:

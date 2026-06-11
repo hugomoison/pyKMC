@@ -32,7 +32,9 @@ def define_AV(config, central_atom_idx: int, positions, cell):
         if np.abs(distance) <= r_m:
             inner_movable_idx.append(i)
             total_active_idx.append(i)  # Inner is also part of total active
-        elif np.abs(distance) > r_m and np.abs(distance) <= r_a:  # Can change to make it between r_m and r_a
+        elif (
+            np.abs(distance) > r_m and np.abs(distance) <= r_a
+        ):  # Can change to make it between r_m and r_a
             buffer_idx.append(i)
             total_active_idx.append(i)
         else:
@@ -43,9 +45,10 @@ def define_AV(config, central_atom_idx: int, positions, cell):
 
     av_positions = positions[av_idx]
 
-    #print(len(av_idx)," atoms in AV,", len(av_idx)-len(buffer_idx), "movable atoms")
+    # print(len(av_idx)," atoms in AV,", len(av_idx)-len(buffer_idx), "movable atoms")
 
     return av_positions, av_idx, buffer_idx
+
 
 def make_AV(engine, av_indices, buffer_indices):
 
@@ -63,9 +66,9 @@ def make_AV(engine, av_indices, buffer_indices):
     else:
         engine.command(f"group buffer empty")
         engine.command("fix f_buffer buffer setforce 0.0 0.0 0.0")
-        print('No buffer atoms defined')
+        print("No buffer atoms defined")
 
-    engine.command('run 0 post no')
+    engine.command("run 0 post no")
 
 
 def reset(engine, config, cell) -> None:
@@ -73,76 +76,93 @@ def reset(engine, config, cell) -> None:
     Clear lammps instance, preps it for the new sim:
     """
 
-    engine.command('clear')
+    engine.command("clear")
     initialize_parameters(engine)
     # Create cell
     xhi, yhi, zhi = cell[0][0], cell[1, 1], cell[2, 2]
-    engine.command(
-        "region box block 0.0 {} 0.0 {} 0.0 {}".format(xhi, yhi, zhi)
-    )
-    engine.command('create_box 1 box')  # NEEDS TO BE UPDATED FOR ALLOYS
+    engine.command("region box block 0.0 {} 0.0 {} 0.0 {}".format(xhi, yhi, zhi))
+    engine.command("create_box 1 box")  # NEEDS TO BE UPDATED FOR ALLOYS
     initialize_potential(engine, config)
 
+
 def clear(engine):
-    '''
+    """
     Clears lammps instance
-    '''
-    engine.command('clear')
+    """
+    engine.command("clear")
+
 
 def redefine_atoms(engine, positions, type=None) -> None:
-    '''
-        Check to see if current lammps system has enough atoms
-        If not, deletes all atoms then redefines them
-        '''
+    """
+    Check to see if current lammps system has enough atoms
+    If not, deletes all atoms then redefines them
+    """
     if type is None:
-        type = [1]*len(positions)
+        type = [1] * len(positions)
     new_positions = positions.flatten().astype(np.float64)
     ids = np.arange(1, len(positions) + 1, dtype=np.int32)
     engine.lmp.create_atoms(len(positions), ids, type, x=new_positions)
     engine.command("comm_style tiled")
     engine.command("balance 1.1 rcb")
     engine.command("neigh_modify every 1 delay 0 check yes")
-    engine.command('fix 1 all setforce 0.0 0.0 0.0')
-    engine.command('run 0')
-    engine.command('unfix 1')
+    engine.command("fix 1 all setforce 0.0 0.0 0.0")
+    engine.command("run 0")
+    engine.command("unfix 1")
 
-def partn_search_AV(engine, config, central_atom_idx: int, positions, cell, type) -> [np.array, int]:
+
+def partn_search_AV(
+    engine, config, central_atom_idx: int, positions, cell, type
+) -> [np.array, int]:
     reset(engine, config, cell)
-    av_positions, av_idx, buffer_idx = define_AV(config, central_atom_idx, positions, cell)
+    av_positions, av_idx, buffer_idx = define_AV(
+        config, central_atom_idx, positions, cell
+    )
 
-    #Need to map type to positions
+    # Need to map type to positions
     atom_map = np.array(av_idx, dtype=int)
     map_type = {
         atom_type: {"ref": i + 1, "mass": atomic_masses[atomic_numbers[atom_type]]}
         for i, atom_type in enumerate(sorted(set(type)))
     }
-    type = np.array([map_type[element]["ref"] for element in type]) # map to integer
+    type = np.array([map_type[element]["ref"] for element in type])  # map to integer
 
-    av_type=type[atom_map]
+    av_type = type[atom_map]
 
     redefine_atoms(engine, av_positions, av_type)
     make_AV(engine, av_idx, buffer_idx)
-    return atom_map, np.array(np.where(atom_map == central_atom_idx)[0]+1)
+    return atom_map, np.array(np.where(atom_map == central_atom_idx)[0] + 1)
 
-def partn_refine_AV(engine, config, central_atom_idx:int, positions, cell, type, saddle_idx, saddle_positions) -> [float, np.array, int]:
-    '''
-        Receive the system with the central atom index, define an active volume around this atom, then update the positions
-        with those for the saddle.
 
-        This was added in order to get the activation energy for an event, as the traditional method does not work for
-        Active Volumes.
-    '''
+def partn_refine_AV(
+    engine,
+    config,
+    central_atom_idx: int,
+    positions,
+    cell,
+    type,
+    saddle_idx,
+    saddle_positions,
+) -> [float, np.array, int]:
+    """
+    Receive the system with the central atom index, define an active volume around this atom, then update the positions
+    with those for the saddle.
+
+    This was added in order to get the activation energy for an event, as the traditional method does not work for
+    Active Volumes.
+    """
 
     reset(engine, config, cell)
-    av_positions, av_idx, buffer_idx = define_AV(config, central_atom_idx, positions, cell)
+    av_positions, av_idx, buffer_idx = define_AV(
+        config, central_atom_idx, positions, cell
+    )
 
-    #Need to map types to positions
+    # Need to map types to positions
     atom_map = np.array(av_idx, dtype=int)
     map_type = {
         atom_type: {"ref": i + 1, "mass": atomic_masses[atomic_numbers[atom_type]]}
         for i, atom_type in enumerate(sorted(set(type)))
     }
-    type = np.array([map_type[element]["ref"] for element in type]) # map to integer
+    type = np.array([map_type[element]["ref"] for element in type])  # map to integer
 
     av_type = type[atom_map]
 
@@ -153,36 +173,40 @@ def partn_refine_AV(engine, config, central_atom_idx:int, positions, cell, type,
         E_before = get_potential_energy(engine)
         engine.command("min_style {}".format(config.lammps.min_style))
         engine.command("minimize 1.0e-6 1.0e-8 10 10")
-        E_init=get_potential_energy(engine)
+        E_init = get_potential_energy(engine)
         print("Before minimization: ", E_before, "After minimization: ", E_init)
-        print("% Difference:", abs((E_before - E_init)/E_init*100),"%")
+        print("% Difference:", abs((E_before - E_init) / E_init * 100), "%")
     else:
-        E_init=get_potential_energy(engine)
+        E_init = get_potential_energy(engine)
 
-    core_idx=[]
-    core_ids=[]
+    core_idx = []
+    core_ids = []
     for i, atom_idx in enumerate(saddle_idx):
-        index = int(np.where(atom_map == atom_idx)[0])  # index in atom map where this value is true
+        index = int(
+            np.where(atom_map == atom_idx)[0]
+        )  # index in atom map where this value is true
         av_positions[index] = saddle_positions[i]
         core_idx.append(index)  # Atom id
         core_ids.append(index + 1)
     set_positions(engine, av_positions)
 
-    engine.command('fix 1 all setforce 0.0 0.0 0.0')
-    engine.command('run 0')
-    engine.command('unfix 1')
+    engine.command("fix 1 all setforce 0.0 0.0 0.0")
+    engine.command("run 0")
+    engine.command("unfix 1")
 
     # Want to minimize initially to speed up refinement process
     engine.command(f"group core id {' '.join(map(str, core_ids))}")
-    engine.command('fix f_core core setforce 0.0 0.0 0.0')
+    engine.command("fix f_core core setforce 0.0 0.0 0.0")
     engine.command("min_style {}".format(config.lammps.min_style))
     engine.command("minimize 1.0e-6 1.0e-8 10 10")
-    engine.command('unfix f_core')
+    engine.command("unfix f_core")
 
-    return E_init, atom_map, (np.where(atom_map == central_atom_idx)[0]+1)
+    return E_init, atom_map, (np.where(atom_map == central_atom_idx)[0] + 1)
 
-def position_results_AV(config, artn, atom_map, positions) -> [np.array, np.array, np.array, int]:
 
+def position_results_AV(
+    config, artn, atom_map, positions
+) -> [np.array, np.array, np.array, int]:
 
     min1positions = artn.extract("tau_min1")
     min2positions = artn.extract("tau_min2")
@@ -194,7 +218,7 @@ def position_results_AV(config, artn, atom_map, positions) -> [np.array, np.arra
     dist = np.sqrt(dist)
     dist[dist > config.atomicenvironment.rcut] = (
         0
-    # if atom moves more that rcutevent, consider that it crosses the cell (happens with lammps), so distance = 0 to not consider it as the one that moves the most
+        # if atom moves more that rcutevent, consider that it crosses the cell (happens with lammps), so distance = 0 to not consider it as the one that moves the most
     )
     index_move = np.argmax(dist)
 
@@ -217,7 +241,12 @@ def position_results_AV(config, artn, atom_map, positions) -> [np.array, np.arra
         min2positions_mapped[atom_idx][1] = min2positions[i][1]
         min2positions_mapped[atom_idx][2] = min2positions[i][2]
 
-    return  min1positions_mapped, min2positions_mapped, saddlepositions_mapped, index_move_mapped
+    return (
+        min1positions_mapped,
+        min2positions_mapped,
+        saddlepositions_mapped,
+        index_move_mapped,
+    )
 
 
 def initialize_parameters(engine):
@@ -248,16 +277,12 @@ def initialize_system(engine, system):
     types = [map_type[element]["ref"] for element in types]  # map to integer
 
     # lammps create system
-    engine.command(
-        "region box block 0.0 {} 0.0 {} 0.0 {}".format(xhi, yhi, zhi)
-    )
+    engine.command("region box block 0.0 {} 0.0 {} 0.0 {}".format(xhi, yhi, zhi))
     engine.command("create_box {} box".format(len(map_type)))
     engine.lmp.create_atoms(natoms, ind, types, x)
     # Set masses
     for key in map_type.keys():
-        engine.command(
-            "mass {} {}".format(map_type[key]["ref"], map_type[key]["mass"])
-        )
+        engine.command("mass {} {}".format(map_type[key]["ref"], map_type[key]["mass"]))
     # Label atoms name to type :
     engine.command(
         "labelmap atom "

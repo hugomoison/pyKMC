@@ -7,7 +7,7 @@ import math as m
 def compute_rate_Eyring(dE: float, config: Config) -> float:
     r"""Compute the rate constant based on the energy barrier and parameters in the configuration.
 
-    It uses the following equation : 
+    It uses the following equation :
     $$
     k0*e^{-\frac{dE}{k_{b}T}}
     $$

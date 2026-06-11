@@ -112,7 +112,7 @@ class ErrorType(Enum):
     PSR_MATCHING_SCORE_ABOVE_ACCEPTANCE_THRESHOLD = 22
     REFINEMENT_INVALID_ENERGY_BARRIER = 31
     REFINEMENT_INVALID_MINIMA = 32
-    RECONSTRUCTION_INVALID_MIN1 = 41 
+    RECONSTRUCTION_INVALID_MIN1 = 41
     RECONSTRUCTION_INVALID_MIN2 = 42
     BASIN_TEXIT_NOT_FOUND = 51
 
@@ -152,7 +152,7 @@ class EventSearchOutput:
     dE_forward: float
     dE_backward: float
     move_atom_index: int
-    #map: np.ndarray
+    # map: np.ndarray
     cell: Optional[np.ndarray] = None
 
 
@@ -168,13 +168,13 @@ class EventRefinementOutput:
         Refined saddle point atomic positions.
     min2_positions : np.ndarray
         Refined atomic positions of the final minimum (if matched)
-    E_saddle : float 
+    E_saddle : float
         Potential energy at the saddle point.
     dE_forward : Optional[float]
         Refined forward energy barrier (if matched).
     num_reference_event : Optional[int]
         Index of the corresponding reference event (if matched).
-    refined: Optional[str] 
+    refined: Optional[str]
         If the event has been refined (T: True, F: False, B: In basin)
     """
 
@@ -209,39 +209,48 @@ class PSROutput:
     permutation_matrix: np.ndarray
     matching_score: float
 
-@dataclass 
-class ReconstructionOutput : 
+
+@dataclass
+class ReconstructionOutput:
     """Store the result of a reconstruction"""
-    min1_positions: np.ndarray 
-    saddle_positions: np.ndarray 
+
+    min1_positions: np.ndarray
+    saddle_positions: np.ndarray
     min2_positions: np.ndarray
     min2_etot: float
 
-@dataclass 
-class BasinSelectorOutput : 
-    """"Store the result of the selector"""
-    t_exit: float 
-    exit_state: int 
-
-@dataclass 
-class BasinExitTimeSolverOutput : 
-    """Sotre the results of exit time solver"""
-    t_exit: float
 
 @dataclass
-class BasinOutput : 
+class BasinSelectorOutput:
+    """ "Store the result of the selector"""
+
+    t_exit: float
+    exit_state: int
+
+
+@dataclass
+class BasinExitTimeSolverOutput:
+    """Sotre the results of exit time solver"""
+
+    t_exit: float
+
+
+@dataclass
+class BasinOutput:
     """Store the results of the basin."""
+
     initial_system_positions: np.ndarray
     central_atom: int
-    saddle_positions: np.ndarray 
-    final_positions: np.ndarray 
+    saddle_positions: np.ndarray
+    final_positions: np.ndarray
     neighbors: np.ndarray
     energy_barrier: float
-    k_tot: float 
+    k_tot: float
     t_exit: float
     exit_state: int
     from_state: int
-    num_reference_event: int 
+    num_reference_event: int
+
 
 @dataclass
 class AtomicEnvironmentInfo:
@@ -322,11 +331,12 @@ class RefinementsInfo:
     n_sucesses: int
     n_fails: dict[str, int]
 
+
 @dataclass
-class EventsInfo: 
+class EventsInfo:
     """Active events informations."""
 
-    types: list[str] 
+    types: list[str]
     central_atom: list[int]
     initial_topologies: list[str]
     reference_events: list[int]
@@ -338,20 +348,24 @@ class EventsInfo:
     dra_f: list[float]
     refined: list[str]
 
-    def output_msg(self) -> str: 
+    def output_msg(self) -> str:
 
-        df = pd.DataFrame({
-                'Types': self.types,
-                'Central Atom': self.central_atom,
-                'Ref Event': self.reference_events,
-                'dE forward': self.dE_forward,
-                'dE backward': self.dE_backward,
-                'dE asym': self.dE_asym,
-                'k': self.k,
-                'dra_i': self.dra_i,
-                'dra_f': self.dra_f,
-                'Refined': self.refined,}).reset_index(drop=True)
-        return df.to_string(index=True)        
+        df = pd.DataFrame(
+            {
+                "Types": self.types,
+                "Central Atom": self.central_atom,
+                "Ref Event": self.reference_events,
+                "dE forward": self.dE_forward,
+                "dE backward": self.dE_backward,
+                "dE asym": self.dE_asym,
+                "k": self.k,
+                "dra_i": self.dra_i,
+                "dra_f": self.dra_f,
+                "Refined": self.refined,
+            }
+        ).reset_index(drop=True)
+        return df.to_string(index=True)
+
 
 @dataclass
 class KMCLoopInfo:
@@ -433,7 +447,7 @@ def represent_list_preserve_flow(
         YAML node representing the sequence.
 
     """
-    if all(isinstance(i, int|float) for i in data):
+    if all(isinstance(i, int | float) for i in data):
         return dumper.represent_sequence("tag:yaml.org,2002:seq", data, flow_style=True)
     return dumper.represent_sequence("tag:yaml.org,2002:seq", data)
 

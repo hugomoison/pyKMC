@@ -3,9 +3,9 @@
 import ira_mod
 import numpy as np
 from .result import Result, ErrorInfo, PSROutput, Ok, Err, ErrorType
-from .config import Config 
-from .system import System 
-import pandas as pd 
+from .config import Config
+from .system import System
+import pandas as pd
 from .neighbors_list import NeighborsList
 
 
@@ -28,7 +28,12 @@ class PointSetRegistration:
     """
 
     def __init__(
-        self, config: Config, system: System, dfevent: pd.Series, neighbors_list: NeighborsList, central_atom_index: int
+        self,
+        config: Config,
+        system: System,
+        dfevent: pd.Series,
+        neighbors_list: NeighborsList,
+        central_atom_index: int,
     ) -> None:
         self.system = system
         self.config = config
@@ -83,14 +88,13 @@ class PointSetRegistration:
 
         coords1 = self.system.positions[neighbor_list]
 
+        # GREY ALLOY
+        typ1 = ["X"] * len(coords1)
+        typ2 = typ1
 
-        #GREY ALLOY
-        typ1 = ['X']*len(coords1)
-        typ2 = typ1 
+        # typ1 = np.array(self.system.types)[neighbor_list]
 
-        #typ1 = np.array(self.system.types)[neighbor_list]
-
-        #typ2 = typ1  # If they have same topology id should be always true ?
+        # typ2 = typ1  # If they have same topology id should be always true ?
 
         # unwrap if close to cell limits :
         alat = self.system.cell[0][0]
@@ -189,14 +193,17 @@ def check_match(
                     details="Hausdorff distance = {}, acceptance threshold = {} ".format(
                         result_match.ok_value().matching_score, matching_score
                     ),
-                    variables={"matching_score": result_match.ok_value().matching_score}
+                    variables={
+                        "matching_score": result_match.ok_value().matching_score
+                    },
                 )
             )
-        
+
         else:
             return result_match  # Ok(PSROutput)
 
-def simple_ira(nat1, typ1, coords1, nat2, typ2, coords2, kmax_factor) : 
+
+def simple_ira(nat1, typ1, coords1, nat2, typ2, coords2, kmax_factor):
     # Run ira to find transformation matrices
     ira = ira_mod.IRA()
     try:

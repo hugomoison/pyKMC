@@ -69,14 +69,17 @@ def make_ni_fcc_with_vacancies(
     """
     a = 3.52
     repeats = 10
-    basis = np.array(
-        [
-            [0.0, 0.0, 0.0],
-            [0.5, 0.5, 0.0],
-            [0.5, 0.0, 0.5],
-            [0.0, 0.5, 0.5],
-        ]
-    ) * a
+    basis = (
+        np.array(
+            [
+                [0.0, 0.0, 0.0],
+                [0.5, 0.5, 0.0],
+                [0.5, 0.0, 0.5],
+                [0.0, 0.5, 0.5],
+            ]
+        )
+        * a
+    )
 
     positions = []
     for i in range(repeats):
@@ -131,7 +134,9 @@ def make_ni_fcc_with_vacancies(
 @pytest.fixture
 def ni_fcc_3vacancies() -> tuple[System, list[int]]:
     """Ni FCC supercell with vacancies at A (center), B (~8 Å), C (~20 Å)."""
-    system, _vac, central = make_ni_fcc_with_vacancies([_A_TARGET, _B_TARGET, _C_TARGET])
+    system, _vac, central = make_ni_fcc_with_vacancies(
+        [_A_TARGET, _B_TARGET, _C_TARGET]
+    )
     return system, central
 
 

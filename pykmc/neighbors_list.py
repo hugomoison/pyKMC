@@ -28,10 +28,10 @@ class NeighborsList:
         self.system = system
         self.rnei = rnei
         self.rcut = rcut
-        if rcut is not None : 
+        if rcut is not None:
             self.neighbors_list = {"rnei": [], "rcut": []}
-        else : 
-            self.neighbors_list = {"rnei" : []}
+        else:
+            self.neighbors_list = {"rnei": []}
         self._build_neighbors_list()
 
     def _build_neighbors_list(self) -> None:
@@ -46,7 +46,7 @@ class NeighborsList:
             neighbors = tree.query_ball_point(positions[i], self.rnei)
             neighbors.remove(i)  # don't have self as neighbor
             self.neighbors_list["rnei"].append(neighbors)
-            if self.rcut is not None : 
+            if self.rcut is not None:
                 neighbors = tree.query_ball_point(positions[i], self.rcut)
                 self.neighbors_list["rcut"].append(neighbors)
 

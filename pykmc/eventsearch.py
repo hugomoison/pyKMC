@@ -22,7 +22,9 @@ class EventSearch:
 
     """
 
-    def __init__(self, config, system: System, manager: Manager, loggers: LogKMC) -> None:
+    def __init__(
+        self, config, system: System, manager: Manager, loggers: LogKMC
+    ) -> None:
         self.config = config
         self.system = system
         self.manager = manager
@@ -47,22 +49,34 @@ class EventSearch:
                 len(central_atom_research_list)
             ),
         )
-        if self.config.control.active_volume==True:
+        if self.config.control.active_volume == True:
             if self.config.activevolume.ract <= self.config.atomicenvironment.rcut:
-                raise ValueError('Active Volume radius is smaller than cutoff radius. Please increase ract or decrease rcut')
-            futures = self.manager.partn_search(config=self.config, central_atom=central_atom_research_list, positions=self.system.positions.copy(), cell=self.system.cell.copy(), types=self.system.types.copy())
+                raise ValueError(
+                    "Active Volume radius is smaller than cutoff radius. Please increase ract or decrease rcut"
+                )
+            futures = self.manager.partn_search(
+                config=self.config,
+                central_atom=central_atom_research_list,
+                positions=self.system.positions.copy(),
+                cell=self.system.cell.copy(),
+                types=self.system.types.copy(),
+            )
         else:
-            futures = self.manager.partn_search(config=self.config, central_atom=central_atom_research_list,
-                                                positions=self.system.positions.copy(), types=self.system.types.copy())
-        for f in futures :
+            futures = self.manager.partn_search(
+                config=self.config,
+                central_atom=central_atom_research_list,
+                positions=self.system.positions.copy(),
+                types=self.system.types.copy(),
+            )
+        for f in futures:
             self.results.append(f.result())
 
-            self.loggers.progress_bar("progress", len(self.results), len(central_atom_research_list))
-        #self.results = [f.result() for f in futures]
-        
+            self.loggers.progress_bar(
+                "progress", len(self.results), len(central_atom_research_list)
+            )
+        # self.results = [f.result() for f in futures]
 
-
-        #for i, at_idx in enumerate(central_atom_research_list):
+        # for i, at_idx in enumerate(central_atom_research_list):
         #    event_search_output = self.engine.search_event(self.system, at_idx)
         #    self.results.append(event_search_output)
         #    self.loggers.progress_bar(

@@ -17,7 +17,9 @@ from pykmc.event_recycling import DistanceRecycling
 from .conftest import make_active_table, row
 
 
-def _recycler(movement_thr: float = 0.02, distance_thr: float = 10.0) -> DistanceRecycling:
+def _recycler(
+    movement_thr: float = 0.02, distance_thr: float = 10.0
+) -> DistanceRecycling:
     return DistanceRecycling(movement_thr=movement_thr, distance_thr=distance_thr)
 
 
@@ -30,7 +32,10 @@ def test_close_discarded_far_recycled(ni_fcc_3vacancies) -> None:
     system.positions[central[0]] = positions_pre[central[0]] + np.array([0.3, 0.0, 0.0])
     active = make_active_table([row(c) for c in central])
     recycled = _recycler().select_recyclable(
-        active, executed_idx=0, system=system, positions_pre=positions_pre,
+        active,
+        executed_idx=0,
+        system=system,
+        positions_pre=positions_pre,
     )
     assert len(recycled) == 1
     assert int(recycled.iloc[0]["atom_index"]) == central[2]
@@ -43,7 +48,10 @@ def test_distance_threshold_boundary(ni_fcc_3vacancies) -> None:
     system.positions[central[0]] = positions_pre[central[0]] + np.array([0.3, 0.0, 0.0])
     active = make_active_table([row(c) for c in central])
     recycled = _recycler(distance_thr=25.0).select_recyclable(
-        active, executed_idx=0, system=system, positions_pre=positions_pre,
+        active,
+        executed_idx=0,
+        system=system,
+        positions_pre=positions_pre,
     )
     assert len(recycled) == 0
 
@@ -53,10 +61,15 @@ def test_movement_check_overrides_distance(ni_fcc_3vacancies) -> None:
     system, central = ni_fcc_3vacancies
     positions_pre = system.positions.copy()
     system.positions[central[0]] = positions_pre[central[0]] + np.array([0.3, 0.0, 0.0])
-    system.positions[central[2]] = positions_pre[central[2]] + np.array([0.05, 0.0, 0.0])
+    system.positions[central[2]] = positions_pre[central[2]] + np.array(
+        [0.05, 0.0, 0.0]
+    )
     active = make_active_table([row(c) for c in central])
     recycled = _recycler().select_recyclable(
-        active, executed_idx=0, system=system, positions_pre=positions_pre,
+        active,
+        executed_idx=0,
+        system=system,
+        positions_pre=positions_pre,
     )
     assert len(recycled) == 0
 
@@ -68,7 +81,10 @@ def test_self_excluded(ni_fcc_3vacancies) -> None:
     system.positions[central[0]] = positions_pre[central[0]] + np.array([0.3, 0.0, 0.0])
     active = make_active_table([row(c) for c in central])
     recycled = _recycler().select_recyclable(
-        active, executed_idx=0, system=system, positions_pre=positions_pre,
+        active,
+        executed_idx=0,
+        system=system,
+        positions_pre=positions_pre,
     )
     assert central[0] not in [int(a) for a in recycled["atom_index"].tolist()]
 
@@ -84,7 +100,10 @@ def test_pbc_wrap_close(ni_fcc_4vacancies) -> None:
     system.positions[central[0]] = positions_pre[central[0]] + np.array([0.3, 0.0, 0.0])
     active = make_active_table([row(c) for c in central])
     recycled = _recycler().select_recyclable(
-        active, executed_idx=0, system=system, positions_pre=positions_pre,
+        active,
+        executed_idx=0,
+        system=system,
+        positions_pre=positions_pre,
     )
     recycled_idx = [int(a) for a in recycled["atom_index"].tolist()]
     assert recycled_idx == [central[2]]
