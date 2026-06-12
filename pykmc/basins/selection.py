@@ -107,9 +107,8 @@ class FPTASelector():
         #Absorbing columns will always be O since we initialize M as a Null matrix and absorbing state are never in ['state']
 
         #Diagonal elements : M_ii = sum_j k_ij
-        for i in range(len(set(connectivity_table.df["state"]))): #only diag for transient states
-            self.M_abs[i, i] = -sum([self.M_abs[i, j] for j in range(n_states) if j != i])
-
+        for i in set(connectivity_table.df["state"]): #only diag for transient states
+            self.M_abs[i, i] = -np.sum(self.M_abs[:, i])
 
     def build_reduced_matrix(self, n_transient_states: int) -> None: 
         """
