@@ -119,6 +119,12 @@ class ReferenceEventTable:
         emax = self.config.eventsearch.emax_event
         backward_emin = self.config.eventsearch.backward_emin_event
         energy_asymmetry = self.config.eventsearch.energy_asymmetry
+        del_energy_event = self.config.eventsearch.del_energy_event
+
+        #TMP: delr specific at partn
+        delr_thr = self.config.partn.delr_thr
+        npart1 = int(np.sum(np.linalg.norm(saddle_positions - min1_positions, axis=1) > delr_thr))
+        npart2 = int(np.sum(np.linalg.norm(saddle_positions - min2_positions, axis=1) > delr_thr))
 
         if dE_forward > emax:  # barrier energy too high, reject the event
             return Err(
@@ -168,6 +174,13 @@ class ReferenceEventTable:
                     ),
                 )
             )
+        
+        elif (npart1 == 0 and dE_forward < del_energy_event) or (npart2 == 0 and dE_backward < del_energy_event) : 
+            return Err(ErrorInfo(
+                type=ErrorType.EVENT_WITH_DISPLACEMENTS_LOWER_THAN_THRESHOLD, 
+                message="npart = 0 and energy lower than threshold.", 
+                details="energy forward = {}, energy backward = {}".formart(dE_forward, dE_backward), 
+            ))
 
         else:  # Event is valid, construct event Series
             dfevent_forward, dfevent_backward = self._build_event_series(
@@ -179,6 +192,7 @@ class ReferenceEventTable:
                 dE_backward=dE_backward,
                 cell=cell,
             )
+
             if self.is_new_event(
                 dfevent=dfevent_forward
             ):  # check if event not already in the catalog

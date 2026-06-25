@@ -149,6 +149,10 @@ class EventSearchConfig(BaseModel):
         description="Prevent highly asymmetric event to be added to the reference table."
                     "The con"
     )
+    del_energy_event: float = Field(
+        default=0.1, 
+        description="If during an events all atoms move less then delr_thr and if the energy barrier is lower then energy_del_e_event, the event is discard."
+    )
     refined_minimum_delr_thr: float = Field(
         default = 0.1, 
         description="Refinement is accepted only if the central atom moves less than this distance between the current position and the refined minimum."
@@ -162,6 +166,7 @@ class EventSearchConfig(BaseModel):
         default=0.5,
         description="delr threshold between one minima and the intial configuration to consider the event valid.",
     )
+
 
     
 
