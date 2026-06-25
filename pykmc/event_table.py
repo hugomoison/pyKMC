@@ -192,7 +192,7 @@ class ReferenceEventTable:
                 return Err(ErrorInfo(
                 type=ErrorType.EVENT_WITH_DISPLACEMENTS_LOWER_THAN_THRESHOLD, 
                 message="npart = 0 and energy lower than threshold.", 
-                details="energy forward = {}, energy backward = {}".formart(dE_forward, dE_backward), 
+                details="energy forward = {}, energy backward = {}".format(dE_forward, dE_backward),
                 ))
 
             if self.is_new_event(
