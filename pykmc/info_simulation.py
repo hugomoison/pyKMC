@@ -111,6 +111,7 @@ def info_is_valid_reference_events(
         "dE < emin_event": 0,
         "dE inverse < emin_event": 0,
         "Event asymmetric": 0,
+        "Event with no displacement" : 0,
         "Event already in reference table": 0,
     }
     for res in results_is_valid_events:
@@ -126,8 +127,11 @@ def info_is_valid_reference_events(
                     invalid_events["dE inverse < emin_event"] += 1
                 case ErrorType.EVENT_ASYMMETRIC:
                     invalid_events["Event asymmetric"] += 1
+                case ErrorType.EVENT_WITH_DISPLACEMENTS_LOWER_THAN_THRESHOLD: 
+                    invalid_events["Event with no displacement"] +=1
                 case ErrorType.EVENT_NOT_NEW:
                     invalid_events["Event already in reference table"] += 1
+                
     return ReferenceValidEventsInfo(n_valid_events, invalid_events)
 
 
