@@ -1660,10 +1660,10 @@
 
 <ul>
 <li>
-<p><strong><code>style</code></strong> : <code>Literal['cna', 'graph', 'cna/graph', 'diamond/graph']</code>, mandatory
+<p><strong><code>style</code></strong> : <code>Literal['cna', 'graph', 'cna/graph', 'diamond/graph', 'coordination', 'coordination/graph']</code>, mandatory
 <br />
 <details><summary>Description</summary>
-  Method used to characterize and assign an ID to an atom's local atomic environment
+  Method used to characterize and assign an ID to an atom's local atomic environment. 'coordination' classifies atoms based on nearest-neighbor count against a threshold. 'coordination/graph' first filters by coordination, then computes graph IDs for non-crystal atoms.
   </details></p>
 </li>
 <li>
@@ -1685,6 +1685,13 @@
 <br />
 <details><summary>Description</summary>
   When `style` is 'cna/graph', specifies the N-th shell of neighbors whose graph IDs should also be computed.
+  </details></p>
+</li>
+<li>
+<p><strong><code>coordination_threshold</code></strong> : <code>int</code>, optional
+<br />
+<details><summary>Description</summary>
+  When style is 'coordination' or 'coordination/graph', atoms with fewer neighbors (within rnei) than this value are classified as 'noncrystal'. Atoms with this many or more neighbors are classified as 'crystal'. Required when style is 'coordination' or 'coordination/graph'.
   </details></p>
 </li>
 <li>

@@ -1319,6 +1319,28 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pykmc.AtomicEnvironment.compute_coordination" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        compute_coordination
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pykmc.AtomicEnvironment.compute_coordinationgraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        compute_coordinationgraph
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pykmc.AtomicEnvironment.compute_graph" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1375,6 +1397,23 @@
       
     </span>
   </a>
+  
+    <nav class="md-nav" aria-label="AtomicEnvironmentConfig">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pykmc.AtomicEnvironmentConfig.validate_coordination_threshold" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        validate_coordination_threshold
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
         
@@ -4113,6 +4152,116 @@ based on the chosen <code>style</code>.</p>
 <div class="doc doc-object doc-function">
 
 
+<h4 id="pykmc.AtomicEnvironment.compute_coordination" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">compute_coordination</span>
+
+
+</h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">compute_coordination</span><span class="p">()</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>See :py:func:<code>.environments.coordination</code> for the coordination-number classifier.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pykmc.AtomicEnvironment.compute_coordinationgraph" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">compute_coordinationgraph</span>
+
+
+</h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">compute_coordinationgraph</span><span class="p">(</span><span class="n">neighbors_list</span><span class="p">,</span> <span class="n">environment_list</span><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Classify by coordination, then compute Graph Topology IDs for the non-crystal atoms.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>neighbors_list</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="list">list</span>[<span title="int">int</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>first neighbors lists</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>environment_list</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<span title="list">list</span>[<span title="int">int</span>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>lists of atoms in environments (used for the graph computation)</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<span title="str">str</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>atomic environment ID for each atom</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="pykmc.AtomicEnvironment.compute_graph" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">compute_graph</span>
 
@@ -4291,6 +4440,26 @@ based on the chosen <code>style</code>.</p>
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pykmc.AtomicEnvironmentConfig.validate_coordination_threshold" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">validate_coordination_threshold</span>
+
+
+</h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">validate_coordination_threshold</span><span class="p">()</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Ensure coordination_threshold is set when the style requires it.</p>
+
+
+    </div>
+
+</div>
 
 
 
