@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#facadepluggable-backend-architecture" class="md-skip">
+        <a href="#facadepluggable-strategy-architecture" class="md-skip">
           Skip to content
         </a>
       
@@ -1392,11 +1392,11 @@
 
 
 
-<h1 id="facadepluggable-backend-architecture">Facade/pluggable backend architecture</h1>
+<h1 id="facadepluggable-strategy-architecture">Facade/pluggable strategy architecture</h1>
 <p><em>Note: refactoring in progress. Objects marked "todo" below still need to be migrated to this architecture.</em></p>
 <div class="toc">
 <ul>
-<li><a href="#facadepluggable-backend-architecture">Facade/pluggable backend architecture</a><ul>
+<li><a href="#facadepluggable-strategy-architecture">Facade/pluggable strategy architecture</a><ul>
 <li><a href="#details">Details</a><ul>
 <li><a href="#facade">Facade</a></li>
 <li><a href="#strategy">Strategy</a></li>
@@ -1425,7 +1425,7 @@
 <p>To that end, pyKMC uses a <strong>facade/strategy pattern</strong> built around two components:</p>
 <ul>
 <li>A <strong>facade</strong> object, which is the user-facing API. It holds the relevant data and exposes a stable interface, regardless of which strategy is active underneath. It also provides a convenient create classmethod that reads the configuration, builds the requested strategy, and returns a wired facade.</li>
-<li>A <strong>strategy</strong> object, which inherits from an abstract base class (ABC) and implements the specific method. Swapping backends does not affect the facade's interface.</li>
+<li>A <strong>strategy</strong> object, which inherits from an abstract base class (ABC) and implements the specific method. Swapping strategies does not affect the facade's interface.</li>
 </ul>
 <pre class="mermaid"><code>graph LR; A("FacadeXxx.create(params, strategy_name)") 
 --&gt; B("&lt;br&gt;FacadeXxx(params, strategy) &lt;br&gt; exposes stable API/holds data&lt;br&gt;");
@@ -1452,7 +1452,7 @@
 </span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">create</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">strategy</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;FacadeXxx&quot;</span><span class="p">:</span> 
 </span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="n">StrategyXxx</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
 </span></code></pre></div>
-<p>This separation has two practical benefits. First, adding or modifying a strategy never risks breaking the user-facing interface. Second, the facade can be tested independently of any specific backend implementation. A <code>create</code> classmethod is the convenience constructor that builds the strategy and wires it, in practice : </p>
+<p>This separation has two practical benefits. First, adding or modifying a strategy never risks breaking the user-facing interface. Second, the facade can be tested independently of any specific strategy implementation. A <code>create</code> classmethod is the convenience constructor that builds the strategy and wires it, in practice : </p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">obj</span> <span class="o">=</span> <span class="n">Facade</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;my_strategy&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">cfg</span><span class="p">)</span>
 </span></code></pre></div>
 <h3 id="strategy">Strategy</h3>
