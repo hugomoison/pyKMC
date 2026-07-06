@@ -63,6 +63,60 @@ from .bias import Bias
 # TODO: Add reconstruction info
 
 
+def _references_to_purge(
+    reference_table: pd.DataFrame,
+    err_reference: list[int],
+    err_ae: list[str],
+    selected_ref: int,
+) -> tuple[list[int], set[str]]:
+    """Filter failed references so the executed event's reference survives.
+
+    A generic reference event is instantiated as many active rows (one per
+    matching site via IRA reuse). Several of those rows can be tried in one
+    ``reconstruction()`` loop: an earlier one may fail -- queuing its
+    ``num_reference_event`` in ``err_reference`` -- while a later row under the
+    *same* reference reconstructs and becomes the executed event. Purging that
+    reference would delete a globally valid event and crash the step on the
+    now-empty ``event_id`` lookup at the output log line.
+
+    The executed event's reference is therefore protected, together with its
+    forward/backward partner: ``ReferenceEventTable.remove`` also drops the
+    backward sibling of anything it removes, so an entangled backward reference
+    would take the executed one with it. ``err_ae`` is filtered in lockstep so a
+    kept reference keeps its topology in ``visited_environments``.
+
+    Parameters
+    ----------
+    reference_table : pd.DataFrame
+        The reference event table; needs ``idx_ref`` and ``idx_backward``.
+    err_reference : list[int]
+        ``num_reference_event`` of every active row that failed reconstruction.
+    err_ae : list[str]
+        Topology id of each failed row, index-aligned with ``err_reference``.
+    selected_ref : int
+        ``num_reference_event`` of the executed (selected) event.
+
+    Returns
+    -------
+    tuple[list[int], set[str]]
+        The references to purge (sorted) and the topology ids to drop, both with
+        the executed event's reference and its partner removed.
+
+    """
+    protected = {selected_ref}
+    sel_rows = reference_table[reference_table["idx_ref"] == selected_ref]
+    if len(sel_rows) > 0:
+        protected.add(int(sel_rows["idx_backward"].values[0]))
+    pairs = [
+        (ref, ae)
+        for ref, ae in zip(err_reference, err_ae, strict=False)
+        if ref not in protected
+    ]
+    refs_to_remove = sorted({int(ref) for ref, _ in pairs})
+    ae_to_remove = {ae for _, ae in pairs}
+    return refs_to_remove, ae_to_remove
+
+
 class KMC:
     """Manage and execute the Kinetic Monte Carlo (KMC) simulation.
 
@@ -284,18 +338,32 @@ class KMC:
                 self.system.types, self.reference_table, active_table
             )
             if len(err_reference) != 0:
-                self.loggers.info(
-                    "log",
-                    "\t :=> Removing reference event from which reconstruction failed.",
+                # Never purge the reference the just-executed event depends on
+                # (nor its backward partner): a sibling active row under the
+                # same generic reference can fail and queue it for deletion even
+                # though the selected event reconstructed with it successfully.
+                selected_ref = int(
+                    active_table.table.loc[idx_selected_event].at["num_reference_event"]
                 )
-                self.reference_table.remove(list(set(err_reference)))
-                self.loggers.info(
-                    "log",
-                    "\t :=> Removing topology from known environments from which reconstruction failed.",
+                refs_to_remove, ae_to_remove = _references_to_purge(
+                    self.reference_table.table,
+                    err_reference,
+                    err_ae,
+                    selected_ref,
                 )
-                self.visited_environments = self.visited_environments.difference(
-                    set(err_ae)
-                )
+                if refs_to_remove:
+                    self.loggers.info(
+                        "log",
+                        "\t :=> Removing reference event from which reconstruction failed.",
+                    )
+                    self.reference_table.remove(refs_to_remove)
+                    self.loggers.info(
+                        "log",
+                        "\t :=> Removing topology from known environments from which reconstruction failed.",
+                    )
+                    self.visited_environments = self.visited_environments.difference(
+                        ae_to_remove
+                    )
             # INFO :
             self.loggers.events_file_step_first_line("events", step)
             self.loggers.events_applicable_info_line("events", idx_selected_event)
@@ -440,10 +508,15 @@ class KMC:
             num_ref_selected = active_table.table.loc[idx_selected_event].at[
                 "num_reference_event"
             ]
+            # Guard the reference lookup: the selected event's reference is
+            # protected from the reconstruction-failure purge above, but stay
+            # defensive against any other path that leaves it absent (fmt_hash
+            # renders None as its empty-hash placeholder).
+            event_ids_selected = self.reference_table.table[
+                self.reference_table.table["idx_ref"] == num_ref_selected
+            ]["event_id"].values
             event_id_selected = fmt_hash(
-                self.reference_table.table[
-                    self.reference_table.table["idx_ref"] == num_ref_selected
-                ]["event_id"].values[0]
+                event_ids_selected[0] if len(event_ids_selected) > 0 else None
             )
             self.loggers.table_line_info_kmc(
                 "output",
