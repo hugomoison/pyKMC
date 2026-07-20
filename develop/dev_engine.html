@@ -8,13 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://hugomoison.github.io/pyKMC/develop/dev_code_formatting.html">
+        <link rel="canonical" href="https://hugomoison.github.io/pyKMC/develop/dev_engine.html">
       
       
-        <link rel="prev" href="dev_engine.html">
+        <link rel="prev" href="dev_strategy_pattern.html">
       
       
-        <link rel="next" href="api/system.html">
+        <link rel="next" href="dev_code_formatting.html">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>Code formatting - pyKMC</title>
+        <title>Engine - pyKMC</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#developer-guide" class="md-skip">
+        <a href="#engine-module" class="md-skip">
           Skip to content
         </a>
       
@@ -120,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Code formatting
+              Engine
             
           </span>
         </div>
@@ -507,34 +507,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="dev_engine.html" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Engine
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -554,7 +526,7 @@
   <span class="md-ellipsis">
     
   
-    Code formatting
+    Engine
   
 
     
@@ -565,14 +537,14 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <a href="dev_code_formatting.html" class="md-nav__link md-nav__link--active">
+      <a href="dev_engine.html" class="md-nav__link md-nav__link--active">
         
   
   
   <span class="md-ellipsis">
     
   
-    Code formatting
+    Engine
   
 
     
@@ -598,22 +570,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#code-formatting" class="md-nav__link">
+  <a href="#details" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Code Formatting
+        Details
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Code Formatting">
+    <nav class="md-nav" aria-label="Details">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
+  <a href="#engine-abc" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Installation
+        Engine ABC
       
     </span>
   </a>
@@ -621,10 +593,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#formatting" class="md-nav__link">
+  <a href="#config-protocol" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Formatting
+        Config Protocol
       
     </span>
   </a>
@@ -632,10 +604,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#editor-setup" class="md-nav__link">
+  <a href="#engineextension" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Editor Setup
+        EngineExtension
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#distinction-from-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Distinction from strategies
       
     </span>
   </a>
@@ -647,10 +630,49 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#adding-a-new-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a new engine
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dev_code_formatting.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Code formatting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -1332,22 +1354,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#code-formatting" class="md-nav__link">
+  <a href="#details" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Code Formatting
+        Details
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Code Formatting">
+    <nav class="md-nav" aria-label="Details">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#installation" class="md-nav__link">
+  <a href="#engine-abc" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Installation
+        Engine ABC
       
     </span>
   </a>
@@ -1355,10 +1377,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#formatting" class="md-nav__link">
+  <a href="#config-protocol" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Formatting
+        Config Protocol
       
     </span>
   </a>
@@ -1366,10 +1388,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#editor-setup" class="md-nav__link">
+  <a href="#engineextension" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Editor Setup
+        EngineExtension
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#distinction-from-strategies" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Distinction from strategies
       
     </span>
   </a>
@@ -1378,6 +1411,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#adding-a-new-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a new engine
+      
+    </span>
+  </a>
   
 </li>
       
@@ -1398,39 +1442,130 @@
 
 
 
-<h1 id="developer-guide">Developer Guide</h1>
-<h2 id="code-formatting">Code Formatting</h2>
-<p>pyKMC uses <a href="https://docs.astral.sh/ruff/">Ruff</a> for Python formatting. Formatting is enforced by CI on every push and pull request — the check runs <code>ruff format --check</code> and fails if any file is not formatted.</p>
-<h3 id="installation">Installation</h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>ruff
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># or, if using uv:</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>uv<span class="w"> </span>sync<span class="w"> </span>--extra<span class="w"> </span>dev
+<h1 id="engine-module">Engine module</h1>
+<div class="toc">
+<ul>
+<li><a href="#engine-module">Engine module</a><ul>
+<li><a href="#details">Details</a><ul>
+<li><a href="#engine-abc">Engine ABC</a></li>
+<li><a href="#config-protocol">Config Protocol</a></li>
+<li><a href="#engineextension">EngineExtension</a></li>
+<li><a href="#distinction-from-strategies">Distinction from strategies</a></li>
+</ul>
+</li>
+<li><a href="#adding-a-new-engine">Adding a new engine</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<p>Engines are computational backends responsible for operations that require energy and force evaluations (e.g. minimization or event searches). The <code>Engine</code> module is designed to be used as the computation backend in the master-worker MPI structure provided by the <code>Manager</code> module <em>(see Manager documentation)</em>, and can also be used standalone. This primary use case within the Manager drives the key design choices of the module: <code>Engine</code> is a <code>Registrable</code> ABC with mandatory abstract methods, and data-extraction methods return results only on MPI rank 0 of the engine's communicator.</p>
+<p>In addition to the mandatory interface, engines can be extended with operation-specific capabilities through the <strong>extension mechanism</strong> (see <a href="#engineextension">EngineExtension</a>). This is the intended integration point when a higher-level algorithm needs to delegate a specific computation to the engine directly, for example, a CNA filter that uses a LAMMPS compute instead of the default Python implementation.</p>
+<pre class="mermaid"><code>graph TB;
+subgraph engine_registry["engine registry (autodiscovered)"]
+B["Engine(Registrable, root=True) 
+@abstractmethods 
+results: rank 0 only"]
+B --&gt; C["XxxEngine 
+name = 'xxx'"];
+B --&gt; D(" ... ");
+B --&gt; E["YyyEngine 
+name = 'yyy'"];
+C --&gt; F["XxxConfig(Protocol)"]
+E --&gt; G["YyyConfig(Protocol)"]
+end
+subgraph extensions["extensions (optional, engine-specific)"]
+H["EngineExtension 
+attached via 
+engine.registrer()"]
+I["YyyEngineExtension1 
+my_ext1method1 
+my_ext1method2"]
+J["YyyEngineExtension2 
+my_ext2method1"]
+K["..."]
+H --- I
+H --- J
+H --- K
+end
+engine_registry ~~~ extensions
+I -.-&gt;|extends| E
+J -.-&gt;|extends| E</code></pre>
+<h2 id="details">Details</h2>
+<h3 id="engine-abc">Engine ABC</h3>
+<p><code>Engine</code> inherits from <code>Registrable</code> (with <code>root=True</code>), which provides the registry and the autodiscovery mechanism shared across pyKMC modules. All subclasses must declare a <code>name</code> attribute and implement every abstract method. They represent the minimal set of operations required for the simulation.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pykmc._core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Registrable</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">abstractmethod</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">Engine</span><span class="p">(</span><span class="n">Registrable</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="nd">@abstractmethod</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>           
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="nd">@abstractmethod</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>           
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="nd">@abstractmethod</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">initialize_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>   
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="o">...</span>
 </span></code></pre></div>
-<h3 id="formatting">Formatting</h3>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Format all files</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>ruff<span class="w"> </span>format<span class="w"> </span>.
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Check without modifying (same as CI)</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>ruff<span class="w"> </span>format<span class="w"> </span>--check<span class="w"> </span>.
+<p><strong>Rank 0 convention.</strong> When running under MPI, all engine commands execute collectively across all ranks, but data-extraction methods return values only on rank 0 and all other ranks return <code>None</code>. Code calling these methods must account for this:</p>
+<h3 id="config-protocol">Config Protocol</h3>
+<p>Each engine declares its own configuration interface as a <code>Protocol</code>. This keeps the engine decoupled from any concrete config class. It only requires that the config object exposes the expected attributes, without enforcing how it is built. In practice pyKMC uses Pydantic <code>BaseModel</code>s as configs, which are structurally compatible with any matching <code>Protocol</code>. The engine can therefore be instantiated with a Pydantic model in production or a plain stub in tests, as long as the interface matches.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Protocol</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyEngineConfig</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">pair_style</span><span class="p">:</span> <span class="nb">str</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">pair_coeff</span><span class="p">:</span> <span class="nb">str</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">min_style</span><span class="p">:</span> <span class="nb">str</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">minimize</span><span class="p">:</span> <span class="nb">str</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">verbosity</span><span class="p">:</span> <span class="nb">int</span>
 </span></code></pre></div>
-<p>Configuration lives in <code>ruff.toml</code> at the repo root. Key settings: line length 88, Python 3.10 target, double quotes.</p>
-<h3 id="editor-setup">Editor Setup</h3>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">VSCode</label><label for="__tabbed_1_2">PyCharm / JetBrains</label><label for="__tabbed_1_3">Neovim / other editors</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<p>Install the <a href="https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff">Ruff extension</a> (<code>charliermarsh.ruff</code>).</p>
-<p>The repo includes <code>.vscode/settings.json</code> which sets Ruff as the default Python formatter and enables format-on-save automatically.</p>
-</div>
-<div class="tabbed-block">
-<p>Install the <a href="https://plugins.jetbrains.com/plugin/20574-ruff">Ruff plugin</a> from the JetBrains Marketplace.</p>
-<p>Then enable format-on-save: <strong>Settings → Tools → Ruff → Format on save</strong>.</p>
-<p>The plugin automatically picks up <code>ruff.toml</code> from the project root.</p>
-</div>
-<div class="tabbed-block">
-<p>Any editor with an LSP client can use <code>ruff server</code>. See the <a href="https://docs.astral.sh/ruff/editors/">Ruff editor integrations docs</a> for setup instructions.</p>
-</div>
-</div>
-</div>
+<h3 id="engineextension">EngineExtension</h3>
+<p><code>EngineExtension</code> allows attaching engine-specific operations to an engine instance without modifying the <code>Engine</code> ABC. An extension registers itself at construction time by calling <code>super().__init__(engine)</code>, which calls <code>engine.register(self)</code> and stores the engine reference as <code>self.engine</code>. The engine then exposes the extension's public methods directly through <code>__getattr__</code> delegation, so callers access them as if they were native engine methods. Extension methods are also fully discoverable: they appear in <code>dir(engine)</code> and in <code>inspect.getmembers(engine, callable)</code> alongside the core methods.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pykmc.engine</span><span class="w"> </span><span class="kn">import</span> <span class="n">EngineExtension</span><span class="p">,</span> <span class="n">Engine</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyExtension</span><span class="p">(</span><span class="n">EngineExtension</span><span class="p">):</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">engine</span><span class="p">:</span> <span class="n">Engine</span><span class="p">,</span> <span class="n">param</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span>   <span class="c1"># required </span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">param</span> <span class="o">=</span> <span class="n">param</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">new_compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        <span class="c1"># self.engine gives full access to the engine </span>
+</span></code></pre></div>
+<p>Once attached, the method is accessible directly on the engine instance:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">engine</span> <span class="o">=</span> <span class="n">Engine</span><span class="p">(</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;myengine&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">cfg</span><span class="p">)</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">MyExtension</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">param</span><span class="o">=...</span><span class="p">)</span>   <span class="c1"># attaches on construction</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">result</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">new_compute</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>   <span class="c1"># delegates to the extension</span>
+</span></code></pre></div>
+<p>Conflicts are caught at registration time: if two extensions expose a method with the same name, <code>register()</code> raises a <code>ValueError</code>.</p>
+<h3 id="distinction-from-strategies">Distinction from strategies</h3>
+<p>Although <code>Engine</code> uses the same <code>Registrable</code> autodiscovery mechanism as strategies, the two serve fundamentally different roles. Strategies are interchangeable algorithmic choices for a given operation; engines are fixed computational backends. An engine is not selected as one option among many equivalent alternatives.</p>
+<h2 id="adding-a-new-engine">Adding a new engine</h2>
+<p><strong>1.</strong> Create <code>pykmc/engine/my_engine.py</code>.</p>
+<p><strong>2.</strong> Define a config Protocol and an engine class:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Protocol</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Engine</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyEngineConfig</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">my_param</span><span class="p">:</span> <span class="nb">str</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyEngine</span><span class="p">(</span><span class="n">Engine</span><span class="p">):</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;my_engine&quot;</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">MyEngineConfig</span><span class="p">,</span> <span class="n">comm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">engine_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+</span><span id="__span-4-13"><a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+</span><span id="__span-4-14"><a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">comm</span> <span class="o">=</span> <span class="n">comm</span>
+</span><span id="__span-4-15"><a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">engine_id</span> <span class="o">=</span> <span class="n">engine_id</span>
+</span><span id="__span-4-16"><a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>
+</span><span id="__span-4-17"><a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="__span-4-18"><a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+</span><span id="__span-4-19"><a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>    <span class="o">...</span>
+</span></code></pre></div>
+<p>No other steps are needed. <code>autodiscover</code> imports all submodules of <code>pykmc/engine/</code> when the package is loaded, which triggers <code>Registrable.__init_subclass__</code> and registers <code>MyEngine</code> under <code>"my_engine"</code> automatically.</p>
 
 
 
