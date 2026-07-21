@@ -35,7 +35,11 @@ def main() -> None:
         kmc._initialize()
         kmc.manager = manager
         #        kmc = KMC(config)
-        kmc.run()
+        try:
+            kmc.run()
+        except Exception:
+            manager.close_all()
+            raise
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@
 from ..sessions import MpiApiSession
 from dataclasses import dataclass
 from concurrent.futures import Future
+from contextlib import contextmanager
 import queue
 import threading
 
@@ -58,14 +59,14 @@ class Manager:
         print("[Manager] Initializing all Lammps engines")
         for session in self.sessions:
             session.initialize_parameters()
-            session.initialize_system(system)
+            session.initialize_system(system, config)
             session.initialize_potential(config)
         print("[Manager] use global")
         self.use_global()
         print("[Manager] Initializing global Lammps engines")
         if self.global_session is not None:
             self.global_initialize_parameters()
-            self.global_initialize_system(system)
+            self.global_initialize_system(system, config)
             self.global_initialize_potential(config)
 
     def use_local(self):
@@ -95,7 +96,6 @@ class Manager:
 
             try:
                 method = getattr(session, job.operation_name)
-
                 if job.params is None:
                     result = method()
                 else:
@@ -141,13 +141,40 @@ class Manager:
     #    except Exception as e :
     #        job.future.set_exception(e)
 
+    def _active_sessions(self) -> list[MpiApiSession]:
+        if self.using_global:
+            return [self.global_session] if self.global_session is not None else []
+        return list(self.sessions)
+
+    @contextmanager
+    def sleeping_workers(self):
+        """Put the active workers in their sleep loop for the duration of the scope."""
+        sessions = self._active_sessions()
+        slept_sessions = []
+        try:
+            for session in sessions:
+                session.sleep()
+                slept_sessions.append(session)
+            yield
+        finally:
+            for session in reversed(slept_sessions):
+                session.wake()
+
     def set_all_positions(self, positions):
         # print("[Manager] Setting positions to all sessions.")
         for session in self.sessions:
             session.set_positions(positions=positions)
 
-    def submit_job(self, method_name: str, params: dict = None) -> Future:
+    def setup_otf_cycle(self, config) -> None:
+        """Reload potentials in all sessions. Ends in global mode, ready for minimize."""
+        self.use_local()
+        for session in self.sessions:
+            session.setup_otf_cycle(config)
+        if self.global_session is not None:
+            self.use_global()
+            self.global_session.setup_otf_cycle(config)
 
+    def submit_job(self, method_name: str, params: dict = None) -> Future:
         future = Future()
         job = Job(method_name, params, future)
         # print(f"[PoolManager] Submitting job: {job.operation_name}") #with params: {job.params}")
@@ -221,11 +248,8 @@ class Manager:
         """
         Close all sessions and their underlying engines.
         """
-        # print("[PoolManager] Closing all sessions.")
-        if self.global_session is not None:
-            self.global_session.close(wait_status=False)
         for session in self.sessions:
-            session.close(wait_status=True)
+            session.close(wait_status=False)
 
     def __getattr__(self, name: str):
         """Check if method start with global_, if yes, then return global_session.method"""

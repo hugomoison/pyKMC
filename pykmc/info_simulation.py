@@ -77,7 +77,11 @@ def info_reference_event_searches(
     """
     total_event_searches = len(results_reference_event_searches)
     n_success = 0
-    n_fails = {"no_event_found": 0, "minima_not_matching_positions": 0}
+    n_fails = {
+        "no_event_found": 0,
+        "minima_not_matching_positions": 0,
+        "runtime_error": 0,
+    }
     for res in results_reference_event_searches:
         if res.is_ok():
             n_success += 1
@@ -85,6 +89,8 @@ def info_reference_event_searches(
             # n_fails += 1
             if res.err_value().type == ErrorType.EVENT_NOT_FOUND:
                 n_fails["no_event_found"] += 1
+            elif res.err_value().type == ErrorType.EVENT_SEARCH_RUNTIME_ERROR:
+                n_fails["runtime_error"] += 1
             else:
                 n_fails["minima_not_matching_positions"] += 1
     return ReferenceEventSearchInfo(total_event_searches, n_success, n_fails)
@@ -160,6 +166,7 @@ def info_refinements(
         "invalid_dE": {"n": 0, "ref_event": []},
         "invalid_minima": {"n": 0, "ref_event": []},
         "event_not_found": {"n": 0, "ref_event": []},
+        "runtime_error": {"n": 0, "ref_event": []},
     }
     for res in results_refinements:
         if res.is_ok():
@@ -182,9 +189,14 @@ def info_refinements(
                 case ErrorType.REFINEMENT_INVALID_ENERGY_BARRIER:
                     n_fails["invalid_dE"]["n"] += 1
                 case ErrorType.REFINEMENT_INVALID_MINIMA:
-                    n_fails["invalid_min"]["n"] += 1
+                    n_fails["invalid_minima"]["n"] += 1
                 case ErrorType.EVENT_NOT_FOUND:
                     n_fails["event_not_found"]["n"] += 1
+                case ErrorType.EVENT_REFINEMENT_RUNTIME_ERROR:
+                    n_fails["runtime_error"]["n"] += 1
+                    n_fails["runtime_error"]["ref_event"].append(
+                        res.err_value().variables["n_ref_event"]
+                    )
 
     return RefinementsInfo(n_attempts, n_successes, n_fails)
 
