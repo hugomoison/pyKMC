@@ -223,7 +223,7 @@ class Manager:
         """
         # print("[PoolManager] Closing all sessions.")
         if self.global_session is not None:
-            self.global_session.close(wait_status=False)
+            self.use_local()
         for session in self.sessions:
             session.close(wait_status=True)
 

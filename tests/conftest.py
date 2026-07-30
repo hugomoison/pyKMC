@@ -1,6 +1,7 @@
 import pytest
 from pykmc import System, Config, AtomicEnvironment, NeighborsList
 import numpy as np
+from mpi4py import MPI
 from pykmc.basins import (
     StatesConnectivity,
     BasinStatesConnectivity,
@@ -16,6 +17,46 @@ import pickle
 from functools import wraps
 import subprocess
 from ase.build import bulk, surface
+
+
+def _abort_mpi_on_failure(
+    report: pytest.TestReport | pytest.CollectReport,
+) -> None:
+    """Abort an MPI pytest invocation when any rank reports a failure."""
+    if not report.failed or not MPI.Is_initialized() or MPI.Is_finalized():
+        return
+
+    world = MPI.COMM_WORLD
+    size = world.Get_size()
+    if size <= 1:
+        return
+
+    rank = world.Get_rank()
+    phase = getattr(report, "when", "unknown")
+    try:
+        sys.stderr.write(
+            f"\n[pytest-mpi] failure on rank={rank}, size={size}, "
+            f"phase={phase}, node={report.nodeid}\n"
+            f"{report.longreprtext}\n"
+        )
+        for title, content in getattr(report, "sections", ()):
+            sys.stderr.write(f"\n--- {title} ---\n{content}\n")
+        sys.stderr.flush()
+    finally:
+        try:
+            world.Abort(1)
+        finally:
+            os._exit(1)
+
+
+def pytest_runtest_logreport(report: pytest.TestReport) -> None:
+    """Terminate the MPI world after a failed setup, call, or teardown report."""
+    _abort_mpi_on_failure(report)
+
+
+def pytest_collectreport(report: pytest.CollectReport) -> None:
+    """Terminate the MPI world after a failed collection report."""
+    _abort_mpi_on_failure(report)
 
 
 # Systems
