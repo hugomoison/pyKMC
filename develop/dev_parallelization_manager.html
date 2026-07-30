@@ -1,0 +1,1858 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://hugomoison.github.io/pyKMC/develop/dev_parallelization_manager.html">
+      
+      
+        <link rel="prev" href="dev_engine.html">
+      
+      
+        <link rel="next" href="dev_code_formatting.html">
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Manager and Parallelization - pyKMC</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="stylesheets/gruvbox.css">
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-orange" data-md-color-accent="red">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#parallelization-manager" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="index.html" title="pyKMC" class="md-header__button md-logo" aria-label="pyKMC" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            pyKMC
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Manager and Parallelization
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-orange" data-md-color-accent="red"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-orange" data-md-color-accent="red"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.04 7 9.54s-2.94 8.27-7 9.54c.95.3 1.95.46 3 .46a10 10 0 0 0 10-10A10 10 0 0 0 9 2"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="index.html" title="pyKMC" class="md-nav__button md-logo" aria-label="pyKMC" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    pyKMC
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="install/installation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="user_guide.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="troubleshooting.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="parameters.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    KMC Parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Developer Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dev_strategy_pattern.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy pattern
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dev_engine.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manager and Parallelization
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="dev_parallelization_manager.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manager and Parallelization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Modes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#local-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#group-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Group mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#global-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Global mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#available-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Operations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#message-format-and-dispatch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Message format and dispatch
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Message format and dispatch">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-dispatch-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The dispatch result
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reply-and-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reply and tags
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#factory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Factory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#engine-factory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Engine factory
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dev_code_formatting.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Code formatting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/system.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/neighbors_list.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    NeighborsList
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/atomic_environment.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AtomicEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/config.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/log.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/algorithms.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Algorithms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/kmc.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    KMC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/environments.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/engine.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/lammpsengine.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LammpsEngine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/event_table.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    EventTable
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/eventsearch.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    EventSearch
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/refinement.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Refinement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/point_set_registration.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PointSetRegistration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/symmetries.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Symmetries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/rate_constant.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RateConstante
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/initializer.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Initialize
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/result.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Result
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/info_simulations.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Info
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/utils.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utils
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/run.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    run
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#modes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Modes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#local-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#group-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Group mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#global-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Global mode
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#available-operations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Available Operations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#message-format-and-dispatch" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Message format and dispatch
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Message format and dispatch">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-dispatch-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The dispatch result
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reply-and-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reply and tags
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#factory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Factory
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#engine-factory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Engine factory
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="parallelization-manager">Parallelization - Manager</h1>
+<p>Due to the inherent KMC algorithm, pyKMC is mostly sequential. However, some heavy operations are independent (e.g. event searches and refinements) and can be parallelized. The <code>manager</code> module provides a standard MPI master-worker architecture for this purpose.</p>
+<p>While the module can be used standalone, its design is driven by pyKMC's specific needs. Typically, this architecture is used to run multiple <code>Engine</code> instances operating independently, one per worker, each on a small number of cores.</p>
+<p>Beyond this basic use, the architecture addresses two problems specific to pyKMC:</p>
+<p>(i) Collective operations on the full system: each worker normally runs a "small" <code>Engine</code> instance operating on a subset of atoms (with active volumes). When a whole-system operation is needed (e.g. minimization), performing it on one of these small instances is inefficient for large systems. The manager addresses this by allowing an additional Engine instance to be instantiated collectively across multiple workers, so that the operation can exploit available cores.</p>
+<p>(ii) Pure Python parallelism: some operations are worth parallelizing but do not require an Engine at all. The manager provides a mechanism for all workers to execute Python functions synchronously, communicating via MPI.</p>
+<p>We first describe the manager module and then how it is ment to be used in pyKMC with the <code>Engine</code> module. </p>
+<h2 id="structure">Structure</h2>
+<p>The <code>manager</code> module provides three components meant to be used together: a <code>Manager</code> object, which is the user-facing interface for submitting operations, a <code>Session</code> object, which handles communication between the <code>Manager</code> and a single <code>Worker</code>, and a <code>Worker</code> object, which implements the logic to broadcast and dispatch MPI requests across all ranks of its local communicator.</p>
+<pre class="mermaid"><code>%%{init: {'flowchart': {'curve': 'step'}}}%%
+flowchart LR
+    subgraph master["Master · world rank 0 (one core)"]
+        direction TB
+        mgr["Manager"]
+        j(( ))
+        mgr --- j
+        j --- s1["Session 1"]
+        j --- s2["Session 2"]
+        j --- dots["⋮"]
+        j --- sN["Session N"]
+    end
+
+    s1 &lt;==&gt;|"send/recv message"| w1["Worker 1&lt;br/&gt;ranks 1–n"]
+    s2 &lt;==&gt;|"send/recv message"| w2["Worker 2&lt;br/&gt;ranks n+1–m"]
+    sN &lt;==&gt;|"send/recv message"| wN["Worker N&lt;br/&gt;ranks m+1…p"]
+
+    w2 ~~~ note["&lt;div align='right'&gt;&lt;b&gt;Inside a Worker&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;div align='left'&gt;local rank 0 = leader&lt;br/&gt;&amp;nbsp;&amp;nbsp;broadcasts request to the group&lt;br/&gt;all ranks : run the step together &lt;/div&gt;"]
+
+    style j fill:transparent,stroke:transparent,width:6px,height:6px;
+    style dots fill:none,stroke:none;
+</code></pre>
+<p>To support all three use cases, the <code>Manager</code> relies on several MPI communicators: one <code>local_comm</code> per worker (spanning only that worker's ranks), a <code>group_comm</code> spanning a subset of workers, and a <code>global_comm</code> spanning all workers. A separate <code>world_comm</code> (typically <code>MPI.COMM_WORLD</code>) is reserved for rank-0-to-worker communication via the <code>Session</code> protocol. Whenever the mode changes, switching commands (<code>use_local</code>, <code>use_group</code>, <code>use_global</code>) are sent through <code>world_comm</code> to update the active communicator on each worker.</p>
+<pre class="mermaid"><code>flowchart TB
+
+    %% Workers
+    subgraph Workers
+        direction LR
+        W1[Worker 1]
+        W2[Worker 2]
+        WN[Worker N]
+    end
+
+    %% Local layer
+    subgraph "mode = local"
+        direction LR
+        LC1[local_comm]
+        LC2[local_comm]
+        LCN[local_comm]
+    end
+
+    %% Group + Global
+    GC[group_comm]
+    GLC[global_comm]
+
+    %% Worker -&gt; local (vertical)
+    W1 --&gt; LC1
+    W2 --&gt; LC2
+    WN --&gt; LCN
+
+    %% Worker -&gt; group (direct)
+    W1 --&gt; GC
+    W2 --&gt; GC
+
+    %% Worker -&gt; global (direct)
+    W1 --&gt; GLC
+    W2 --&gt; GLC
+    WN --&gt; GLC
+
+    %% Group -&gt; global
+    GC --&gt; GLC</code></pre>
+<p>Setting up these communicators and wiring the components together is handled by a <code>ManagerFactory</code>, described bellow to facilitate its use. </p>
+<h2 id="modes">Modes</h2>
+<h4 id="local-mode">Local mode</h4>
+<p>The default mode. Operations are asynchronous and follow a standard master-worker pattern: each call creates a <code>Job</code> holding the operation name, its arguments, and a <code>Future</code> result, then places it in a shared queue. Each <code>Session</code> thread picks up jobs as they become available and executes them on its worker.</p>
+<p>Usage : 
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">future</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">parameter</span><span class="o">=</span><span class="n">a</span><span class="p">)</span>  <span class="c1"># non-blocking, returns immediately</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># ... other work ...</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">result</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>  <span class="c1"># blocks until the job completes</span>
+</span></code></pre></div></p>
+<p>The <code>Job</code> dataclass:
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nd">@dataclass</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">Job</span><span class="p">:</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">op_name</span><span class="p">:</span> <span class="nb">str</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">future</span><span class="p">:</span> <span class="n">Future</span>
+</span></code></pre></div></p>
+<h4 id="group-mode">Group mode</h4>
+<p>Group mode is synchronous. The operation is dispatched to <code>Session</code> connected to the group communicator, and all workers in the group execute it collectively. The call blocks until the operation completes.</p>
+<p>Usage :
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">group_operation</span><span class="p">(</span><span class="n">parameter</span><span class="o">=</span><span class="n">a</span><span class="p">)</span>  <span class="c1"># blocking</span>
+</span></code></pre></div></p>
+<p>Workers outside the group remain idle for the duration of the call.</p>
+<h4 id="global-mode">Global mode</h4>
+<p>Identical to group mode, but the operation runs collectively across all workers.</p>
+<p>Usage:
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">global_operation</span><span class="p">(</span><span class="n">parameter</span><span class="o">=</span><span class="n">a</span><span class="p">)</span>  <span class="c1"># blocking</span>
+</span></code></pre></div></p>
+<p>Mode switches happen automatically: calling <code>manager.group_operation()</code> while in local mode drains the local queue first, then switches to group mode. Calling any local operation switches back. Same for the global mode.</p>
+<h2 id="available-operations">Available Operations</h2>
+<p>The <code>Manager</code> submits by name, the <code>Session</code> forwards the request, and the <code>Worker</code> looks up the matching callable at dispatch time and runs it on every rank of the active communicator.</p>
+<p>Each <code>Worker</code> maintains a registry, a dictionary mapping operation names to <code>Callables</code>. When a message arrives from rank 0, the worker looks up the operation name in its registry and calls the corresponding function.</p>
+<p>Each mode has its own registry (<code>local_registry</code>, <code>group_registry</code>, <code>global_registry</code>), built at construction time and swapped when the mode changes. The set of available operations can therefore differ between modes.</p>
+<p>In addition to the user-defined registry, the <code>Worker</code> exposes a set of builtin operations (<code>use_local</code>, <code>use_group</code>, <code>use_global</code>, <code>shutdown</code>, <code>list_ops</code>) that are always available regardless of mode and are dispatched before the registry is consulted.</p>
+<p>A <code>Worker</code>'s registry is assembled at construction from three sources:</p>
+<ol>
+<li>Object methods (<code>local_obj</code>, <code>global_obj</code>, <code>group_obj</code>): <code>build_registry</code> collects, via <code>inspect.getmembers</code>, all public methods. Passing a list of objects merges their methods, a duplicate name raises <code>ValueError</code>. Object methods are called with kwargs only (no communicator is injected) so each object must already hold its communicator as an attribute, set at construction.</li>
+<li>extra_ops: MPI-aware callables with signature <code>fn(comm, **kwargs)</code>. The <code>Worker</code> injects the active communicator at dispatch time, so the same function adapts automatically to whichever mode is current.</li>
+<li>Builtins: <code>use_local</code>, <code>use_group</code>, <code>use_global</code>, <code>shutdown</code>, <code>list_ops</code>. Always available, handled separately from the registry.</li>
+</ol>
+<h2 id="message-format-and-dispatch">Message format and dispatch</h2>
+<p>A message starts at the <code>Manager</code>: a submit call (or one of its group_ / global_ variants) hands the operation to a <code>Session</code>, the object that actually talks to the worker. From there the <code>Session</code>, on world rank 0, sends it point-to-point over <code>world_comm</code> to the worker's master rank, the local rank 0 of the active communicator. That rank is the only one reading world_comm, the other ranks are blocked in a collective, waiting. Once the master rank has the message, it broadcast it over the active communicator so that every rank holds the same message, and then all ranks dispatch it together. The operation is performed and the return value (or error) travels back the other way: only the master rank replies to the <code>Session</code>, over <code>world_comm</code>, which hands it back to the <code>Manager</code>.</p>
+<p>A message has the shape <code>{"type": &lt;op_name&gt;, "value": &lt;payload&gt;}</code>. The <code>value</code> field becomes kwargs by the following rule:</p>
+<ul>
+<li>absent or <code>None</code> → no kwargs;</li>
+<li><code>dict</code> → used as-is as kwargs;</li>
+<li>scalar → wrapped as <code>{"value": scalar}</code>.</li>
+</ul>
+<p>In practice <code>Session.call(op, **kwargs)</code> always sends a <code>dict</code> (or nothing), but <code>_dispatch</code> handles the scalar case to stay robust against other senders.</p>
+<p>Dispatch distinguishes two categories:</p>
+<ul>
+<li>Builtins : executed without a barrier, since they only mutate the worker's local state (mode switch, shutdown). They return <code>SILENT</code> unless they produce a value (<code>list_ops</code> returns a list → <code>SUCCESS</code>). Mode switches therefore send no status back: they are fire-and-forget.</li>
+<li>Registry operations : bracketed by a <code>comm.barrier()</code> before and after, so that internal MPI collectives are safe. <code>extra_ops</code> receive <code>self.comm</code> as their first positional argument, object methods are called with kwargs only. An unknown name returns <code>ERROR</code> with the list of available operations.</li>
+</ul>
+<pre class="mermaid"><code>%%{init: {'flowchart': {'curve': 'step'}}}%%
+flowchart TD
+    A["msg = {type, value}"] --&gt; B["value → kwargs&lt;br/&gt;(None / dict / scalar)"]
+    B --&gt; C{"type in builtins?"}
+    C --&gt;|yes| D["direct call&lt;br/&gt;(no barrier)"]
+    D --&gt; E{"result?"}
+    E --&gt;|yes| F["SUCCESS"]
+    E --&gt;|no| G["SILENT"]
+    C --&gt;|no| H{"type in registry?"}
+    H --&gt;|no| I["ERROR&lt;br/&gt;unknown operation"]
+    H --&gt;|yes| J["comm.barrier()"]
+    J --&gt; K{"extra_op?"}
+    K --&gt;|yes| L["handler(comm, **kwargs)"]
+    K --&gt;|no| M["handler(**kwargs)"]
+    L --&gt; N["comm.barrier()"]
+    M --&gt; N
+    N --&gt; O["SUCCESS / ERROR"]</code></pre>
+<h3 id="the-dispatch-result">The dispatch result</h3>
+<p><code>_dispatch</code> runs on every rank and returns a <code>DispatchResult</code> (dataclass) carrying a <code>DispatchStatus</code> (enum) plus an optional value and error:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">DispatchStatus</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">SILENT</span> <span class="o">=</span> <span class="s2">&quot;silent&quot;</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">SUCCESS</span> <span class="o">=</span> <span class="s2">&quot;success&quot;</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">ERROR</span> <span class="o">=</span> <span class="s2">&quot;error&quot;</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="nd">@dataclass</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="k">class</span><span class="w"> </span><span class="nc">DispatchResult</span><span class="p">:</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="n">status</span><span class="p">:</span> <span class="n">DispatchStatus</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="n">value</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="n">error</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+</span></code></pre></div>
+<p>These types never cross <code>world_comm</code>, they only tell the master rank whether to reply, and with what:</p>
+<ul>
+<li><code>SILENT</code> : no reply at all (builtins that only mutate local state, e.g. mode switches: fire-and-forget).</li>
+<li><code>SUCCESS</code> : send a <code>status</code> message, then a <code>result</code> message only if <code>value is not None</code>. </li>
+<li><code>ERROR</code> : send a <code>status</code> message carrying the error string, no result follows.</li>
+</ul>
+<p>Every rank produces a <code>DispatchResult</code>, but only local rank 0 acts on it (in <code>_send_result</code>). </p>
+<h3 id="reply-and-tags">Reply and tags</h3>
+<p>Only local rank 0 replies to the <code>Session</code>, over <code>world_comm</code>. It first sends the status message (<code>has_result</code> flag + optional <code>error</code>), then, if <code>has_result</code> is true, a second result message with the return value. On the <code>Session</code> side an <code>error</code> is re-raised as <code>RuntimeError</code>, otherwise the value is returned to the caller (or <code>None</code> when there is no result).</p>
+<p>The two directions use three tags to keep the flows from interleaving on <code>world_comm</code>:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">_TAG_STATUS</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Worker → Session : completion + error flag</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">_TAG_RESULT</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># Worker → Session : return value (only if has_result)</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">_TAG_CMD</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># Session → Worker : operation request</span>
+</span></code></pre></div>
+<p>The numeric values are arbitrary, the only invariant is that both sides agree on them. A new message flow should get a new tag rather than overload an existing one.</p>
+<p>Notes :
+- <code>return None</code> means "void" : the <code>has_result</code> flag is computed from <code>r.value is not None</code>. An operation that legitimately returns <code>None</code> is treated as having no result, and <code>Session.call</code> returns <code>None</code> without waiting for a <code>result</code> message.
+- <code>extra_ops</code> signature : they must accept the communicator as their first argument (<code>fn(comm, **kwargs)</code>), unlike object methods.
+- Reserved names : the builtins (<code>use_local</code>, <code>use_group</code>, <code>use_global</code>, <code>shutdown</code>, <code>list_ops</code>) cannot be reused by a method or <code>extra_op</code>.
+- Cross-mode consistency : Objects passed to the different modes must expose the same public methods, otherwise construction fails.</p>
+<h2 id="factory">Factory</h2>
+<p>A <code>ManagerFactory</code> is provided to facilite the use of the <code>Manager</code>. It is the collective entry point that wires the <code>manager</code> stack together. A single <code>launch()</code> call partitions the MPI ranks, builds the communicators, instantiates <code>Workers</code>, and assembles the <code>Session</code> objects and the <code>Manager</code>.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="bp">self</span><span class="o">.</span><span class="n">manager</span> <span class="o">=</span> <span class="n">ManagerFactory</span><span class="p">(</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="n">obj_factory</span><span class="o">=</span><span class="k">lambda</span> <span class="n">comm</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">Object</span><span class="p">(</span><span class="n">comm</span><span class="p">),</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">n_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">comm</span><span class="o">=</span><span class="n">comm</span><span class="p">,</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">has_global</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">group_size</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">extra_ops</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;extra_operation&quot;</span><span class="p">:</span> <span class="n">extra_operation</span><span class="p">},</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="p">)</span><span class="o">.</span><span class="n">launch</span><span class="p">()</span>
+</span></code></pre></div>
+<p>Rank 0 is always the <code>Manager</code> and runs no worker. Ranks <code>1 … size-1</code> are split into <code>n_workers</code>.  Then, the provided comm is split, with <code>comm.Split</code>, so :</p>
+<ul>
+<li><code>local_comm</code> : one per worker;</li>
+<li><code>global_comm</code> : all worker ranks (if <code>has_global</code>);</li>
+<li><code>group_comm</code> : subset of workers (if <code>group_size</code> is set), <code>group_size</code> must be a multiple of the per-worker rank count, checked at construction.</li>
+</ul>
+<p>Object creation is delegated to <code>obj_factory(comm, mode) -&gt; Any | None</code>, called once per (worker × mode), the result is registered in the worker's registry for that mode. Returning <code>None</code> leaves the mode holding only <code>extra_ops</code>. An MPI-aware object must be initialized with the communicator it is handed. <code>extra_ops</code> pass through to every worker unchanged.</p>
+<p><code>launch()</code> is collective : every rank calls it. On a worker rank it builds the <code>Worker</code> and calls <code>worker.start()</code>, which blocks in the message loop until <code>shutdown</code> (returns <code>None</code>). On rank 0 it builds the sessions and <code>Manager</code>, calls <code>manager.start()</code>, and returns it, so everything after <code>factory.launch()</code> is rank-0 driver code while the workers are already looping inside it.</p>
+<h2 id="engine-factory">Engine factory</h2>
+<p><code>EngineManagerFactory</code> is the pyKMC-specific subclass of <code>ManagerFactory</code>. It fixes the object-creation policy to the pyKMC convention: one <code>Engine</code> per worker for local mode, plus one shared <code>Engine</code> on the group, so you supply an engine style and config instead of an <code>obj_factory</code>. </p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">factory</span> <span class="o">=</span> <span class="n">EngineManagerFactory</span><span class="p">(</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">engine_style</span><span class="o">=</span><span class="s2">&quot;lammps&quot;</span><span class="p">,</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">engine_config</span><span class="o">=</span><span class="n">cfg</span><span class="p">,</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">n_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">group_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>    <span class="n">comm</span><span class="o">=</span><span class="n">MPI</span><span class="o">.</span><span class="n">COMM_WORLD</span><span class="p">,</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="p">)</span><span class="o">.</span><span class="n">launch</span><span class="p">()</span>
+</span></code></pre></div>
+<p>The subclass overrides <code>_create_worker</code> to attach engines by mode: local gets one engine per worker on its <code>local_comm</code>, the asynchronous path, each worker running an independent engine on a small active volume, group gets a single engine built collectively on <code>group_comm</code> and shared across the group's workers, the synchronous path for whole-system operations, global gets no engine (<code>None</code>) and is reserved for <code>extra_ops</code>.</p>
+<p>A whole-system operation (e.g. a full minimization) run on one worker's small engine is inefficient for large systems. Group mode lets that operation span several workers' cores instead, and <code>group_size</code> sets how many: small systems can use a small group, large systems get more cores by raising it.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["content.code.copy", "content.code.annotate", "content.code.highlight", "content.tabs.link"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
