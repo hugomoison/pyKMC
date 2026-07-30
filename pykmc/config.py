@@ -122,10 +122,11 @@ class ControlConfig(BaseModel):
     )
 
     wall_time_buffer: float = Field(
-        default=0.0,
+        default=120.0,
         ge=0,
         description=(
             "Buffer time subtracted from wall_time_limit. "
+            "Default is 120 seconds. "
             "Accepted formats: seconds, '10m', '2h', '3d', 'HH:MM:SS', or 'D-HH:MM:SS'."
         ),
     )
