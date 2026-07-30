@@ -51,6 +51,9 @@ class Refinement:
         self.atomic_environment = atomic_environment
         self.manager = manager
         self.results = None
+        self._replay: list[tuple[int, pd.Series, int | None]] = []
+        self._total_energy: float | None = None
+        self._e_thr: float | None = None
 
     def execute(
         self,
@@ -74,11 +77,14 @@ class Refinement:
         """
         existing_pairs = existing_pairs or set()
         self.results = []
+        self._replay = []
 
         total_refinements, supposed_ktot = self.get_total_refinements_todo(
             df_reference_events
         )
         e_thr = self.get_energy_thr_refine(df_reference_events, supposed_ktot)
+        self._e_thr = e_thr
+        self._total_energy = total_energy
         self.loggers.info("log", "\t :=> Refining {} events".format(total_refinements))
 
         all_futures = []
@@ -116,33 +122,40 @@ class Refinement:
                 "progress", total_refinements - len(future_context), total_refinements
             )
 
-            # update result
-            if res.is_ok():
-                res.ok_value().min2_positions = ctx["min2_positions"]
-                res.ok_value().num_reference_event = ctx["num_reference_event"]
-                res.ok_value().saddle_positions = res.ok_value().saddle_positions[
-                    ctx["neighbors"]
-                ]
-                # Now check if energy barrier consistent with generic one
-                # TODO partn should not return different things depending on AV or not. We get the total energy at the saddle point or dE, but not both.
-                # TODO and to be consistent, you should modify res.ok_value().E_saddle.
-                if self.config.control.active_volume == True:
-                    res.ok_value().dE_forward = res.ok_value().E_saddle
-                else:
-                    res.ok_value().dE_forward = res.ok_value().E_saddle - total_energy
-                res = self.check_refinement_energy(
-                    res,
-                    abs(res.ok_value().dE_forward - ctx["reference_energy_barrier"]),
-                    self.config.eventsearch.refined_energy_thr,
-                )
-
-            else:
-                err = res.err_value()
-                if not isinstance(err.variables, dict):
-                    err.variables = {}
-                err.variables["n_ref_event"] = ctx["num_reference_event"]
-
+            res = self._finalize_result(res, ctx)
             self.results.append(res)
+            self._replay += [
+                (ctx.get("at_idx"), ctx.get("dfevent"), ctx.get("symmetry_index"))
+            ]
+
+    def _finalize_result(self, res, ctx):
+        """Apply the post-processing that used to live inline in execute()'s result loop."""
+        if res.is_ok():
+            res.ok_value().min2_positions = ctx["min2_positions"]
+            res.ok_value().num_reference_event = ctx["num_reference_event"]
+            res.ok_value().saddle_positions = res.ok_value().saddle_positions[
+                ctx["neighbors"]
+            ]
+            # Now check if energy barrier consistent with generic one
+            # TODO partn should not return different things depending on AV or not. We get the total energy at the saddle point or dE, but not both.
+            # TODO and to be consistent, you should modify res.ok_value().E_saddle.
+            if self.config.control.active_volume == True:
+                res.ok_value().dE_forward = res.ok_value().E_saddle
+            else:
+                res.ok_value().dE_forward = res.ok_value().E_saddle - self._total_energy
+            res = self.check_refinement_energy(
+                res,
+                abs(res.ok_value().dE_forward - ctx["reference_energy_barrier"]),
+                self.config.eventsearch.refined_energy_thr,
+            )
+
+        else:
+            err = res.err_value()
+            if not isinstance(err.variables, dict):
+                err.variables = {}
+            err.variables["n_ref_event"] = ctx["num_reference_event"]
+
+        return res
 
     def refine_single(
         self,
@@ -151,6 +164,7 @@ class Refinement:
         total_energy: float,
         future_context: dict,
         e_thr: float,
+        only_symmetry_index: int | None = None,
     ) -> list[Result[EventRefinementOutput, ErrorInfo]]:
         """Perform a single reference event refinement.
 
@@ -181,7 +195,12 @@ class Refinement:
         if not result_psr.is_ok():
             f = concurrent.futures.Future()
             f.set_result(result_psr)
-            future_context[f] = {"num_reference_event": dfevent["idx_ref"]}
+            future_context[f] = {
+                "num_reference_event": dfevent["idx_ref"],
+                "at_idx": at_idx,
+                "dfevent": dfevent,
+                "symmetry_index": None,
+            }
             return f
 
         else:
@@ -207,9 +226,14 @@ class Refinement:
                 self.system.positions.copy()
             )  # save to restore system after
 
-            for sym_matrix, perm_matrix in zip(
-                dfevent.at["sym_matrix"], dfevent.at["sym_perm"], strict=False
+            for symmetry_index, (sym_matrix, perm_matrix) in enumerate(
+                zip(dfevent.at["sym_matrix"], dfevent.at["sym_perm"], strict=False)
             ):
+                if (
+                    only_symmetry_index is not None
+                    and symmetry_index != only_symmetry_index
+                ):
+                    continue
                 ###=> Apply symmetries to displacements
                 new_displacement_saddle = geometry.transform_positions(
                     displacement_saddle, sym_matrix, 0, perm_matrix
@@ -299,6 +323,9 @@ class Refinement:
                     "num_reference_event": dfevent["idx_ref"],
                     "reference_energy_barrier": dfevent["energy_barrier"],
                     "neighbors": neighbors.copy(),
+                    "at_idx": at_idx,
+                    "dfevent": dfevent,
+                    "symmetry_index": symmetry_index,
                 }
 
                 # => Restore the system to its initial state
@@ -390,3 +417,23 @@ class Refinement:
 
         """
         return [e.ok_value() for e in self.results if e.is_ok()]
+
+    def retry(self, retry_task_ids: list[int]) -> None:
+        """Re-run refinement for exactly the given result indices, overwriting self.results in place."""
+        for i in retry_task_ids:
+            at_idx, dfevent, symmetry_index = self._replay[i]
+            assert symmetry_index is not None, (
+                "retry() only supports re-running symmetry-level refinement jobs; "
+                "PSR-match failures are never flagged as extrapolation errors."
+            )
+            future_context = {}
+            futures = self.refine_single(
+                at_idx,
+                dfevent,
+                self._total_energy,
+                future_context,
+                self._e_thr,
+                only_symmetry_index=symmetry_index,
+            )
+            f = futures[0] if isinstance(futures, list) else futures
+            self.results[i] = self._finalize_result(f.result(), future_context[f])

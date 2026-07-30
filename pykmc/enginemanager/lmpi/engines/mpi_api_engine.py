@@ -2,10 +2,14 @@ from lammps import lammps
 import threading
 from mpi4py import MPI
 import queue
+import traceback
 from ..lammps_operations import (
     initialize_parameters,
     initialize_system,
     initialize_potential,
+    setup_otf_cycle,
+    reset_otf_flags,
+    get_otf_flags,
     minimize,
     get_total_energy,
     get_positions,
@@ -58,6 +62,7 @@ class MpiApiEngine:
 
         self._is_alive = False
         self._is_busy = False
+        self._last_error = None
         self.message_reader_thread = None
         self.message_queue = queue.Queue()  # Queue to hold messages from the session
 
@@ -65,11 +70,16 @@ class MpiApiEngine:
         self._operations_map = {
             "use_global": self.use_global,
             "use_local": self.use_local,
+            "sleep": self.sleep,
+            "wake": self.wake,
             "close": self.close,
             "command": self.command,
             "initialize_parameters": initialize_parameters,
             "initialize_system": initialize_system,
             "initialize_potential": initialize_potential,
+            "setup_otf_cycle": setup_otf_cycle,
+            "reset_otf_flags": reset_otf_flags,
+            "get_otf_flags": get_otf_flags,
             "minimize": minimize,
             "get_total_energy": get_total_energy,
             "get_positions": get_positions,
@@ -137,6 +147,14 @@ class MpiApiEngine:
 
         return msg
 
+    def _read_sleep_message(self):
+        """Wait for a control message while the engine is sleeping."""
+        if isinstance(self.messenger, MpiMessenger):
+            return self.messenger.recv(source=MPI.ANY_SOURCE, tag=2)
+        if isinstance(self.messenger, QueueMessenger):
+            return self.messenger.recv(tag=2)
+        raise RuntimeError("Unsupported messenger type")
+
     # RUN ON ALL RANKS
     def run_engine_loop(self):
         """All ranks run this while lammps is alive, when a message is broadcaster from the master rank, execute the command."""
@@ -157,6 +175,7 @@ class MpiApiEngine:
             if msg is None:
                 continue
 
+            self._last_error = None
             result = self._handle_message(msg)
 
             if entry_global_mode and self.global_rank == 0:
@@ -187,6 +206,7 @@ class MpiApiEngine:
             "value": {
                 "alive": self._is_alive,
                 "busy": self._is_busy,
+                "error": self._last_error,
             },
         }
         messenger.send(status_msg, dest=0, tag=0)
@@ -227,6 +247,12 @@ class MpiApiEngine:
                     result = operation_handler(self, *args, **kwargs)
                 return result
             except Exception as e:
+                self._last_error = {
+                    "type": type(e).__name__,
+                    "message": str(e),
+                    "traceback": traceback.format_exc(),
+                    "operation": msg_type,
+                }
                 print(f"[Engine Rank {self.rank}] Error in handler {msg_type}: {e}")
             finally:
                 entry_engine_comm.barrier()
@@ -249,6 +275,28 @@ class MpiApiEngine:
             raise RuntimeError(f"Error executing command '{cmd}': {e}")
         finally:
             self._is_busy = False
+
+    def sleep(self) -> None:
+        """Block the worker until a wake or close control message arrives."""
+        while self._is_alive:
+            if self.rank == 0:
+                msg = self._read_sleep_message()
+            else:
+                msg = None
+
+            msg = self.engine_comm.bcast(msg, root=0)
+            msg_type = msg.get("type")
+
+            if msg_type == "wake":
+                return
+            if msg_type == "close":
+                self.close()
+                return
+            raise ValueError(f"Unknown sleep control message: {msg_type}")
+
+    def wake(self) -> None:
+        """Wake is consumed by the sleep loop."""
+        return None
 
     def use_global(self) -> None:
         """Switch to global LAMMPS"""

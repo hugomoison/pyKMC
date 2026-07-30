@@ -30,6 +30,7 @@ class EventSearch:
         self.manager = manager
         self.loggers = loggers
         self.results = None
+        self._central_atoms: list[int] = []
 
     def execute(self, central_atom_research_list: list[int]) -> None:
         """Execute an event search for each central atom in the central_atom_research_list list.
@@ -42,6 +43,7 @@ class EventSearch:
             list of central atom around which we will perform the event search.
 
         """
+        self._central_atoms = central_atom_research_list
         self.results = []
         self.loggers.info(
             "log",
@@ -49,25 +51,7 @@ class EventSearch:
                 len(central_atom_research_list)
             ),
         )
-        if self.config.control.active_volume == True:
-            if self.config.activevolume.ract <= self.config.atomicenvironment.rcut:
-                raise ValueError(
-                    "Active Volume radius is smaller than cutoff radius. Please increase ract or decrease rcut"
-                )
-            futures = self.manager.partn_search(
-                config=self.config,
-                central_atom=central_atom_research_list,
-                positions=self.system.positions.copy(),
-                cell=self.system.cell.copy(),
-                types=self.system.types.copy(),
-            )
-        else:
-            futures = self.manager.partn_search(
-                config=self.config,
-                central_atom=central_atom_research_list,
-                positions=self.system.positions.copy(),
-                types=self.system.types.copy(),
-            )
+        futures = self._submit(central_atom_research_list)
         for f in futures:
             self.results.append(f.result())
 
@@ -82,6 +66,34 @@ class EventSearch:
         #    self.loggers.progress_bar(
         #        "progress", i + 1, len(central_atom_research_list)
         #    )
+
+    def _submit(self, central_atom_list: list[int]):
+        """Submit an event search for the given central atoms and return the futures."""
+        if self.config.control.active_volume == True:
+            if self.config.activevolume.ract <= self.config.atomicenvironment.rcut:
+                raise ValueError(
+                    "Active Volume radius is smaller than cutoff radius. Please increase ract or decrease rcut"
+                )
+            return self.manager.partn_search(
+                config=self.config,
+                central_atom=central_atom_list,
+                positions=self.system.positions.copy(),
+                cell=self.system.cell.copy(),
+                types=self.system.types.copy(),
+            )
+        return self.manager.partn_search(
+            config=self.config,
+            central_atom=central_atom_list,
+            positions=self.system.positions.copy(),
+            types=self.system.types.copy(),
+        )
+
+    def retry(self, retry_task_ids: list[int]) -> None:
+        """Re-run event search for exactly the given indices, overwriting self.results in place."""
+        central_atoms = [self._central_atoms[i] for i in retry_task_ids]
+        futures = self._submit(central_atoms)
+        for i, f in zip(retry_task_ids, futures, strict=True):
+            self.results[i] = f.result()
 
     def _center_event_positions(
         self, event_search_output: EventSearchOutput

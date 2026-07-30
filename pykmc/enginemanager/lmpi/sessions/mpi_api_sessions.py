@@ -59,6 +59,16 @@ class MpiApiSession:
             value = msg.get("value", {})
             self._is_alive = value.get("alive", False)
             self._is_busy = value.get("busy", False)
+            error = value.get("error")
+            if error is not None:
+                operation = error.get("operation", "unknown")
+                error_type = error.get("type", "RuntimeError")
+                message = error.get("message", "")
+                tb = error.get("traceback")
+                details = f"Engine error during {operation}: {error_type}: {message}"
+                if tb:
+                    details = f"{details}\n{tb}"
+                raise RuntimeError(details)
         else:
             raise RuntimeError(
                 f"Unexpected message type received: {msg}, expected 'status' but got '{msg.get('type')}'"
@@ -88,6 +98,15 @@ class MpiApiSession:
         self.send_message({"type": "use_global"})
 
     # @session_locked
+    def sleep(self) -> None:
+        """Send the engine into its low-CPU sleep loop."""
+        self.messenger.send({"type": "sleep"}, dest=self.engine_master_rank, tag=2)
+
+    def wake(self) -> None:
+        """Wake the engine and receive the delayed sleep status."""
+        self.messenger.send({"type": "wake"}, dest=self.engine_master_rank, tag=2)
+        self.receive_status()
+
     def close(self, wait_status: bool = False) -> None:
         """
         Instruct the engine to shut down.
@@ -125,12 +144,14 @@ class MpiApiSession:
         self.send_message({"type": "initialize_parameters"})
 
     # @session_locked
-    def initialize_system(self, system) -> None:
+    def initialize_system(self, system, config=None) -> None:
         """
         Initialize Lammps system
         """
         # print(f"[Session {self.session_id}] Initializing Lammps System")
-        self.send_message({"type": "initialize_system", "value": system})
+        self.send_message(
+            {"type": "initialize_system", "value": {"system": system, "config": config}}
+        )
 
     # @session_locked
     def initialize_potential(self, config) -> None:
@@ -139,6 +160,26 @@ class MpiApiSession:
         """
         # print(f"[Session {self.session_id}] Initializing Lammps Potential")
         self.send_message({"type": "initialize_potential", "value": config})
+
+    def setup_otf_cycle(self, config) -> None:
+        """Reload an updated LAMMPS potential in-place."""
+        self.send_message({"type": "setup_otf_cycle", "value": config})
+
+    def reset_otf_flags(self) -> None:
+        """Reset latched OTF extrapolation flags on the engine."""
+        self.send_message({"type": "reset_otf_flags"})
+
+    def get_otf_flags(self):
+        """Return the current latched OTF extrapolation flags."""
+        self._is_busy = True
+        try:
+            self.send_message({"type": "get_otf_flags"})
+            msg = self.messenger.recv(source=self.engine_master_rank, tag=1)
+            if msg.get("type") == "result":
+                return msg["value"]
+            raise RuntimeError(f"Unexpected message type: {msg}")
+        finally:
+            self._is_busy = False
 
     # @session_locked
     def minimize(self, config, positions=None) -> None:
@@ -150,22 +191,6 @@ class MpiApiSession:
             {"type": "minimize", "value": {"config": config, "positions": positions}}
         )
 
-    # @session_locked
-    def get_total_energy(self) -> float:
-        """ """
-        self._is_busy = True  # Mark the session as busy
-        # print(f"[Session] Get total energy")
-        try:
-            self.send_message({"type": "get_total_energy"})
-            msg = self.messenger.recv(source=self.engine_master_rank, tag=1)
-            if msg.get("type") == "result":
-                return msg["value"]
-            else:
-                raise RuntimeError(f"Unexpected message type: {msg}")
-        finally:
-            self._is_busy = False
-
-    # @session_locked
     def get_positions(self) -> np.ndarray[float]:
         self._is_busy = True
         # print(f"[Session] Get Positions")
@@ -189,7 +214,7 @@ class MpiApiSession:
             self._is_busy = False
 
     # @session_locked
-    def minimize_with_results(self, config, positions=None, types=None):
+    def minimize_with_results(self, config, positions=None, cell=None, types=None):
         """Minimize and return the minimized positions and the total energy."""
         self._is_busy = True
         # print(f"[Session n°{self.session_id}] Minimizing and get positions and total energy")
@@ -197,7 +222,12 @@ class MpiApiSession:
             self.send_message(
                 {
                     "type": "minimize_with_results",
-                    "value": {"config": config, "positions": positions, "types": types},
+                    "value": {
+                        "config": config,
+                        "positions": positions,
+                        "cell": cell,
+                        "types": types,
+                    },
                 }
             )
             msg = self.messenger.recv(source=self.engine_master_rank, tag=1)

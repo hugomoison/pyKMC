@@ -167,7 +167,7 @@ def test_step_log_reads_executed_row_before_prune(
         min2_positions=positions.copy(), min2_etot=-1.0
     )
 
-    monkeypatch.setattr(sim, "minimize_system", lambda: None)
+    monkeypatch.setattr(sim, "minimize_system", lambda *args, **kwargs: None)
     monkeypatch.setattr(sim, "execute_event_searches", lambda atoms: _FakeEventSearch())
     monkeypatch.setattr(sim, "add_reference_events", lambda results: [])
     monkeypatch.setattr(

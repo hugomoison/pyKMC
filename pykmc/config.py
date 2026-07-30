@@ -103,6 +103,11 @@ class ControlConfig(BaseModel):
         description="Enable event selection bias. Requires a [Bias] section.",
     )
 
+    otfml: Optional[bool] = Field(
+        default=False,
+        description="Enable on-the-fly ML retraining. Requires an [OTFML] section with retrain_command.",
+    )
+
 
 class AtomicEnvironmentConfig(BaseModel):
     """Atomic environments parameters."""
@@ -549,6 +554,10 @@ class LammpsConfig(BaseModel):
 
     pair_style: str = Field(default=..., description="Lammps pair_style command.")
     pair_coeff: str = Field(default=..., description="Lammps pair_coeff command.")
+    type_order: Optional[list[str]] = Field(
+        default=None,
+        description="Explicit atom type ordering (e.g. ['Ni', 'Si', 'H']). Type 1 = first element, type 2 = second, etc. Required when the potential does not accept element names in pair_coeff (e.g. MTP).",
+    )
     min_style: Optional[str] = Field(
         default="cg", description="Lammps min_style command."
     )
@@ -560,6 +569,99 @@ class LammpsConfig(BaseModel):
         default="1.0e-6 1.0e-8 10 10",
         description="Lammps minimize command with frozen core",
     )
+
+    @field_validator("type_order", mode="before")
+    @classmethod
+    def parse_type_order(cls, v):
+        return parse_list_of_str(v)
+
+
+def parse_list_of_str(v):
+    """Parse a string or list value into a list of strings."""
+    if v is None:
+        return None
+    if isinstance(v, list):
+        return [str(item).strip() for item in v if str(item).strip()]
+    if isinstance(v, str):
+        stripped = v.strip()
+        if stripped.lower() == "none" or stripped == "":
+            return None
+        if "\n" in stripped:
+            values = [line.strip() for line in stripped.splitlines() if line.strip()]
+            return values or None
+        stripped = stripped.strip("[]")
+        return [item.strip() for item in stripped.split(",") if item.strip()]
+    return v
+
+
+class OTFMLConfig(BaseModel):
+    """On-the-fly machine learning potential parameters."""
+
+    retrain_command: str = Field(
+        description="Base command for retraining (e.g. 'python -m mtp_otf'). Named arguments below are appended automatically.",
+    )
+    potential_file: str = Field(
+        description="Potential file path. Appended as --potential and copied to otfml_runtime/cycle{N}/ after each retrain.",
+    )
+    training_set_file: str = Field(
+        description="Training set file path. Appended as --training_set and copied to otfml_runtime/cycle{N}/ after each retrain.",
+    )
+    gamma_tolerance: float = Field(
+        description="Extrapolation tolerance used for dumping and flagging configurations.",
+    )
+    gamma_max: float = Field(
+        description="Maximum extrapolation grade; triggers halt and extreme-extrapolation flag.",
+    )
+    launcher: Optional[Literal["nested", "fork", "slurm"]] = Field(
+        default=None,
+        description="Execution backend passed as --launcher. Choices: nested, fork, slurm.",
+    )
+    batch_args: Optional[str] = Field(
+        default=None,
+        description="Extra batch arguments passed as --batch-args for slurm. Required when launcher is slurm.",
+    )
+    runner_args: Optional[str] = Field(
+        default=None,
+        description="Extra runner arguments passed as --runner-args for nested MPI or Slurm srun launches.",
+    )
+    sequential_eval: bool = Field(
+        default=False,
+        description="Emit --sequential-eval so selected structures are evaluated one at a time.",
+    )
+    extra_args: Optional[str] = Field(
+        default=None,
+        description="Extra arguments appended verbatim to the retrain command before the dump glob, for remaining kmtp-otf CLI options such as --max_structures.",
+    )
+    enabled_phases: list[Literal["search", "refine", "minimize"]] = Field(
+        default_factory=lambda: ["search", "refine", "minimize"],
+        description="OTF phases enabled for retry handling.",
+    )
+
+    @model_validator(mode="after")
+    def check_slurm_batch_args(self):
+        if self.launcher == "slurm" and self.batch_args is None:
+            raise ValueError("batch_args is required when launcher is 'slurm'")
+        if self.launcher in {"nested", "fork"} and self.batch_args is not None:
+            raise ValueError(
+                f"batch_args is only valid when launcher is 'slurm', got '{self.launcher}'"
+            )
+        if self.launcher == "fork" and self.runner_args is not None:
+            raise ValueError("runner_args is not valid when launcher is 'fork'")
+        return self
+
+    @field_validator(
+        "launcher", "batch_args", "runner_args", "extra_args", mode="before"
+    )
+    @classmethod
+    def parse_optional_cli_string(cls, v):
+        if isinstance(v, str) and v.strip().lower() in {"", "none"}:
+            return None
+        return v
+
+    @field_validator("enabled_phases", mode="before")
+    @classmethod
+    def parse_enabled_phases(cls, v):
+        return parse_list_of_str(v)
 
 
 class IraConfig(BaseModel):
@@ -829,6 +931,10 @@ class Config(BaseModel):
         default=None,
         description="LAMMPS-specific parameters. Required if engine == lammps.",
     )
+    otfml: Optional[OTFMLConfig] = Field(
+        default=None,
+        description="On-the-fly machine learning potential retraining parameters.",
+    )
 
     partn: Optional[PartnConfig] = Field(
         default=None, description="pARTn parameters controling the event searches"
@@ -958,6 +1064,7 @@ class Config(BaseModel):
             ("control.active_volume", True): ["activevolume"],
             ("control.recycle", True): ["eventrecycling"],
             ("control.bias", True): ["bias"],
+            ("control.otfml", True): ["otfml"],
         }
 
         for (field_path, condition_value), required_fields in validation_rules.items():
@@ -973,6 +1080,11 @@ class Config(BaseModel):
                                 field_path, condition_value, missing_fields
                             )
                         )
+        if self.control.otfml and self.control.active_volume:
+            raise ValueError("OTFML does not support active_volume=True in v1.")
+        if self.control.otfml and self.lammps is not None:
+            if not self.lammps.pair_style.strip().startswith("mtp/extrapolation"):
+                raise ValueError("OTFML requires `pair_style mtp/extrapolation`.")
         return self
 
 
