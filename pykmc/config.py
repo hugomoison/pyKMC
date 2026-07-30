@@ -319,7 +319,7 @@ class PartnConfig(BaseModel):
 
     convergence_property: Literal["maxval", "norm"] = Field(
         default="maxval",
-        description="Specify how to test convergence of the forces. 'maxval': the convergence will be tested by MAXVAL( ABS( force ) ); 'norm' the convergence will be tested by NORM2( force ).",
+        description="Specify how pARTn tests convergence of the forces (transmitted as pARTn's converge_property for both event searches and refinements). 'maxval': the convergence will be tested by MAXVAL( ABS( force ) ); 'norm': the convergence will be tested by NORM2( force ).",
     )
 
     nevalf_max: int = Field(

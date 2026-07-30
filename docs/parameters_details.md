@@ -316,7 +316,7 @@
   </details>
 - **`convergence_property`** : `Literal['maxval', 'norm']`, default = `'maxval'`
   <details><summary>Description</summary>
-  Specify how to test convergence of the forces. 'maxval': the convergence will be tested by MAXVAL( ABS( force ) ); 'norm' the convergence will be tested by NORM2( force ).
+  Specify how pARTn tests convergence of the forces (transmitted as pARTn's converge_property for both event searches and refinements). 'maxval': the convergence will be tested by MAXVAL( ABS( force ) ); 'norm': the convergence will be tested by NORM2( force ).
   </details>
 - **`nevalf_max`** : `int`, default = `9999`
   <details><summary>Description</summary>

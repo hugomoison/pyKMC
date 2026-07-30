@@ -500,6 +500,7 @@ class LammpsEngine(Engine):
         else:
             artn.set("lnperp_limitation", False)
         artn.set("forc_thr", config.partn.forc_thr)
+        artn.set("converge_property", config.partn.convergence_property)
         artn.set("push_over", config.partn.push_over)
 
         self.lmp.command(f"minimize 1e-6 1e-8 10000 {config.partn.nevalf_max}")
@@ -654,6 +655,7 @@ class LammpsEngine(Engine):
         else:
             artn.set("lnperp_limitation", False)
         artn.set("forc_thr", config.partn.r_forc_thr)
+        artn.set("converge_property", config.partn.convergence_property)
 
         max_attempts = config.partn.r_max_attempts
         attempt = 0

@@ -284,6 +284,7 @@ def partn_search(
 
     # Convergence
     artn.set("forc_thr", config.partn.forc_thr)
+    artn.set("converge_property", config.partn.convergence_property)
 
     # Final push
     artn.set("push_over", config.partn.push_over)
@@ -463,6 +464,7 @@ def partn_refine(
 
     # Convergence
     artn.set("forc_thr", config.partn.r_forc_thr)
+    artn.set("converge_property", config.partn.convergence_property)
 
     # MAX attempt based on delr_sad (from initial position)
     # Fix that sometime, we go back to the minimum, so saddle point found is the minimum
