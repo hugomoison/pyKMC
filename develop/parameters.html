@@ -1741,6 +1741,13 @@
   </details></p>
 </li>
 <li>
+<p><strong><code>group_size</code></strong> : <code>int</code>, default = <code>-1</code>
+<br />
+<details><summary>Description</summary>
+  Number of MPI worker ranks in the group communicator (replaces old global mode). -1 means all worker ranks.
+  </details></p>
+</li>
+<li>
 <p><strong><code>engine_use_rank_0</code></strong> : <code>bool</code>, default = <code>False</code>
 <br />
 <details><summary>Description</summary>
@@ -2008,6 +2015,13 @@
 <br />
 <details><summary>Description</summary>
   Lammps minimize command with frozen core
+  </details></p>
+</li>
+<li>
+<p><strong><code>verbosity</code></strong> : <code>int</code>, optional
+<br />
+<details><summary>Description</summary>
+  LAMMPS log verbosity. None inherits control.verbosity. 0 disables log file.
   </details>
 </p>
 </li>
