@@ -8,10 +8,10 @@
       
       
       
-        <link rel="canonical" href="https://hugomoison.github.io/pyKMC/main/developer_guide.html">
+        <link rel="canonical" href="https://hugomoison.github.io/pyKMC/main/dev_code_formatting.html">
       
       
-        <link rel="prev" href="parameters.html">
+        <link rel="prev" href="dev_parallelization_manager.html">
       
       
         <link rel="next" href="api/system.html">
@@ -21,15 +21,15 @@
       
       
       <link rel="icon" href="assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>Developer Guide - pyKMC</title>
+        <title>Code formatting - pyKMC</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
@@ -120,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Developer Guide
+              Code formatting
             
           </span>
         </div>
@@ -434,16 +434,20 @@
   
   
   
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
-      
-      
-      <a href="developer_guide.html" class="md-nav__link md-nav__link--active">
         
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -457,7 +461,231 @@
   
   
 
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Developer Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dev_strategy_pattern.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy pattern
+  
+
+    
+  </span>
+  
+  
+
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dev_engine.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dev_parallelization_manager.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manager and Parallelization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Code formatting
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="dev_code_formatting.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Code formatting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#code-formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Formatting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code Formatting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Formatting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#editor-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editor Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
       
     </li>
   
@@ -1125,6 +1353,64 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#code-formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Code Formatting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code Formatting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#formatting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Formatting
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#editor-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Editor Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1141,7 +1427,38 @@
 
 
 <h1 id="developer-guide">Developer Guide</h1>
-<p>Coming soon.</p>
+<h2 id="code-formatting">Code Formatting</h2>
+<p>pyKMC uses <a href="https://docs.astral.sh/ruff/">Ruff</a> for Python formatting. Formatting is enforced by CI on every push and pull request — the check runs <code>ruff format --check</code> and fails if any file is not formatted.</p>
+<h3 id="installation">Installation</h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>ruff
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># or, if using uv:</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>uv<span class="w"> </span>sync<span class="w"> </span>--extra<span class="w"> </span>dev
+</span></code></pre></div>
+<h3 id="formatting">Formatting</h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Format all files</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>ruff<span class="w"> </span>format<span class="w"> </span>.
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Check without modifying (same as CI)</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>ruff<span class="w"> </span>format<span class="w"> </span>--check<span class="w"> </span>.
+</span></code></pre></div>
+<p>Configuration lives in <code>ruff.toml</code> at the repo root. Key settings: line length 88, Python 3.10 target, double quotes.</p>
+<h3 id="editor-setup">Editor Setup</h3>
+<div class="tabbed-set tabbed-alternate" data-tabs="1:3"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">VSCode</label><label for="__tabbed_1_2">PyCharm / JetBrains</label><label for="__tabbed_1_3">Neovim / other editors</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>Install the <a href="https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff">Ruff extension</a> (<code>charliermarsh.ruff</code>).</p>
+<p>The repo includes <code>.vscode/settings.json</code> which sets Ruff as the default Python formatter and enables format-on-save automatically.</p>
+</div>
+<div class="tabbed-block">
+<p>Install the <a href="https://plugins.jetbrains.com/plugin/20574-ruff">Ruff plugin</a> from the JetBrains Marketplace.</p>
+<p>Then enable format-on-save: <strong>Settings → Tools → Ruff → Format on save</strong>.</p>
+<p>The plugin automatically picks up <code>ruff.toml</code> from the project root.</p>
+</div>
+<div class="tabbed-block">
+<p>Any editor with an LSP client can use <code>ruff server</code>. See the <a href="https://docs.astral.sh/ruff/editors/">Ruff editor integrations docs</a> for setup instructions.</p>
+</div>
+</div>
+</div>
 
 
 
@@ -1159,6 +1476,8 @@
             </div>
           
           
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
         
@@ -1191,10 +1510,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["content.code.copy", "content.code.annotate", "content.code.highlight"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["content.code.copy", "content.code.annotate", "content.code.highlight", "content.tabs.link"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>

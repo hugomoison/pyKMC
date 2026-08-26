@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://hugomoison.github.io/pyKMC/main/api/system.html">
       
       
-        <link rel="prev" href="../developer_guide.html">
+        <link rel="prev" href="../dev_code_formatting.html">
       
       
         <link rel="next" href="neighbors_list.html">
@@ -21,7 +21,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
@@ -29,7 +29,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -432,9 +432,20 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../developer_guide.html" class="md-nav__link">
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -448,7 +459,135 @@
   
   
 
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Developer Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev_strategy_pattern.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Strategy pattern
+  
+
+    
+  </span>
+  
+  
+
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev_engine.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev_parallelization_manager.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manager and Parallelization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev_code_formatting.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Code formatting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -1616,7 +1755,7 @@ Defaults to None.</p>
 <span class="normal"><a href="#__codelineno-0-166">166</a></span>
 <span class="normal"><a href="#__codelineno-0-167">167</a></span>
 <span class="normal"><a href="#__codelineno-0-168">168</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13"></a><span class="k">class</span><span class="w"> </span><span class="nc">System</span><span class="p">:</span>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents an atomic system with its properties.</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14"></a><span class="w">    </span><span class="sd">"""Represents an atomic system with its properties.</span>
 </span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15"></a>
 </span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16"></a><span class="sd">    This class provides a way to store and manage the fundamental</span>
 </span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17"></a><span class="sd">    characteristics of an atomic configuration, including atom types,</span>
@@ -1626,10 +1765,10 @@ Defaults to None.</p>
 </span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21"></a><span class="sd">    Attributes</span>
 </span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22"></a><span class="sd">    ----------</span>
 </span><span id="__span-0-23"><a id="__codelineno-0-23" name="__codelineno-0-23"></a><span class="sd">    types : np.ndarray of str, shape (N), optional</span>
-</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24"></a><span class="sd">        Atomic types (e.g., &#39;H&#39;, &#39;O&#39;, &#39;C&#39;) where N is the number of atoms.</span>
+</span><span id="__span-0-24"><a id="__codelineno-0-24" name="__codelineno-0-24"></a><span class="sd">        Atomic types (e.g., 'H', 'O', 'C') where N is the number of atoms.</span>
 </span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25"></a><span class="sd">        Defaults to None.</span>
 </span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26"></a><span class="sd">    positions : np.ndarray of float, shape (N, 3), optional</span>
-</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="sd">        Atomic Cartesian coordinates. Each row represents an atom&#39;s</span>
+</span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="sd">        Atomic Cartesian coordinates. Each row represents an atom's</span>
 </span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a><span class="sd">        (x, y, z) position. Defaults to None.</span>
 </span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a><span class="sd">    cell : np.ndarray of float, shape (3, 3), optional</span>
 </span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a><span class="sd">        Simulation box cell. Defaults to None.</span>
@@ -1638,7 +1777,7 @@ Defaults to None.</p>
 </span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="sd">    index : np.ndarray of int, shape (N,), optional</span>
 </span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="sd">        Original indices of the atoms. Defaults to None.</span>
 </span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35"></a>
-</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36"></a><span class="sd">    """</span>
 </span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37"></a>
 </span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
 </span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39"></a>        <span class="bp">self</span><span class="p">,</span>
@@ -1656,7 +1795,7 @@ Defaults to None.</p>
 </span><span id="__span-0-51"><a id="__codelineno-0-51" name="__codelineno-0-51"></a>
 </span><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52"></a>    <span class="nd">@classmethod</span>
 </span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">create_from_file</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">System</span><span class="p">:</span>
-</span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a System object from a structure file.</span>
+</span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="w">        </span><span class="sd">"""Create a System object from a structure file.</span>
 </span><span id="__span-0-55"><a id="__codelineno-0-55" name="__codelineno-0-55"></a>
 </span><span id="__span-0-56"><a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">        This method reads an atomic configuration file (e.g., .xyz, .vasp, .xsf)</span>
 </span><span id="__span-0-57"><a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">        using ASE, and initializes a new System instance with the corresponding</span>
@@ -1677,12 +1816,12 @@ Defaults to None.</p>
 </span><span id="__span-0-72"><a id="__codelineno-0-72" name="__codelineno-0-72"></a><span class="sd">        ValueError</span>
 </span><span id="__span-0-73"><a id="__codelineno-0-73" name="__codelineno-0-73"></a><span class="sd">            If the file cannot be read or parsed into an ASE Atoms object.</span>
 </span><span id="__span-0-74"><a id="__codelineno-0-74" name="__codelineno-0-74"></a>
-</span><span id="__span-0-75"><a id="__codelineno-0-75" name="__codelineno-0-75"></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="__span-0-75"><a id="__codelineno-0-75" name="__codelineno-0-75"></a><span class="sd">        """</span>
 </span><span id="__span-0-76"><a id="__codelineno-0-76" name="__codelineno-0-76"></a>        <span class="c1"># Create ase.Atoms from file</span>
 </span><span id="__span-0-77"><a id="__codelineno-0-77" name="__codelineno-0-77"></a>        <span class="k">try</span><span class="p">:</span>
 </span><span id="__span-0-78"><a id="__codelineno-0-78" name="__codelineno-0-78"></a>            <span class="n">atoms</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">index</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 </span><span id="__span-0-79"><a id="__codelineno-0-79" name="__codelineno-0-79"></a>        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-</span><span id="__span-0-80"><a id="__codelineno-0-80" name="__codelineno-0-80"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Can&#39;t create System from file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+</span><span id="__span-0-80"><a id="__codelineno-0-80" name="__codelineno-0-80"></a>            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Can't create System from file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 </span><span id="__span-0-81"><a id="__codelineno-0-81" name="__codelineno-0-81"></a>
 </span><span id="__span-0-82"><a id="__codelineno-0-82" name="__codelineno-0-82"></a>        <span class="c1"># Create new System instance</span>
 </span><span id="__span-0-83"><a id="__codelineno-0-83" name="__codelineno-0-83"></a>        <span class="n">new_system</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
@@ -1693,7 +1832,7 @@ Defaults to None.</p>
 </span><span id="__span-0-88"><a id="__codelineno-0-88" name="__codelineno-0-88"></a>        <span class="n">new_system</span><span class="o">.</span><span class="n">pbc</span> <span class="o">=</span> <span class="n">atoms</span><span class="o">.</span><span class="n">get_pbc</span><span class="p">()</span>
 </span><span id="__span-0-89"><a id="__codelineno-0-89" name="__codelineno-0-89"></a>        <span class="n">new_system</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">new_system</span><span class="o">.</span><span class="n">types</span><span class="p">))</span>
 </span><span id="__span-0-90"><a id="__codelineno-0-90" name="__codelineno-0-90"></a>
-</span><span id="__span-0-91"><a id="__codelineno-0-91" name="__codelineno-0-91"></a>        <span class="c1">#Wrap positions</span>
+</span><span id="__span-0-91"><a id="__codelineno-0-91" name="__codelineno-0-91"></a>        <span class="c1"># Wrap positions</span>
 </span><span id="__span-0-92"><a id="__codelineno-0-92" name="__codelineno-0-92"></a>        <span class="n">new_system</span><span class="o">.</span><span class="n">update_positions</span><span class="p">(</span><span class="n">new_system</span><span class="o">.</span><span class="n">positions</span><span class="p">)</span>
 </span><span id="__span-0-93"><a id="__codelineno-0-93" name="__codelineno-0-93"></a>
 </span><span id="__span-0-94"><a id="__codelineno-0-94" name="__codelineno-0-94"></a>        <span class="k">return</span> <span class="n">new_system</span>
@@ -1701,7 +1840,7 @@ Defaults to None.</p>
 </span><span id="__span-0-96"><a id="__codelineno-0-96" name="__codelineno-0-96"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">update_positions</span><span class="p">(</span>
 </span><span id="__span-0-97"><a id="__codelineno-0-97" name="__codelineno-0-97"></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">new_positions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">atom_idx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 </span><span id="__span-0-98"><a id="__codelineno-0-98" name="__codelineno-0-98"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="__span-0-99"><a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the atomic positions of the system.</span>
+</span><span id="__span-0-99"><a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="w">        </span><span class="sd">"""Update the atomic positions of the system.</span>
 </span><span id="__span-0-100"><a id="__codelineno-0-100" name="__codelineno-0-100"></a>
 </span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="sd">        This method allows updating either all atomic positions or a subset</span>
 </span><span id="__span-0-102"><a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="sd">        of them specified by their indices. After updating, positions are</span>
@@ -1717,7 +1856,7 @@ Defaults to None.</p>
 </span><span id="__span-0-112"><a id="__codelineno-0-112" name="__codelineno-0-112"></a><span class="sd">              where M is the number of atoms being updated (i.e., `len(atom_idx)`).</span>
 </span><span id="__span-0-113"><a id="__codelineno-0-113" name="__codelineno-0-113"></a><span class="sd">        atom_idx : np.ndarray of int, shape (M,3) optional</span>
 </span><span id="__span-0-114"><a id="__codelineno-0-114" name="__codelineno-0-114"></a><span class="sd">            A 1D NumPy array of integers specifying the indices of the atoms</span>
-</span><span id="__span-0-115"><a id="__codelineno-0-115" name="__codelineno-0-115"></a><span class="sd">            whose positions are to be updated. If `None` (default), all atoms&#39;</span>
+</span><span id="__span-0-115"><a id="__codelineno-0-115" name="__codelineno-0-115"></a><span class="sd">            whose positions are to be updated. If `None` (default), all atoms'</span>
 </span><span id="__span-0-116"><a id="__codelineno-0-116" name="__codelineno-0-116"></a><span class="sd">            positions are updated.</span>
 </span><span id="__span-0-117"><a id="__codelineno-0-117" name="__codelineno-0-117"></a>
 </span><span id="__span-0-118"><a id="__codelineno-0-118" name="__codelineno-0-118"></a><span class="sd">        Notes</span>
@@ -1726,7 +1865,7 @@ Defaults to None.</p>
 </span><span id="__span-0-121"><a id="__codelineno-0-121" name="__codelineno-0-121"></a><span class="sd">        - Small negative position values are set to zero to prevent issues with</span>
 </span><span id="__span-0-122"><a id="__codelineno-0-122" name="__codelineno-0-122"></a><span class="sd">          spatial search algorithms (e.g., KD-trees) due to floating-point inaccuracies.</span>
 </span><span id="__span-0-123"><a id="__codelineno-0-123" name="__codelineno-0-123"></a>
-</span><span id="__span-0-124"><a id="__codelineno-0-124" name="__codelineno-0-124"></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="__span-0-124"><a id="__codelineno-0-124" name="__codelineno-0-124"></a><span class="sd">        """</span>
 </span><span id="__span-0-125"><a id="__codelineno-0-125" name="__codelineno-0-125"></a>        <span class="k">if</span> <span class="n">atom_idx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="__span-0-126"><a id="__codelineno-0-126" name="__codelineno-0-126"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">positions</span> <span class="o">=</span> <span class="n">new_positions</span>
 </span><span id="__span-0-127"><a id="__codelineno-0-127" name="__codelineno-0-127"></a>            <span class="bp">self</span><span class="o">.</span><span class="n">positions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrap_positions</span><span class="p">(</span>
@@ -1746,7 +1885,7 @@ Defaults to None.</p>
 </span><span id="__span-0-141"><a id="__codelineno-0-141" name="__codelineno-0-141"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">wrap_positions</span><span class="p">(</span>
 </span><span id="__span-0-142"><a id="__codelineno-0-142" name="__codelineno-0-142"></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">positions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">cell</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pbc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">True</span>
 </span><span id="__span-0-143"><a id="__codelineno-0-143" name="__codelineno-0-143"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-</span><span id="__span-0-144"><a id="__codelineno-0-144" name="__codelineno-0-144"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Wrap atomic positions back into the primary unit cell.</span>
+</span><span id="__span-0-144"><a id="__codelineno-0-144" name="__codelineno-0-144"></a><span class="w">        </span><span class="sd">"""Wrap atomic positions back into the primary unit cell.</span>
 </span><span id="__span-0-145"><a id="__codelineno-0-145" name="__codelineno-0-145"></a>
 </span><span id="__span-0-146"><a id="__codelineno-0-146" name="__codelineno-0-146"></a><span class="sd">        This method is a convenience wrapper for `ase.geometry.wrap_positions`.</span>
 </span><span id="__span-0-147"><a id="__codelineno-0-147" name="__codelineno-0-147"></a>
@@ -1769,7 +1908,7 @@ Defaults to None.</p>
 </span><span id="__span-0-164"><a id="__codelineno-0-164" name="__codelineno-0-164"></a><span class="sd">        --------</span>
 </span><span id="__span-0-165"><a id="__codelineno-0-165" name="__codelineno-0-165"></a><span class="sd">        ase.geometry.wrap_positions : Refer to ASE documentation for full details.</span>
 </span><span id="__span-0-166"><a id="__codelineno-0-166" name="__codelineno-0-166"></a>
-</span><span id="__span-0-167"><a id="__codelineno-0-167" name="__codelineno-0-167"></a><span class="sd">        &quot;&quot;&quot;</span>
+</span><span id="__span-0-167"><a id="__codelineno-0-167" name="__codelineno-0-167"></a><span class="sd">        """</span>
 </span><span id="__span-0-168"><a id="__codelineno-0-168" name="__codelineno-0-168"></a>        <span class="k">return</span> <span class="n">ase</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">wrap_positions</span><span class="p">(</span><span class="n">positions</span><span class="o">=</span><span class="n">positions</span><span class="p">,</span> <span class="n">cell</span><span class="o">=</span><span class="n">cell</span><span class="p">,</span> <span class="n">pbc</span><span class="o">=</span><span class="n">pbc</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
               </details>
@@ -1933,7 +2072,7 @@ atomic positions, types, cell, and periodic boundary conditions.</p>
 <span class="normal"><a href="#__codelineno-0-93">93</a></span>
 <span class="normal"><a href="#__codelineno-0-94">94</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-52"><a id="__codelineno-0-52" name="__codelineno-0-52"></a><span class="nd">@classmethod</span>
 </span><span id="__span-0-53"><a id="__codelineno-0-53" name="__codelineno-0-53"></a><span class="k">def</span><span class="w"> </span><span class="nf">create_from_file</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">System</span><span class="p">:</span>
-</span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a System object from a structure file.</span>
+</span><span id="__span-0-54"><a id="__codelineno-0-54" name="__codelineno-0-54"></a><span class="w">    </span><span class="sd">"""Create a System object from a structure file.</span>
 </span><span id="__span-0-55"><a id="__codelineno-0-55" name="__codelineno-0-55"></a>
 </span><span id="__span-0-56"><a id="__codelineno-0-56" name="__codelineno-0-56"></a><span class="sd">    This method reads an atomic configuration file (e.g., .xyz, .vasp, .xsf)</span>
 </span><span id="__span-0-57"><a id="__codelineno-0-57" name="__codelineno-0-57"></a><span class="sd">    using ASE, and initializes a new System instance with the corresponding</span>
@@ -1954,12 +2093,12 @@ atomic positions, types, cell, and periodic boundary conditions.</p>
 </span><span id="__span-0-72"><a id="__codelineno-0-72" name="__codelineno-0-72"></a><span class="sd">    ValueError</span>
 </span><span id="__span-0-73"><a id="__codelineno-0-73" name="__codelineno-0-73"></a><span class="sd">        If the file cannot be read or parsed into an ASE Atoms object.</span>
 </span><span id="__span-0-74"><a id="__codelineno-0-74" name="__codelineno-0-74"></a>
-</span><span id="__span-0-75"><a id="__codelineno-0-75" name="__codelineno-0-75"></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="__span-0-75"><a id="__codelineno-0-75" name="__codelineno-0-75"></a><span class="sd">    """</span>
 </span><span id="__span-0-76"><a id="__codelineno-0-76" name="__codelineno-0-76"></a>    <span class="c1"># Create ase.Atoms from file</span>
 </span><span id="__span-0-77"><a id="__codelineno-0-77" name="__codelineno-0-77"></a>    <span class="k">try</span><span class="p">:</span>
 </span><span id="__span-0-78"><a id="__codelineno-0-78" name="__codelineno-0-78"></a>        <span class="n">atoms</span> <span class="o">=</span> <span class="n">read</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">index</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 </span><span id="__span-0-79"><a id="__codelineno-0-79" name="__codelineno-0-79"></a>    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-</span><span id="__span-0-80"><a id="__codelineno-0-80" name="__codelineno-0-80"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Can&#39;t create System from file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
+</span><span id="__span-0-80"><a id="__codelineno-0-80" name="__codelineno-0-80"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Can't create System from file </span><span class="si">{</span><span class="n">file_path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 </span><span id="__span-0-81"><a id="__codelineno-0-81" name="__codelineno-0-81"></a>
 </span><span id="__span-0-82"><a id="__codelineno-0-82" name="__codelineno-0-82"></a>    <span class="c1"># Create new System instance</span>
 </span><span id="__span-0-83"><a id="__codelineno-0-83" name="__codelineno-0-83"></a>    <span class="n">new_system</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
@@ -1970,7 +2109,7 @@ atomic positions, types, cell, and periodic boundary conditions.</p>
 </span><span id="__span-0-88"><a id="__codelineno-0-88" name="__codelineno-0-88"></a>    <span class="n">new_system</span><span class="o">.</span><span class="n">pbc</span> <span class="o">=</span> <span class="n">atoms</span><span class="o">.</span><span class="n">get_pbc</span><span class="p">()</span>
 </span><span id="__span-0-89"><a id="__codelineno-0-89" name="__codelineno-0-89"></a>    <span class="n">new_system</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">new_system</span><span class="o">.</span><span class="n">types</span><span class="p">))</span>
 </span><span id="__span-0-90"><a id="__codelineno-0-90" name="__codelineno-0-90"></a>
-</span><span id="__span-0-91"><a id="__codelineno-0-91" name="__codelineno-0-91"></a>    <span class="c1">#Wrap positions</span>
+</span><span id="__span-0-91"><a id="__codelineno-0-91" name="__codelineno-0-91"></a>    <span class="c1"># Wrap positions</span>
 </span><span id="__span-0-92"><a id="__codelineno-0-92" name="__codelineno-0-92"></a>    <span class="n">new_system</span><span class="o">.</span><span class="n">update_positions</span><span class="p">(</span><span class="n">new_system</span><span class="o">.</span><span class="n">positions</span><span class="p">)</span>
 </span><span id="__span-0-93"><a id="__codelineno-0-93" name="__codelineno-0-93"></a>
 </span><span id="__span-0-94"><a id="__codelineno-0-94" name="__codelineno-0-94"></a>    <span class="k">return</span> <span class="n">new_system</span>
@@ -2111,7 +2250,7 @@ positions are updated.</p>
 <span class="normal"><a href="#__codelineno-0-139">139</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-96"><a id="__codelineno-0-96" name="__codelineno-0-96"></a><span class="k">def</span><span class="w"> </span><span class="nf">update_positions</span><span class="p">(</span>
 </span><span id="__span-0-97"><a id="__codelineno-0-97" name="__codelineno-0-97"></a>    <span class="bp">self</span><span class="p">,</span> <span class="n">new_positions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">atom_idx</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 </span><span id="__span-0-98"><a id="__codelineno-0-98" name="__codelineno-0-98"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-</span><span id="__span-0-99"><a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Update the atomic positions of the system.</span>
+</span><span id="__span-0-99"><a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="w">    </span><span class="sd">"""Update the atomic positions of the system.</span>
 </span><span id="__span-0-100"><a id="__codelineno-0-100" name="__codelineno-0-100"></a>
 </span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="sd">    This method allows updating either all atomic positions or a subset</span>
 </span><span id="__span-0-102"><a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="sd">    of them specified by their indices. After updating, positions are</span>
@@ -2127,7 +2266,7 @@ positions are updated.</p>
 </span><span id="__span-0-112"><a id="__codelineno-0-112" name="__codelineno-0-112"></a><span class="sd">          where M is the number of atoms being updated (i.e., `len(atom_idx)`).</span>
 </span><span id="__span-0-113"><a id="__codelineno-0-113" name="__codelineno-0-113"></a><span class="sd">    atom_idx : np.ndarray of int, shape (M,3) optional</span>
 </span><span id="__span-0-114"><a id="__codelineno-0-114" name="__codelineno-0-114"></a><span class="sd">        A 1D NumPy array of integers specifying the indices of the atoms</span>
-</span><span id="__span-0-115"><a id="__codelineno-0-115" name="__codelineno-0-115"></a><span class="sd">        whose positions are to be updated. If `None` (default), all atoms&#39;</span>
+</span><span id="__span-0-115"><a id="__codelineno-0-115" name="__codelineno-0-115"></a><span class="sd">        whose positions are to be updated. If `None` (default), all atoms'</span>
 </span><span id="__span-0-116"><a id="__codelineno-0-116" name="__codelineno-0-116"></a><span class="sd">        positions are updated.</span>
 </span><span id="__span-0-117"><a id="__codelineno-0-117" name="__codelineno-0-117"></a>
 </span><span id="__span-0-118"><a id="__codelineno-0-118" name="__codelineno-0-118"></a><span class="sd">    Notes</span>
@@ -2136,7 +2275,7 @@ positions are updated.</p>
 </span><span id="__span-0-121"><a id="__codelineno-0-121" name="__codelineno-0-121"></a><span class="sd">    - Small negative position values are set to zero to prevent issues with</span>
 </span><span id="__span-0-122"><a id="__codelineno-0-122" name="__codelineno-0-122"></a><span class="sd">      spatial search algorithms (e.g., KD-trees) due to floating-point inaccuracies.</span>
 </span><span id="__span-0-123"><a id="__codelineno-0-123" name="__codelineno-0-123"></a>
-</span><span id="__span-0-124"><a id="__codelineno-0-124" name="__codelineno-0-124"></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="__span-0-124"><a id="__codelineno-0-124" name="__codelineno-0-124"></a><span class="sd">    """</span>
 </span><span id="__span-0-125"><a id="__codelineno-0-125" name="__codelineno-0-125"></a>    <span class="k">if</span> <span class="n">atom_idx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="__span-0-126"><a id="__codelineno-0-126" name="__codelineno-0-126"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">positions</span> <span class="o">=</span> <span class="n">new_positions</span>
 </span><span id="__span-0-127"><a id="__codelineno-0-127" name="__codelineno-0-127"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">positions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrap_positions</span><span class="p">(</span>
@@ -2299,7 +2438,7 @@ Defaults to True (all directions).</p>
 <span class="normal"><a href="#__codelineno-0-168">168</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-141"><a id="__codelineno-0-141" name="__codelineno-0-141"></a><span class="k">def</span><span class="w"> </span><span class="nf">wrap_positions</span><span class="p">(</span>
 </span><span id="__span-0-142"><a id="__codelineno-0-142" name="__codelineno-0-142"></a>    <span class="bp">self</span><span class="p">,</span> <span class="n">positions</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">cell</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">pbc</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="kc">True</span>
 </span><span id="__span-0-143"><a id="__codelineno-0-143" name="__codelineno-0-143"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-</span><span id="__span-0-144"><a id="__codelineno-0-144" name="__codelineno-0-144"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap atomic positions back into the primary unit cell.</span>
+</span><span id="__span-0-144"><a id="__codelineno-0-144" name="__codelineno-0-144"></a><span class="w">    </span><span class="sd">"""Wrap atomic positions back into the primary unit cell.</span>
 </span><span id="__span-0-145"><a id="__codelineno-0-145" name="__codelineno-0-145"></a>
 </span><span id="__span-0-146"><a id="__codelineno-0-146" name="__codelineno-0-146"></a><span class="sd">    This method is a convenience wrapper for `ase.geometry.wrap_positions`.</span>
 </span><span id="__span-0-147"><a id="__codelineno-0-147" name="__codelineno-0-147"></a>
@@ -2322,7 +2461,7 @@ Defaults to True (all directions).</p>
 </span><span id="__span-0-164"><a id="__codelineno-0-164" name="__codelineno-0-164"></a><span class="sd">    --------</span>
 </span><span id="__span-0-165"><a id="__codelineno-0-165" name="__codelineno-0-165"></a><span class="sd">    ase.geometry.wrap_positions : Refer to ASE documentation for full details.</span>
 </span><span id="__span-0-166"><a id="__codelineno-0-166" name="__codelineno-0-166"></a>
-</span><span id="__span-0-167"><a id="__codelineno-0-167" name="__codelineno-0-167"></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="__span-0-167"><a id="__codelineno-0-167" name="__codelineno-0-167"></a><span class="sd">    """</span>
 </span><span id="__span-0-168"><a id="__codelineno-0-168" name="__codelineno-0-168"></a>    <span class="k">return</span> <span class="n">ase</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">wrap_positions</span><span class="p">(</span><span class="n">positions</span><span class="o">=</span><span class="n">positions</span><span class="p">,</span> <span class="n">cell</span><span class="o">=</span><span class="n">cell</span><span class="p">,</span> <span class="n">pbc</span><span class="o">=</span><span class="n">pbc</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
             </details>
@@ -2363,6 +2502,8 @@ Defaults to True (all directions).</p>
             </div>
           
           
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
         
@@ -2395,10 +2536,10 @@ Defaults to True (all directions).</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy", "content.code.annotate", "content.code.highlight"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy", "content.code.annotate", "content.code.highlight", "content.tabs.link"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
