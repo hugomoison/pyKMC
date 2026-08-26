@@ -14,7 +14,7 @@
         <link rel="prev" href="troubleshooting.html">
       
       
-        <link rel="next" href="dev_strategy_pattern.html">
+        <link rel="next" href="developer_guide.html">
       
       
         
@@ -586,50 +586,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#eventrecycling-section-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Eventrecycling Section (optional)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#inactive_atoms-section-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Inactive_atoms Section (optional)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#frozen_atoms-section-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Frozen_atoms Section (optional)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#bias-section-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Bias Section (optional)
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -644,20 +600,9 @@
   
   
   
-    
-    
-    
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
+    <li class="md-nav__item">
+      <a href="developer_guide.html" class="md-nav__link">
         
-        
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
-        
-          
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
-            
   
   
   <span class="md-ellipsis">
@@ -671,135 +616,7 @@
   
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Developer Guide
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="dev_strategy_pattern.html" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Strategy pattern
-  
-
-    
-  </span>
-  
-  
-
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="dev_engine.html" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Engine
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="dev_parallelization_manager.html" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Manager and Parallelization
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="dev_code_formatting.html" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Code formatting
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
     </li>
   
 
@@ -1593,50 +1410,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#eventrecycling-section-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Eventrecycling Section (optional)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#inactive_atoms-section-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Inactive_atoms Section (optional)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#frozen_atoms-section-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Frozen_atoms Section (optional)
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#bias-section-optional" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Bias Section (optional)
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -1741,13 +1514,6 @@
   </details></p>
 </li>
 <li>
-<p><strong><code>group_size</code></strong> : <code>int</code>, default = <code>-1</code>
-<br />
-<details><summary>Description</summary>
-  Number of MPI worker ranks in the group communicator (replaces old global mode). -1 means all worker ranks.
-  </details></p>
-</li>
-<li>
 <p><strong><code>engine_use_rank_0</code></strong> : <code>bool</code>, default = <code>False</code>
 <br />
 <details><summary>Description</summary>
@@ -1780,27 +1546,6 @@
 <br />
 <details><summary>Description</summary>
   Incorporate AV's into simulations, recommended for large systems
-  </details></p>
-</li>
-<li>
-<p><strong><code>recycle</code></strong> : <code>bool</code>, default = <code>False</code>
-<br />
-<details><summary>Description</summary>
-  Recycle non-perturbed events from the previous KMC step instead of re-searching them. Requires an [EventRecycling] section.
-  </details></p>
-</li>
-<li>
-<p><strong><code>bias</code></strong> : <code>bool</code>, default = <code>False</code>
-<br />
-<details><summary>Description</summary>
-  Enable event selection bias. Requires a [Bias] section.
-  </details></p>
-</li>
-<li>
-<p><strong><code>max_physical_time</code></strong> : <code>float</code>, optional
-<br />
-<details><summary>Description</summary>
-  Maximum physical (simulated) time in ps. If set, the simulation stops once this value is reached. Defaults to None (no time limit).
   </details>
 </p>
 </li>
@@ -1813,10 +1558,10 @@
 
 <ul>
 <li>
-<p><strong><code>style</code></strong> : <code>Literal['cna', 'graph', 'cna/graph', 'diamond/graph', 'coordination', 'coordination/graph']</code>, mandatory
+<p><strong><code>style</code></strong> : <code>Literal['cna', 'graph', 'cna/graph', 'diamond/graph']</code>, mandatory
 <br />
 <details><summary>Description</summary>
-  Method used to characterize and assign an ID to an atom's local atomic environment. 'coordination' classifies atoms based on nearest-neighbor count against a threshold. 'coordination/graph' first filters by coordination, then computes graph IDs for non-crystal atoms.
+  Method used to characterize and assign an ID to an atom's local atomic environment
   </details></p>
 </li>
 <li>
@@ -1838,20 +1583,6 @@
 <br />
 <details><summary>Description</summary>
   When `style` is 'cna/graph', specifies the N-th shell of neighbors whose graph IDs should also be computed.
-  </details></p>
-</li>
-<li>
-<p><strong><code>coordination_threshold</code></strong> : <code>int</code>, optional
-<br />
-<details><summary>Description</summary>
-  When style is 'coordination' or 'coordination/graph', atoms with fewer neighbors (within rnei) than this value are classified as 'noncrystal'. Atoms with this many or more neighbors are classified as 'crystal'. Required when style is 'coordination' or 'coordination/graph'.
-  </details></p>
-</li>
-<li>
-<p><strong><code>atom_coloring_mode</code></strong> : <code>Literal['grey', 'full']</code>, default = <code>'full'</code>
-<br />
-<details><summary>Description</summary>
-  Controls whether element types are used in environment matching. Defaults to 'full' (species-resolved). 'grey': all atoms treated identically (grey alloy approximation). 'full': element types used in graph hashing, PSR matching, and symmetry detection.
   </details>
 </p>
 </li>
@@ -2015,20 +1746,6 @@
 <br />
 <details><summary>Description</summary>
   Lammps minimize command
-  </details></p>
-</li>
-<li>
-<p><strong><code>frz_min</code></strong> : <code>str</code>, default = <code>'1.0e-6 1.0e-8 10 10'</code>
-<br />
-<details><summary>Description</summary>
-  Lammps minimize command with frozen core
-  </details></p>
-</li>
-<li>
-<p><strong><code>verbosity</code></strong> : <code>int</code>, optional
-<br />
-<details><summary>Description</summary>
-  LAMMPS log verbosity. None inherits control.verbosity. 0 disables log file.
   </details>
 </p>
 </li>
@@ -2052,6 +1769,13 @@
 <br />
 <details><summary>Description</summary>
   Threshold at which an atom is considered to have moved. This threshold affects the npart parameter in the artn.out output.
+  </details></p>
+</li>
+<li>
+<p><strong><code>evalf_max</code></strong> : <code>int</code>, default = <code>9999</code>
+<br />
+<details><summary>Description</summary>
+  to stop an artn search before end when the number of force evaluations by the force engine is greater to nevalf_max.
   </details></p>
 </li>
 <li>
@@ -2190,7 +1914,7 @@
   </details></p>
 </li>
 <li>
-<p><strong><code>nevalf_max</code></strong> : <code>int</code>, default = <code>9999</code>
+<p><strong><code>nevalf_max</code></strong> : <code>int</code>, default = <code>500</code>
 <br />
 <details><summary>Description</summary>
   Stop an artn search before end when the number of force evaluations by the force engine is greater to nevalf_max
@@ -2212,10 +1936,10 @@
   </details></p>
 </li>
 <li>
-<p><strong><code>r_nevalf_max</code></strong> : <code>int</code>, default = <code>300</code>
+<p><strong><code>r_evalf_max</code></strong> : <code>int</code>, default = <code>300</code>
 <br />
 <details><summary>Description</summary>
-  Stop an artn refinement before end when the number of force evaluations by the force engine is greater to nevalf_max.
+  to stop an artn refinement before end when the number of force evaluations by the force engine is greater to nevalf_max.
   </details></p>
 </li>
 <li>
@@ -2229,7 +1953,7 @@
 <p><strong><code>r_delr_sad_thr</code></strong> : <code>float</code>, default = <code>0.4</code>
 <br />
 <details><summary>Description</summary>
-  Acceptance threshold (in Angstrom) for a refined saddle point. A refinement run starts from the expected saddle position, and artn delr_sad measures how far the converged saddle has moved from that starting configuration. If delr_sad is strictly below this threshold (delr_sad < r_delr_sad_thr), the refined saddle stayed close to the expected saddle and is accepted; otherwise (e.g. the search fell back to the minimum), a new attempt is made, up to r_max_attempts.
+  When a saddle point is found by pARTn, we compare artn delr_sad to this threshold to check if the system went back to the minimum. If yes, new attempt.
   </details></p>
 </li>
 <li>
@@ -2453,295 +2177,6 @@
 </li>
 </ul>
 <hr />
-<h2 id="eventrecycling-section-optional"><code>Eventrecycling</code> Section (optional)</h2>
-<details><summary>Section Overview</summary>
-  Event recycling parameters. Required when control.recycle = True.
-</details>
-
-<ul>
-<li>
-<p><strong><code>style</code></strong> : <code>Literal['displacement']</code>, mandatory
-<br />
-<details><summary>Description</summary>
-  Method used to decide which events can be recycled. 'displacement' = central atom moved less than movement_thr AND is farther than distance_thr from the executed event.
-  </details></p>
-</li>
-<li>
-<p><strong><code>movement_thr</code></strong> : <code>float</code>, default = <code>0.02</code>
-<br />
-<details><summary>Description</summary>
-  Angstroms. Central atoms whose displacement from pre- to post-execution is below this are considered 'unmoved'.
-  </details></p>
-</li>
-<li>
-<p><strong><code>distance_thr</code></strong> : <code>float</code>, default = <code>10.0</code>
-<br />
-<details><summary>Description</summary>
-  Angstroms. Candidate events whose central atom is farther than this (PBC-aware minimum-image) from the executed event's central atom pass the distance check.
-  </details>
-</p>
-</li>
-</ul>
-<hr />
-<h2 id="inactive_atoms-section-optional"><code>Inactive_atoms</code> Section (optional)</h2>
-<details><summary>Section Overview</summary>
-  Selects atoms by type, index, or geometric region (union semantics).
-
-  Used for ``inactive_atoms`` and ``frozen_atoms`` config sections.
-  Runtime geometric queries (e.g. ``contains(positions)``) live in
-  ``pykmc/region.py``.
-</details>
-
-<ul>
-<li>
-<p><strong><code>region_type</code></strong> : <code>Literal['sphere', 'shell', 'box', 'plane']</code>, optional
-<br />
-<details><summary>Description</summary>
-  Shape of the geometric region.
-  </details></p>
-</li>
-<li>
-<p><strong><code>center</code></strong> : <code>list[float]</code>, optional
-<br />
-<details><summary>Description</summary>
-  Center [x, y, z] for sphere or shell regions.
-  </details></p>
-</li>
-<li>
-<p><strong><code>radius</code></strong> : <code>float</code>, optional
-<br />
-<details><summary>Description</summary>
-  Outer radius for sphere or shell regions.
-  </details></p>
-</li>
-<li>
-<p><strong><code>inner_radius</code></strong> : <code>float</code>, optional
-<br />
-<details><summary>Description</summary>
-  Inner (hollow) radius for shell regions.
-  </details></p>
-</li>
-<li>
-<p><strong><code>lo</code></strong> : <code>list[float]</code>, optional
-<br />
-<details><summary>Description</summary>
-  Lower corner [xlo, ylo, zlo] for box regions.
-  </details></p>
-</li>
-<li>
-<p><strong><code>hi</code></strong> : <code>list[float]</code>, optional
-<br />
-<details><summary>Description</summary>
-  Upper corner [xhi, yhi, zhi] for box regions.
-  </details></p>
-</li>
-<li>
-<p><strong><code>normal</code></strong> : <code>Literal['x', 'y', 'z']</code>, optional
-<br />
-<details><summary>Description</summary>
-  Axis normal to the cutting plane.
-  </details></p>
-</li>
-<li>
-<p><strong><code>threshold</code></strong> : <code>float</code>, optional
-<br />
-<details><summary>Description</summary>
-  Position along the normal axis defining the plane.
-  </details></p>
-</li>
-<li>
-<p><strong><code>side</code></strong> : <code>Literal['inside', 'outside', 'above', 'below']</code>, default = <code>'inside'</code>
-<br />
-<details><summary>Description</summary>
-  Membership side: 'inside'/'outside' for sphere/shell/box, 'above'/'below' for plane.
-  </details></p>
-</li>
-<li>
-<p><strong><code>types</code></strong> : <code>list[str]</code>, default = <code>PydanticUndefined</code>
-<br />
-<details><summary>Description</summary>
-  Chemical symbols of atom types to select (e.g. ['Fe', 'O']).
-  </details></p>
-</li>
-<li>
-<p><strong><code>indices</code></strong> : <code>list[int]</code>, default = <code>PydanticUndefined</code>
-<br />
-<details><summary>Description</summary>
-  0-based atom indices to select.
-  </details>
-</p>
-</li>
-</ul>
-<hr />
-<h2 id="frozen_atoms-section-optional"><code>Frozen_atoms</code> Section (optional)</h2>
-<details><summary>Section Overview</summary>
-  Selects atoms by type, index, or geometric region (union semantics).
-
-  Used for ``inactive_atoms`` and ``frozen_atoms`` config sections.
-  Runtime geometric queries (e.g. ``contains(positions)``) live in
-  ``pykmc/region.py``.
-</details>
-
-<ul>
-<li>
-<p><strong><code>region_type</code></strong> : <code>Literal['sphere', 'shell', 'box', 'plane']</code>, optional
-<br />
-<details><summary>Description</summary>
-  Shape of the geometric region.
-  </details></p>
-</li>
-<li>
-<p><strong><code>center</code></strong> : <code>list[float]</code>, optional
-<br />
-<details><summary>Description</summary>
-  Center [x, y, z] for sphere or shell regions.
-  </details></p>
-</li>
-<li>
-<p><strong><code>radius</code></strong> : <code>float</code>, optional
-<br />
-<details><summary>Description</summary>
-  Outer radius for sphere or shell regions.
-  </details></p>
-</li>
-<li>
-<p><strong><code>inner_radius</code></strong> : <code>float</code>, optional
-<br />
-<details><summary>Description</summary>
-  Inner (hollow) radius for shell regions.
-  </details></p>
-</li>
-<li>
-<p><strong><code>lo</code></strong> : <code>list[float]</code>, optional
-<br />
-<details><summary>Description</summary>
-  Lower corner [xlo, ylo, zlo] for box regions.
-  </details></p>
-</li>
-<li>
-<p><strong><code>hi</code></strong> : <code>list[float]</code>, optional
-<br />
-<details><summary>Description</summary>
-  Upper corner [xhi, yhi, zhi] for box regions.
-  </details></p>
-</li>
-<li>
-<p><strong><code>normal</code></strong> : <code>Literal['x', 'y', 'z']</code>, optional
-<br />
-<details><summary>Description</summary>
-  Axis normal to the cutting plane.
-  </details></p>
-</li>
-<li>
-<p><strong><code>threshold</code></strong> : <code>float</code>, optional
-<br />
-<details><summary>Description</summary>
-  Position along the normal axis defining the plane.
-  </details></p>
-</li>
-<li>
-<p><strong><code>side</code></strong> : <code>Literal['inside', 'outside', 'above', 'below']</code>, default = <code>'inside'</code>
-<br />
-<details><summary>Description</summary>
-  Membership side: 'inside'/'outside' for sphere/shell/box, 'above'/'below' for plane.
-  </details></p>
-</li>
-<li>
-<p><strong><code>types</code></strong> : <code>list[str]</code>, default = <code>PydanticUndefined</code>
-<br />
-<details><summary>Description</summary>
-  Chemical symbols of atom types to select (e.g. ['Fe', 'O']).
-  </details></p>
-</li>
-<li>
-<p><strong><code>indices</code></strong> : <code>list[int]</code>, default = <code>PydanticUndefined</code>
-<br />
-<details><summary>Description</summary>
-  0-based atom indices to select.
-  </details>
-</p>
-</li>
-</ul>
-<hr />
-<h2 id="bias-section-optional"><code>Bias</code> Section (optional)</h2>
-<details><summary>Section Overview</summary>
-  Event selection bias parameters.
-</details>
-
-<ul>
-<li>
-<p><strong><code>style</code></strong> : <code>Literal['direction', 'point', 'topo']</code>, mandatory
-<br />
-<details><summary>Description</summary>
-  Bias style: 'direction' (DirectionBias), 'point' (PointBias), or 'topo' (TopoBias).
-  </details></p>
-</li>
-<li>
-<p><strong><code>mode</code></strong> : <code>Literal['filter', 'boost']</code>, default = <code>'filter'</code>
-<br />
-<details><summary>Description</summary>
-  Selection mode. 'filter': rejection-loop removes non-accepted events. 'boost': multiplies desired event rates by a dynamic factor so they fire with probability bias_weight, without blocking other events.
-  </details></p>
-</li>
-<li>
-<p><strong><code>bias_weight</code></strong> : <code>float</code>, default = <code>0.5</code>
-<br />
-<details><summary>Description</summary>
-  Target probability in (0, 1) that a desired event is selected at each step. Only used in boost mode.
-  </details></p>
-</li>
-<li>
-<p><strong><code>pass_unlisted</code></strong> : <code>bool</code>, default = <code>False</code>
-<br />
-<details><summary>Description</summary>
-  Whether atoms not in atom_indices pass through the bias predicate unchanged. False (default): non-listed atoms are rejected/undesired. True: non-listed atoms always pass; only valid in filter mode.
-  </details></p>
-</li>
-<li>
-<p><strong><code>direction</code></strong> : <code>list[float]</code>, optional
-<br />
-<details><summary>Description</summary>
-  Direction vector [x, y, z] for 'direction' bias.
-  </details></p>
-</li>
-<li>
-<p><strong><code>target_point</code></strong> : <code>list[float]</code>, optional
-<br />
-<details><summary>Description</summary>
-  Target point [x, y, z] for 'point' bias.
-  </details></p>
-</li>
-<li>
-<p><strong><code>atom_indices</code></strong> : <code>list[int]</code>, optional
-<br />
-<details><summary>Description</summary>
-  Global atom indices to bias. None means all atoms.
-  </details></p>
-</li>
-<li>
-<p><strong><code>threshold</code></strong> : <code>float</code>, default = <code>0.0</code>
-<br />
-<details><summary>Description</summary>
-  Minimum projection onto the bias direction for acceptance.
-  </details></p>
-</li>
-<li>
-<p><strong><code>topo_source</code></strong> : <code>str</code>, optional
-<br />
-<details><summary>Description</summary>
-  Source topology ID for 'topo' bias (e.g. vacancy).
-  </details></p>
-</li>
-<li>
-<p><strong><code>topo_target</code></strong> : <code>str</code>, optional
-<br />
-<details><summary>Description</summary>
-  Target topology ID for 'topo' bias (e.g. interstitial).
-  </details>
-</p>
-</li>
-</ul>
-<hr />
 
 
 
@@ -2759,8 +2194,6 @@
             </div>
           
           
-  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
-
 <script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
         
@@ -2793,7 +2226,7 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["content.code.copy", "content.code.annotate", "content.code.highlight", "content.tabs.link"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["content.code.copy", "content.code.annotate", "content.code.highlight"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
       <script src="assets/javascripts/bundle.d7400e89.min.js"></script>
