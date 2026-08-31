@@ -109,7 +109,8 @@ class EventRefinementOutput:
     num_reference_event : Optional[int]
         Index of the corresponding reference event (if matched).
     refined: Optional[str]
-        If the event has been refined (T: True, F: False, B: In basin)
+        If the event has been refined (T: True, F: False, B: In basin; an 'R'
+        prefix marks a row recycled from a previous step, e.g. RT/RF)
     neighbors : Optional[np.ndarray]
         Atom indices that `saddle_positions` and `min2_positions` are ordered by
         (the rcut neighbors of the central atom when the event was refined).

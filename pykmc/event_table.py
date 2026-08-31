@@ -734,6 +734,14 @@ class ActiveEventTable:
                 system,
                 positions_pre,
             )
+            # Mark carried-over rows in the events log: a recycled row shows as
+            # 'RT'/'RF' (recycled; originally refined/unrefined) instead of
+            # 'T'/'F'. Idempotent for rows recycled over multiple steps.
+            if len(self.table) > 0:
+                self.table["refined"] = [
+                    "R" + r if isinstance(r, str) and not r.startswith("R") else r
+                    for r in self.table["refined"]
+                ]
 
     def existing_pairs(self) -> set[tuple[int, int]]:
         """Return `(atom_index, num_reference_event)` tuples already in the table.
