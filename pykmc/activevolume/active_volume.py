@@ -1,21 +1,24 @@
-from ase import Atoms, Atom
-from ase.build import bulk
-from lammps import lammps
 from ase.data import atomic_numbers, atomic_masses
-import pypARTn
 import numpy as np
-import ctypes
 from ase.geometry import find_mic
-from ..system import System
-from ..config import Config
+from ..system import Configuration
+from ..utils.geometry import compute_distances
+from ..enginemanager.lmpi.engine_primitives import (
+    initialize_parameters,
+    initialize_potential,
+    set_positions,
+    get_potential_energy,
+)
 
 
-def define_AV(config, central_atom_idx: int, positions, cell):
+def define_AV(params, central_atom_idx: int, configuration):
+    positions = configuration.positions
+    cell = configuration.cell
     # Defining parameters
     # Radius of whole active volume in Ang
-    r_a = config.activevolume.ract  # Ensure AV is larger than topology analysis
+    r_a = params.activevolume.ract  # Ensure AV is larger than topology analysis
     # Defines the radius of atoms that can move.
-    r_m = config.activevolume.rmov
+    r_m = params.activevolume.rmov
 
     # NEED TO ADD WARNING IF R_A<R_M
 
@@ -32,7 +35,9 @@ def define_AV(config, central_atom_idx: int, positions, cell):
         if np.abs(distance) <= r_m:
             inner_movable_idx.append(i)
             total_active_idx.append(i)  # Inner is also part of total active
-        elif np.abs(distance) > r_m and np.abs(distance) <= r_a:  # Can change to make it between r_m and r_a
+        elif (
+            np.abs(distance) > r_m and np.abs(distance) <= r_a
+        ):  # Can change to make it between r_m and r_a
             buffer_idx.append(i)
             total_active_idx.append(i)
         else:
@@ -43,9 +48,10 @@ def define_AV(config, central_atom_idx: int, positions, cell):
 
     av_positions = positions[av_idx]
 
-    #print(len(av_idx)," atoms in AV,", len(av_idx)-len(buffer_idx), "movable atoms")
+    # print(len(av_idx)," atoms in AV,", len(av_idx)-len(buffer_idx), "movable atoms")
 
     return av_positions, av_idx, buffer_idx
+
 
 def make_AV(engine, av_indices, buffer_indices):
 
@@ -63,254 +69,158 @@ def make_AV(engine, av_indices, buffer_indices):
     else:
         engine.command(f"group buffer empty")
         engine.command("fix f_buffer buffer setforce 0.0 0.0 0.0")
-        print('No buffer atoms defined')
+        print("No buffer atoms defined")
 
-    engine.command('run 0 post no')
+    engine.command("run 0 post no")
 
 
-def reset(engine, config, cell) -> None:
+def reset(engine, params, cell, map_type) -> None:
     """
     Clear lammps instance, preps it for the new sim:
     """
 
-    engine.command('clear')
+    engine.command("clear")
     initialize_parameters(engine)
     # Create cell
     xhi, yhi, zhi = cell[0][0], cell[1, 1], cell[2, 2]
-    engine.command(
-        "region box block 0.0 {} 0.0 {} 0.0 {}".format(xhi, yhi, zhi)
-    )
-    engine.command('create_box 1 box')  # NEEDS TO BE UPDATED FOR ALLOYS
-    initialize_potential(engine, config)
+    engine.command("region box block 0.0 {} 0.0 {} 0.0 {}".format(xhi, yhi, zhi))
+    engine.command("create_box {} box".format(len(map_type)))
+    for key in map_type:
+        engine.command("mass {} {}".format(map_type[key]["ref"], map_type[key]["mass"]))
+    initialize_potential(engine, params)
+
 
 def clear(engine):
-    '''
+    """
     Clears lammps instance
-    '''
-    engine.command('clear')
+    """
+    engine.command("clear")
+
 
 def redefine_atoms(engine, positions, type=None) -> None:
-    '''
-        Check to see if current lammps system has enough atoms
-        If not, deletes all atoms then redefines them
-        '''
+    """
+    Check to see if current lammps system has enough atoms
+    If not, deletes all atoms then redefines them
+    """
     if type is None:
-        type = [1]*len(positions)
+        type = [1] * len(positions)
     new_positions = positions.flatten().astype(np.float64)
     ids = np.arange(1, len(positions) + 1, dtype=np.int32)
     engine.lmp.create_atoms(len(positions), ids, type, x=new_positions)
     engine.command("comm_style tiled")
     engine.command("balance 1.1 rcb")
     engine.command("neigh_modify every 1 delay 0 check yes")
-    engine.command('fix 1 all setforce 0.0 0.0 0.0')
-    engine.command('run 0')
-    engine.command('unfix 1')
+    engine.command("fix 1 all setforce 0.0 0.0 0.0")
+    engine.command("run 0")
+    engine.command("unfix 1")
 
-def partn_search_AV(engine, config, central_atom_idx: int, positions, cell, type) -> [np.array, int]:
-    reset(engine, config, cell)
-    av_positions, av_idx, buffer_idx = define_AV(config, central_atom_idx, positions, cell)
 
-    #Need to map type to positions
-    atom_map = np.array(av_idx, dtype=int)
+def _setup_AV(
+    engine, params, central_atom_idx: int, configuration
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Reset the LAMMPS instance and (re)build the active volume around `central_atom_idx`.
+
+    Returns `(atom_map, av_positions, buffer_idx)`: `atom_map` holds each AV
+    atom's index into `configuration` (in the same order as the LAMMPS atoms
+    `redefine_atoms` just created), `av_positions` their positions, and
+    `buffer_idx` the subset of `atom_map` held fixed as the buffer shell.
+    """
+    types = configuration.types
     map_type = {
         atom_type: {"ref": i + 1, "mass": atomic_masses[atomic_numbers[atom_type]]}
-        for i, atom_type in enumerate(sorted(set(type)))
+        for i, atom_type in enumerate(sorted(set(types)))
     }
-    type = np.array([map_type[element]["ref"] for element in type]) # map to integer
+    reset(engine, params, configuration.cell, map_type)
+    av_positions, av_idx, buffer_idx = define_AV(
+        params, central_atom_idx, configuration
+    )
 
-    av_type=type[atom_map]
+    atom_map = np.array(av_idx, dtype=int)
+    type_refs = np.array([map_type[element]["ref"] for element in types])  # map to integer
+    av_type = type_refs[atom_map]
 
     redefine_atoms(engine, av_positions, av_type)
     make_AV(engine, av_idx, buffer_idx)
-    return atom_map, np.array(np.where(atom_map == central_atom_idx)[0]+1)
+    return atom_map, av_positions, buffer_idx
 
-def partn_refine_AV(engine, config, central_atom_idx:int, positions, cell, type, saddle_idx, saddle_positions) -> [float, np.array, int]:
-    '''
-        Receive the system with the central atom index, define an active volume around this atom, then update the positions
-        with those for the saddle.
 
-        This was added in order to get the activation energy for an event, as the traditional method does not work for
-        Active Volumes.
-    '''
+def partn_search_AV(
+    engine, params, central_atom_idx: int, configuration
+) -> tuple[np.ndarray, np.ndarray]:
+    atom_map, _, _ = _setup_AV(engine, params, central_atom_idx, configuration)
+    return atom_map, np.where(atom_map == central_atom_idx)[0] + 1
 
-    reset(engine, config, cell)
-    av_positions, av_idx, buffer_idx = define_AV(config, central_atom_idx, positions, cell)
 
-    #Need to map types to positions
-    atom_map = np.array(av_idx, dtype=int)
-    map_type = {
-        atom_type: {"ref": i + 1, "mass": atomic_masses[atomic_numbers[atom_type]]}
-        for i, atom_type in enumerate(sorted(set(type)))
-    }
-    type = np.array([map_type[element]["ref"] for element in type]) # map to integer
+def partn_refine_AV(
+    engine,
+    params,
+    central_atom_idx: int,
+    configuration,
+    saddle_idx,
+    saddle_positions,
+) -> tuple[float, np.ndarray, np.ndarray]:
+    """
+    Receive the system with the central atom index, define an active volume around this atom, then update the positions
+    with those for the saddle.
 
-    av_type = type[atom_map]
+    This was added in order to get the activation energy for an event, as the traditional method does not work for
+    Active Volumes.
+    """
 
-    redefine_atoms(engine, av_positions, av_type)
-    make_AV(engine, av_idx, buffer_idx)
+    atom_map, av_positions, _ = _setup_AV(engine, params, central_atom_idx, configuration)
 
-    if config.activevolume.AV_debug == True:
+    if params.activevolume.AV_debug == True:
         E_before = get_potential_energy(engine)
-        engine.command("min_style {}".format(config.lammps.min_style))
+        engine.command("min_style {}".format(params.lammps.min_style))
         engine.command("minimize 1.0e-6 1.0e-8 10 10")
-        E_init=get_potential_energy(engine)
+        E_init = get_potential_energy(engine)
         print("Before minimization: ", E_before, "After minimization: ", E_init)
-        print("% Difference:", abs((E_before - E_init)/E_init*100),"%")
+        print("% Difference:", abs((E_before - E_init) / E_init * 100), "%")
     else:
-        E_init=get_potential_energy(engine)
+        E_init = get_potential_energy(engine)
 
-    core_idx=[]
-    core_ids=[]
-    for i, atom_idx in enumerate(saddle_idx):
-        index = int(np.where(atom_map == atom_idx)[0])  # index in atom map where this value is true
-        av_positions[index] = saddle_positions[i]
-        core_idx.append(index)  # Atom id
-        core_ids.append(index + 1)
+    core_idx = np.searchsorted(atom_map, saddle_idx)  # atom_map is sorted ascending
+    av_positions[core_idx] = saddle_positions
+    core_ids = core_idx + 1
     set_positions(engine, av_positions)
 
-    engine.command('fix 1 all setforce 0.0 0.0 0.0')
-    engine.command('run 0')
-    engine.command('unfix 1')
+    engine.command("fix 1 all setforce 0.0 0.0 0.0")
+    engine.command("run 0")
+    engine.command("unfix 1")
 
     # Want to minimize initially to speed up refinement process
     engine.command(f"group core id {' '.join(map(str, core_ids))}")
-    engine.command('fix f_core core setforce 0.0 0.0 0.0')
-    engine.command("min_style {}".format(config.lammps.min_style))
-    engine.command("minimize 1.0e-6 1.0e-8 10 10")
-    engine.command('unfix f_core')
+    engine.command("fix f_core core setforce 0.0 0.0 0.0")
+    engine.command("min_style {}".format(params.lammps.min_style))
+    engine.command("minimize {}".format(params.lammps.frz_min))
+    engine.command("unfix f_core")
 
-    return E_init, atom_map, (np.where(atom_map == central_atom_idx)[0]+1)
+    return E_init, atom_map, (np.where(atom_map == central_atom_idx)[0] + 1)
 
-def position_results_AV(config, artn, atom_map, positions) -> [np.array, np.array, np.array, int]:
 
+def position_results_AV(
+    params, artn, atom_map, configuration
+) -> tuple[Configuration, Configuration, Configuration, int]:
+    types = configuration.types
+    cell = configuration.cell
 
     min1positions = artn.extract("tau_min1")
     min2positions = artn.extract("tau_min2")
     saddlepositions = artn.extract("tau_sad")
 
-    # find atom that moves the most
-    dist = (min1positions - saddlepositions) ** 2
-    dist = dist.sum(axis=-1)
-    dist = np.sqrt(dist)
-    dist[dist > config.atomicenvironment.rcut] = (
-        0
-    # if atom moves more that rcutevent, consider that it crosses the cell (happens with lammps), so distance = 0 to not consider it as the one that moves the most
+    # find atom that moves the most (PBC-aware, so an atom crossing the
+    # periodic boundary between min1 and saddle isn't mistaken for a small mover)
+    dist = compute_distances(
+        Configuration(positions=min1positions, types=types, cell=cell),
+        Configuration(positions=saddlepositions, types=types, cell=cell),
     )
-    index_move = np.argmax(dist)
+    index_move_mapped = atom_map[np.argmax(dist)]
 
-    index_move_mapped = atom_map[index_move]
+    min1_configuration = configuration.copy()
+    min1_configuration[atom_map] = min1positions
+    min2_configuration = configuration.copy()
+    min2_configuration[atom_map] = min2positions
+    saddle_configuration = configuration.copy()
+    saddle_configuration[atom_map] = saddlepositions
 
-    min1positions_mapped = positions.copy()
-    min2positions_mapped = positions.copy()
-    saddlepositions_mapped = positions.copy()
-
-    for i, atom_idx in enumerate(atom_map):
-        saddlepositions_mapped[atom_idx][0] = saddlepositions[i][0]
-        saddlepositions_mapped[atom_idx][1] = saddlepositions[i][1]
-        saddlepositions_mapped[atom_idx][2] = saddlepositions[i][2]
-
-        min1positions_mapped[atom_idx][0] = min1positions[i][0]
-        min1positions_mapped[atom_idx][1] = min1positions[i][1]
-        min1positions_mapped[atom_idx][2] = min1positions[i][2]
-
-        min2positions_mapped[atom_idx][0] = min2positions[i][0]
-        min2positions_mapped[atom_idx][1] = min2positions[i][1]
-        min2positions_mapped[atom_idx][2] = min2positions[i][2]
-
-    return  min1positions_mapped, min2positions_mapped, saddlepositions_mapped, index_move_mapped
-
-
-def initialize_parameters(engine):
-    engine.command("units metal")
-    engine.command("atom_style atomic")
-    engine.command("dimension 3")
-    engine.command("boundary p p p")
-    engine.command("atom_modify map array")  # ! necessary for scatter atoms
-    engine.command("atom_modify sort 0 0.0")  # ! necessary for partn
-
-
-def initialize_system(engine, system):
-    # system parameters
-    natoms = len(system.types)
-    cell = system.cell
-    types = system.types
-    x = system.positions.flatten()  # Lammps format
-
-    xhi, yhi, zhi = cell[0][0], cell[1, 1], cell[2, 2]
-
-    ind = np.linspace(0, natoms - 1, natoms).astype(int)
-    ind += 1  # Lammps id start at 1
-    # map type to int alphabetic order create a dictionary with atom id and mass, eg {'H' : {'ref': 1, 'mass' : 1.00}, 'Ni': {'ref' : 2, 'mass' : 58.69} }
-    map_type = {
-        atom_type: {"ref": i + 1, "mass": atomic_masses[atomic_numbers[atom_type]]}
-        for i, atom_type in enumerate(sorted(set(types)))
-    }
-    types = [map_type[element]["ref"] for element in types]  # map to integer
-
-    # lammps create system
-    engine.command(
-        "region box block 0.0 {} 0.0 {} 0.0 {}".format(xhi, yhi, zhi)
-    )
-    engine.command("create_box {} box".format(len(map_type)))
-    engine.lmp.create_atoms(natoms, ind, types, x)
-    # Set masses
-    for key in map_type.keys():
-        engine.command(
-            "mass {} {}".format(map_type[key]["ref"], map_type[key]["mass"])
-        )
-    # Label atoms name to type :
-    engine.command(
-        "labelmap atom "
-        + " ".join(f"{int(e['ref'])} {key}" for key, e in map_type.items())
-    )
-
-
-def initialize_potential(engine, config):
-    pair_style = config.lammps.pair_style
-    pair_coeff = config.lammps.pair_coeff
-    engine.command("pair_style {}".format(pair_style))
-    engine.command("pair_coeff {}".format(pair_coeff))
-
-
-def minimize(engine, config, positions=None):
-    if positions is not None:
-        set_positions(engine=engine, positions=positions)
-    engine.command("min_style {}".format(config.lammps.min_style))
-    engine.command("minimize {}".format(config.lammps.minimize))
-
-
-def get_total_energy(engine, positions=None):
-    if positions is not None:
-        set_positions(engine=engine, positions=positions)
-    # Get total energy
-    engine.command("run 0")
-    result = engine.lmp.get_thermo("etotal")
-    if engine.rank == 0:
-        return result
-
-
-def get_potential_energy(engine, positions=None):
-    if positions is not None:
-        set_positions(engine=engine, positions=positions)
-    # get potential energy
-    engine.command("compute c1 all pe")
-    engine.command("run 0")
-    result = engine.lmp.extract_compute("c1", 0, 0)
-    engine.command("uncompute c1")
-    return result
-
-
-def get_positions(engine):
-    result = engine.lmp.gather_atoms("x", 1, 3)
-    if engine.rank == 0:
-        # convert ctype positions into a numpy array
-        result = np.ctypeslib.as_array(result)
-        result = np.reshape(result, (-1, 3))
-        return result
-
-
-def set_positions(engine, positions):
-    positions = positions.flatten().astype(np.float64)
-    positions = np.ascontiguousarray(positions)
-    c_array = (ctypes.c_double * len(positions))(*positions)
-    engine.lmp.scatter_atoms("x", 1, 3, c_array)
+    return min1_configuration, min2_configuration, saddle_configuration, index_move_mapped

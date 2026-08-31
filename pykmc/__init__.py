@@ -7,6 +7,8 @@ from .point_set_registration import *
 from .reconstruction import *
 from .result import *
 from .log import *
-from .config import *
+from .parameters import *
 from .kmc import *
 from .initializer import *
+from .bias import Bias, DirectionBias, PointBias, TopoBias
+from .otfml import *
