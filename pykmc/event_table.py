@@ -22,7 +22,7 @@ from .result import (
     EventRefinementOutput,
 )
 from .point_set_registration import simple_ira, check_match
-from .utils.geometry import compute_delr
+from .utils.geometry import align_positions_by_neighbors, compute_delr
 
 if TYPE_CHECKING:
     from .event_recycling import Recycling
@@ -687,6 +687,7 @@ class ActiveEventTable:
                 "atom_index": pd.Series(dtype="int64"),
                 "saddle_positions": pd.Series(dtype="object"),
                 "final_positions": pd.Series(dtype="object"),
+                "neighbors": pd.Series(dtype="object"),
                 "energy_barrier": pd.Series(dtype="float64"),
                 "k": pd.Series(dtype="float64"),
                 "num_reference_event": pd.Series(dtype="int64"),
@@ -714,6 +715,14 @@ class ActiveEventTable:
                 system,
                 positions_pre,
             )
+            # Mark carried-over rows in the events log: a recycled row shows as
+            # 'RT'/'RF' (recycled; originally refined/unrefined) instead of
+            # 'T'/'F'. Idempotent for rows recycled over multiple steps.
+            if len(self.table) > 0:
+                self.table["refined"] = [
+                    "R" + r if isinstance(r, str) and not r.startswith("R") else r
+                    for r in self.table["refined"]
+                ]
 
     def existing_pairs(self) -> set[tuple[int, int]]:
         """Return `(atom_index, num_reference_event)` tuples already in the table.
@@ -807,6 +816,7 @@ class ActiveEventTable:
                 "atom_index": event_refinement_output.central_atom_index,
                 "saddle_positions": event_refinement_output.saddle_positions,
                 "final_positions": event_refinement_output.min2_positions,
+                "neighbors": event_refinement_output.neighbors,
                 "energy_barrier": event_refinement_output.dE_forward,
                 "k": compute_rate_Eyring(
                     event_refinement_output.dE_forward, self.config
@@ -851,17 +861,44 @@ class ActiveEventTable:
 
         for idx, subset in grouped:
             pos_ref = np.array(self.table.loc[idx, "saddle_positions"])
+            nb_ref = self.table.loc[idx, "neighbors"]
             for jdx in subset.index:
                 if jdx <= idx:
                     continue  # dont compute twice
                 pos_comp = np.array(self.table.loc[jdx, "saddle_positions"])
-                delr = compute_delr(pos_ref, pos_comp, cell)
+                nb_comp = self.table.loc[jdx, "neighbors"]
+                # Align on atom id via the stored per-row `neighbors` ordering
+                # before comparing: recycled rows keep their event-time ordering
+                # while fresh rows follow the current NeighborsList, so a raw
+                # element-wise compute_delr would compare non-corresponding
+                # atoms -- or crash outright when the two stored environments
+                # have different sizes. None/length-mismatched neighbours are
+                # not-comparable -> keep both rows.
+                aligned = align_positions_by_neighbors(
+                    nb_ref, pos_ref, nb_comp, pos_comp
+                )
+                if aligned is None:
+                    continue
+                aligned_ref, aligned_comp, sets_equal = aligned
+                # Same central atom: differing neighbour *sets* means a different
+                # local environment (membership drifted after the system moved),
+                # so the two rows are not duplicates.
+                if not sets_equal:
+                    continue
+                delr = compute_delr(aligned_ref, aligned_comp, cell)
                 if delr < self.config.psr.matching_score_thr:
                     # print('Removing event with delr',delr)
                     duplicates.append(jdx)
 
         # 2. Check duplicates due to symmetric events applied on different central atoms.
         # Group by same generic event if generic event has symmetries meaning that the same generic event has been applied to same central atom
+        # The alignment uses each row's STORED `neighbors` ordering (the
+        # `neighbors` column) instead of a fresh get_neighbors('rcut', ...)
+        # re-derivation: `saddle_positions` is ordered by the neighbours captured
+        # at event time, and re-deriving the order from the current NeighborsList
+        # scatters coordinates onto the wrong atoms for recycled rows.
+        # `neighbors_list` is retained only as the gate that enables this
+        # symmetric pass.
         if (
             neighbors_list is not None
         ):  # need neighbors list to remove symmetric duplicates
@@ -875,24 +912,23 @@ class ActiveEventTable:
 
                 for i, idx in enumerate(indices):  # Loop over indice of subset
                     central_atom1 = subset.loc[idx, "atom_index"]
-                    env1 = neighbors_list.get_neighbors(
-                        "rcut", central_atom1
-                    )  # list of atom in env1
+                    env1 = subset.loc[
+                        idx, "neighbors"
+                    ]  # stored ids for saddle_positions of row idx
 
                     for jdx in indices[i + 1 :]:  # to not compare two times
                         central_atom2 = subset.loc[jdx, "atom_index"]
                         if (
                             central_atom1 != central_atom2
                         ):  # if yes already done in part 1.
-                            env2 = neighbors_list.get_neighbors("rcut", central_atom2)
-                            # intersection of atoms in atomic environments
-                            common = set(env1) & set(env2)
+                            env2 = subset.loc[
+                                jdx, "neighbors"
+                            ]  # stored ids for saddle_positions of row jdx
+                            if env1 is None or env2 is None:
+                                continue  # ordering unknown -> not comparable
 
-                            if not common:  # it's not a duplicate since they don't share atoms in their atomic environments
-                                continue
-
-                            if (
-                                central_atom1 not in env2
+                            if central_atom1 not in set(
+                                np.asarray(env2, dtype=int).tolist()
                             ):  # TODO : To check, but should not be a duplicate
                                 continue
 
@@ -900,19 +936,18 @@ class ActiveEventTable:
                             sad_pos1 = subset.loc[idx, "saddle_positions"]
                             sad_pos2 = subset.loc[jdx, "saddle_positions"]
 
-                            # know we want to compare positions of share atoms, need to map.
-                            map1 = {
-                                a: k for k, a in enumerate(env1)
-                            }  # so we know that the first position is atom xxx, ect, eg {345:0, 439:1, ....}
-                            map2 = {a: k for k, a in enumerate(env2)}  # same for env2
-
-                            # map atom when they are in common
-                            index1 = [map1[a] for a in common]
-                            index2 = [map2[a] for a in common]
-
-                            # get subarray of sad_pos
-                            sad_pos1 = sad_pos1[index1]
-                            sad_pos2 = sad_pos2[index2]
+                            # Align on the SHARED atoms via the stored neighbour
+                            # ids. Unlike part 1 (same central atom, full-set
+                            # match required), a symmetric event on a different
+                            # central atom legitimately spans a different rcut
+                            # shell, so here we deliberately compare over the
+                            # intersection and ignore `sets_equal`.
+                            aligned = align_positions_by_neighbors(
+                                env1, sad_pos1, env2, sad_pos2
+                            )
+                            if aligned is None:
+                                continue  # no shared atoms / length mismatch -> keep both
+                            sad_pos1, sad_pos2, _sets_equal = aligned
 
                             # now we can compare
                             delr = compute_delr(sad_pos1, sad_pos2, cell)

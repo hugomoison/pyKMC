@@ -339,8 +339,8 @@ class KMC:
                         min2_positions=result_basin.ok_value().final_positions,
                         dE_forward=result_basin.ok_value().energy_barrier,
                         num_reference_event=result_basin.ok_value().num_reference_event,
+                        neighbors=result_basin.ok_value().neighbors,
                     )
-                    neighbors = result_basin.ok_value().neighbors
                     tmp_active_table.add_events(tmp_event)
                     # reconstruct event
                     result_basin_reconstruction = self._reconstruction_active_event(
@@ -791,13 +791,54 @@ class KMC:
         self, idx_selected_event: int, active_table: AtomicEnvironment
     ):
         central_atom = active_table.table.loc[idx_selected_event].at["atom_index"]
-        neighbors = self.neighbors_list.get_neighbors("rcut", central_atom)
+        stored_neighbors = active_table.table.loc[idx_selected_event].at["neighbors"]
         saddle_positions = copy.deepcopy(
             active_table.table.loc[idx_selected_event].at["saddle_positions"]
         )
         supposed_final_positions = copy.deepcopy(
             active_table.table.loc[idx_selected_event].at["final_positions"]
         )
+
+        # The stored neighbour ordering is authoritative for the saddle/final
+        # coordinate rows: it was captured at refinement time, and the per-step
+        # neighbour list may since have been rebuilt with the same atoms in a
+        # different order (or different members) -- re-deriving it here would
+        # scatter the stored coordinates onto the wrong absolute atoms.
+        # Fail fast on a missing column (None) or a length mismatch.
+        if (
+            stored_neighbors is None
+            or saddle_positions is None
+            or supposed_final_positions is None
+        ):
+            return Err(
+                ErrorInfo(
+                    type=ErrorType.RECONSTRUCTION_INVALID_EVENT_DATA,
+                    message="Active event row is missing required reconstruction "
+                    "columns (neighbors/saddle_positions/final_positions).",
+                    variables={
+                        "idx_selected_event": int(idx_selected_event),
+                        "central_atom": int(central_atom),
+                    },
+                )
+            )
+        neighbors = np.asarray(stored_neighbors, dtype=int)
+        if not (
+            len(neighbors) == len(saddle_positions) == len(supposed_final_positions)
+        ):
+            return Err(
+                ErrorInfo(
+                    type=ErrorType.RECONSTRUCTION_INVALID_EVENT_DATA,
+                    message="Active event row has an inconsistent 'neighbors' column.",
+                    variables={
+                        "idx_selected_event": int(idx_selected_event),
+                        "central_atom": int(central_atom),
+                        "n_neighbors": int(len(neighbors)),
+                        "n_saddle": int(len(saddle_positions)),
+                        "n_final": int(len(supposed_final_positions)),
+                    },
+                )
+            )
+
         supposed_initial_positions = copy.deepcopy(self.system.positions[neighbors])
 
         # Move the system to the saddle point
@@ -811,8 +852,8 @@ class KMC:
             supposed_final_positions,
             self.system.positions,
             self.system.cell,
-            self.config.psr.matching_score_thr,
             neighbors,
+            central_atom=central_atom,
         )
         # result with min1, saddle, min2 pos
 
