@@ -522,12 +522,10 @@ def partn_refine(
             atom_map = None
             set_configuration(engine, configuration)
             E_init = get_potential_energy(engine)
-            # saddle_positions is only given when configuration is the base
-            # (unmoved) system and the caller wants this delta merged in
-            # (see RefinementPreparer). A caller that already moved
-            # configuration to the saddle itself (BasinsGenericEvents'
-            # non-active-volume refine_absorbing) leaves it None -- the
-            # configuration set above is already the guess.
+            # saddle_positions is given when configuration is the base
+            # (unmoved) system and the caller wants this delta merged in,
+            # so E_init above is the state minimum and the returned
+            # E_saddle (etot_sad - E_init) is already the barrier.
             if saddle_positions is not None:
                 guess = configuration.copy()
                 guess[saddle_idx] = saddle_positions

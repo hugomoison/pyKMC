@@ -445,17 +445,13 @@ class BasinsGenericEvents:
         """When connectivity table is build, and that we have dict of states, we refine the energy barrier and k_forward of the transient -> absorbing event"""
         # compute the energy of the state
         # for all row in connectivity table where we need to refine
-        futures_context = {}  # idx → { "min": f_min, "saddle": f_sad }
+        futures_context = {}  # idx → { "saddle": f_sad, ... }
         for idx, row in self.connectivity_table.df.iterrows():
             if row["transient"] == False:  # need to refine
                 # tmp_system = copy.deepcopy(self.states[row["state"]].system)
                 tmp_system = System.from_configuration(
                     self.states[row["state"]].system.configuration.copy(), pbc=True
                 )
-                # get tmp_system energy
-                future1 = self.manager.get_total_energy(
-                    positions=tmp_system.positions.copy()
-                )  # Send copy not reference
                 # move to generic saddle positions
                 ref_event = self.reference_table.table[
                     self.reference_table.table["idx_ref"] == row["event_connexion"]
@@ -514,29 +510,16 @@ class BasinsGenericEvents:
                     "rcut", row["central_atom"]
                 )
 
-                if self.params.control.active_volume == True:
-                    # add a job to manager queue
-                    future2 = self.manager.partn_refine(
-                        self.params,
-                        row["central_atom"],
-                        configuration=tmp_system.configuration.copy(),
-                        saddle_idx=neighbors.copy(),
-                        saddle_positions=saddle_configuration.positions.copy(),
-                    )
-                # Move system do saddle positions
-                else:
-                    tmp_system.update_positions(saddle_configuration, atom_idx=neighbors)
-                    # refine
-                    future2 = self.manager.partn_refine(
-                        self.params,
-                        row["central_atom"],
-                        configuration=tmp_system.configuration.copy(),
-                        saddle_idx=neighbors.copy(),
-                    )  # send copy not reference !
+                future2 = self.manager.partn_refine(
+                    self.params,
+                    row["central_atom"],
+                    configuration=tmp_system.configuration.copy(),
+                    saddle_idx=neighbors.copy(),
+                    saddle_positions=saddle_configuration.positions.copy(),
+                )  # send copy not reference ! -- active_volume routing happens inside partn_refine
 
                 # save future in context :
                 futures_context[idx] = {
-                    "min": future1,
                     "saddle": future2,
                     "neighbors": neighbors,
                     "state": row["state"],
@@ -546,17 +529,12 @@ class BasinsGenericEvents:
                 # RELEASE MEMORY :
                 self.states[row["state"]].release_heavy_objects()
 
-        # modify connectivity table entry future1 hold min energy, future2 holds E_saddle
+        # modify connectivity table entry -- future2 holds the already-refined dE (E_saddle - E_min)
         for idx, ctx in futures_context.items():
-            E_min = ctx["min"].result()
             result_sad = ctx["saddle"].result()
             if not result_sad.is_ok():
                 return result_sad
-            E_sad = result_sad.ok_value().E_saddle
-            if self.params.control.active_volume == True:
-                dE = E_sad
-            else:
-                dE = E_sad - E_min
+            dE = result_sad.ok_value().E_saddle
             k = compute_rate_Eyring(dE, self.params)
 
             # also save saddle configuration refined -- re-imaged around the
