@@ -1,12 +1,12 @@
 """Manages Point Set Registration (shape matching) methods."""
 
 import ira_mod
-import numpy as np
 from .result import Result, ErrorInfo, PSROutput, Ok, Err, ErrorType
-from .config import Config 
-from .system import System 
-import pandas as pd 
+from .parameters import Parameters
+from .system import System, Configuration
+import pandas as pd
 from .neighbors_list import NeighborsList
+from .utils.geometry import unwrap_around
 
 
 class PointSetRegistration:
@@ -14,7 +14,7 @@ class PointSetRegistration:
 
     Parameters
     ----------
-    config : Config
+    params : Parameters
         The configuration.
     system : System
         The atomic system.
@@ -28,14 +28,19 @@ class PointSetRegistration:
     """
 
     def __init__(
-        self, config: Config, system: System, dfevent: pd.Series, neighbors_list: NeighborsList, central_atom_index: int
+        self,
+        params: Parameters,
+        system: System,
+        dfevent: pd.Series,
+        neighbors_list: NeighborsList,
+        central_atom_index: int,
     ) -> None:
         self.system = system
-        self.config = config
+        self.params = params
         self.dfevent = dfevent
         self.neighbors_list = neighbors_list
         self.central_atom_index = central_atom_index
-        self.psr_style = self.config.psr.style
+        self.psr_style = self.params.psr.style
 
     def match(self) -> Result[PSROutput, ErrorInfo]:
         """Run the point set registration based on the style defined in the configuration.
@@ -71,93 +76,25 @@ class PointSetRegistration:
             The results of the ira psr procedure.
 
         """
-        # Initialize IRA
-        ira = ira_mod.IRA()
+        initial_configuration = self.dfevent.at["initial_configuration"]
 
-        # Event informations :
-        coords2 = self.dfevent.at["initial_positions"]
-        nat2 = len(coords2)
+        # atoms around the central atom, exactly rcut (see docstring)
+        neighbor_list = self.neighbors_list.get_neighbors(
+            "rcut", central_atom_index
+        ).copy()
+        live_configuration = unwrap_around(
+            self.system.configuration[neighbor_list],
+            self.system.positions[central_atom_index],
+        )
 
-        # atom in the rcutevent around the central atom
-        neighbor_list = self.neighbors_list.get_neighbors("rcut", central_atom_index)
-
-        coords1 = self.system.positions[neighbor_list]
-
-
-        #GREY ALLOY
-        typ1 = ['X']*len(coords1)
-        typ2 = typ1 
-
-        #typ1 = np.array(self.system.types)[neighbor_list]
-
-        #typ2 = typ1  # If they have same topology id should be always true ?
-
-        # unwrap if close to cell limits :
-        alat = self.system.cell[0][0]
-        for i in range(len(coords1)):
-            if (
-                np.linalg.norm(
-                    coords1[i][0] - self.system.positions[central_atom_index][0]
-                )
-                > alat / 2
-            ):
-                coords1[i][0] = (
-                    coords1[i][0]
-                    + np.sign(
-                        self.system.positions[central_atom_index][0] - coords1[i][0]
-                    )
-                    * alat
-                )
-            if (
-                np.linalg.norm(
-                    coords1[i][1] - self.system.positions[central_atom_index][1]
-                )
-                > alat / 2
-            ):
-                coords1[i][1] = (
-                    coords1[i][1]
-                    + np.sign(
-                        self.system.positions[central_atom_index][1] - coords1[i][1]
-                    )
-                    * alat
-                )
-            if (
-                np.linalg.norm(
-                    coords1[i][2] - self.system.positions[central_atom_index][2]
-                )
-                > alat / 2
-            ):
-                coords1[i][2] = (
-                    coords1[i][2]
-                    + np.sign(
-                        self.system.positions[central_atom_index][2] - coords1[i][2]
-                    )
-                    * alat
-                )
-        nat1 = len(coords1)
-        kmax_factor = self.config.ira.kmax_factor
-
-        # Run ira to find transformation matrices
-        try:
-            rmat, tr, perm, dh = ira.match(
-                nat1, typ1, coords1, nat2, typ2, coords2, kmax_factor
-            )
-
-            return Ok(
-                PSROutput(
-                    rotation_matrix=rmat,
-                    translation_matrix=tr,
-                    permutation_matrix=perm,
-                    matching_score=dh,
-                )
-            )
-        except Exception:
-            return Err(
-                ErrorInfo(
-                    type=ErrorType.PSR_NO_MATCH_FOUND,
-                    message="IRA did not find a match",
-                )
-            )
+        return simple_ira(
+            live_configuration,
+            initial_configuration,
+            self.params.ira.kmax_factor,
+            full=self.params.atomicenvironment.coloring_mode == "full",
+            candidate1=neighbor_list.index(central_atom_index),
+            candidate2=int(self.dfevent.at["move_atom_idx"]),
+        )
 
 
 def check_match(
@@ -189,19 +126,39 @@ def check_match(
                     details="Hausdorff distance = {}, acceptance threshold = {} ".format(
                         result_match.ok_value().matching_score, matching_score
                     ),
-                    variables={"matching_score": result_match.ok_value().matching_score}
+                    variables={
+                        "matching_score": result_match.ok_value().matching_score
+                    },
                 )
             )
-        
+
         else:
             return result_match  # Ok(PSROutput)
 
-def simple_ira(nat1, typ1, coords1, nat2, typ2, coords2, kmax_factor) : 
+
+def simple_ira(
+    configuration_1: Configuration,
+    configuration_2: Configuration,
+    kmax_factor: float,
+    full: bool = False,
+    candidate1: int | None = None,
+    candidate2: int | None = None,
+) -> Result[PSROutput, ErrorInfo]:
+    """Run IRA between two `Configuration`s; `full` gates real vs. dummy ("X") types.
+
+    `candidate1`/`candidate2`, if given, seed the search with a known
+    matching atom pair (e.g. each configuration's central atom).
+    """
+    nat1 = len(configuration_1)
+    nat2 = len(configuration_2)
+    typ1 = list(configuration_1.types) if full else nat1 * ["X"]
+    typ2 = list(configuration_2.types) if full else nat2 * ["X"]
+    candidate_kwargs = {"candidate1": candidate1, "candidate2": candidate2} if candidate1 is not None else {}
     # Run ira to find transformation matrices
     ira = ira_mod.IRA()
     try:
         rmat, tr, perm, dh = ira.match(
-            nat1, typ1, coords1, nat2, typ2, coords2, kmax_factor
+            nat1, typ1, configuration_1.positions, nat2, typ2, configuration_2.positions, kmax_factor, **candidate_kwargs
         )
 
         return Ok(
@@ -219,3 +176,4 @@ def simple_ira(nat1, typ1, coords1, nat2, typ2, coords2, kmax_factor) :
                 message="IRA did not find a match",
             )
         )
+
