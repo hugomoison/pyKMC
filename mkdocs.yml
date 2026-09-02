@@ -30,6 +30,7 @@ nav:
   - Getting Started:
       - Installation: install/installation.md
       - User Guide: user_guide.md
+      - Event Recycling: recycling.md
   - Troubleshooting: troubleshooting.md
   - KMC Parameters: parameters.md
   - Developer Guide: 
@@ -49,6 +50,7 @@ nav:
       - Engine: api/engine.md
       - LammpsEngine: api/lammpsengine.md
       - EventTable : api/event_table.md
+      - EventRecycling : api/event_recycling.md
       - EventSearch : api/eventsearch.md
       - Refinement : api/refinement.md
       - PointSetRegistration : api/point_set_registration.md
