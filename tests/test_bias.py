@@ -4,14 +4,21 @@ import numpy as np
 import pandas as pd
 import pytest
 from unittest.mock import MagicMock
-import importlib.util, sys, pathlib
+import importlib.util, sys, pathlib, types
 
 
 def _load(rel):
-    path = pathlib.Path(__file__).parent.parent / rel
-    spec = importlib.util.spec_from_file_location(path.stem, path)
+    root = pathlib.Path(__file__).parent.parent
+    path = root / rel
+    module_name = ".".join(path.relative_to(root).with_suffix("").parts)
+    package_name = module_name.split(".")[0]
+    if package_name not in sys.modules:
+        package = types.ModuleType(package_name)
+        package.__path__ = [str(root / package_name)]
+        sys.modules[package_name] = package
+    spec = importlib.util.spec_from_file_location(module_name, path)
     mod = importlib.util.module_from_spec(spec)
-    sys.modules[path.stem] = mod
+    sys.modules[module_name] = mod
     spec.loader.exec_module(mod)
     return mod
 
@@ -29,11 +36,30 @@ rejection_free = _algo.rejection_free
 # ---------------------------------------------------------------------------
 
 
-def make_system(positions: np.ndarray):
-    """Return a minimal System-like mock with the given positions array."""
+def make_system(positions: np.ndarray, cell: np.ndarray | None = None):
+    """Return a minimal System-like mock with the given positions array.
+
+    The default cell is large enough that minimum-image wrapping is a no-op for
+    the tests that are not specifically exercising periodic borders.
+    """
     system = MagicMock()
     system.positions = np.asarray(positions, dtype=float)
+    system.cell = np.eye(3) * 1000.0 if cell is None else np.asarray(cell, dtype=float)
     return system
+
+
+def make_neighbors_list(neighborhoods: dict[int, list[int]]):
+    """Return a minimal NeighborsList-like mock.
+
+    Parameters
+    ----------
+    neighborhoods : dict[int, list[int]]
+        Maps a central atom index to its 'rcut' neighbourhood, in the order the
+        event's ``final_positions`` array follows.
+    """
+    neighbors = MagicMock()
+    neighbors.get_neighbors.side_effect = lambda cutoff, idx: neighborhoods[idx]
+    return neighbors
 
 
 def make_reference_table(move_atom_idx: int, idx_ref: int = 0):
@@ -54,6 +80,7 @@ def make_event(
     final_positions: np.ndarray,
     num_reference_event: int = 0,
     k: float = 1.0,
+    energy_barrier: float = 0.5,
 ) -> pd.Series:
     """Return an active-event row (pd.Series)."""
     return pd.Series(
@@ -61,7 +88,7 @@ def make_event(
             "atom_index": atom_index,
             "final_positions": np.asarray(final_positions, dtype=float),
             "num_reference_event": num_reference_event,
-            "energy_barrier": 0.5,
+            "energy_barrier": energy_barrier,
             "k": k,
             "refined": "yes",
         }
@@ -74,6 +101,17 @@ def make_active_table(events: list[pd.Series]):
     table = MagicMock()
     table.table = df
     return table
+
+
+def make_recording_selector():
+    """Return a (selector, seen) pair recording the rates each call receives."""
+    seen = []
+
+    def selector(rates):
+        seen.append(np.asarray(rates, dtype=float).copy())
+        return 0, 1.0, float(np.sum(rates))
+
+    return selector, seen
 
 
 # ---------------------------------------------------------------------------
@@ -212,6 +250,42 @@ class TestDirectionBias:
         assert idx == 0
         assert ktot > 0.0
 
+    def test_displacement_read_from_the_biased_atom_own_slot(self, ref_table_atom0):
+        """A listed neighbour is judged on its own displacement, not the centre's."""
+        # atom 0 is the event centre and does not move; atom 1 moves +x by 1
+        system = make_system([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
+        neighbors = make_neighbors_list({0: [0, 1]})
+        event = make_event(
+            atom_index=0, final_positions=[[0.0, 0.0, 0.0], [2.0, 0.0, 0.0]]
+        )
+        forward = DirectionBias(direction=[1, 0, 0], atom_indices=[1], threshold=0.5)
+        backward = DirectionBias(direction=[-1, 0, 0], atom_indices=[1], threshold=0.5)
+        assert forward.accept(event, system, ref_table_atom0, neighbors) is True
+        assert backward.accept(event, system, ref_table_atom0, neighbors) is False
+
+    def test_require_center_ignores_listed_neighbours(self, ref_table_atom0):
+        """With require_center, a listed neighbour does not stand in for the centre."""
+        system = make_system([[0.0, 0.0, 0.0], [1.0, 0.0, 0.0]])
+        neighbors = make_neighbors_list({0: [0, 1]})
+        event = make_event(
+            atom_index=0, final_positions=[[0.0, 0.0, 0.0], [2.0, 0.0, 0.0]]
+        )
+        bias = DirectionBias(
+            direction=[1, 0, 0], atom_indices=[1], threshold=0.5, require_center=True
+        )
+        assert bias.accept(event, system, ref_table_atom0, neighbors) is False
+
+    def test_accept_hop_across_periodic_border(self, ref_table_atom0):
+        """A hop across the boundary displaces by the minimum image, not by ~L."""
+        system = make_system([[0.2, 0.0, 0.0]], cell=np.eye(3) * 10.0)
+        neighbors = make_neighbors_list({0: [0]})
+        # atom hops from 0.2 to 9.8: a -0.4 displacement, not +9.6
+        event = make_event(atom_index=0, final_positions=[[9.8, 0.0, 0.0]])
+        forward = DirectionBias(direction=[1, 0, 0], threshold=0.1)
+        backward = DirectionBias(direction=[-1, 0, 0], threshold=0.1)
+        assert forward.accept(event, system, ref_table_atom0, neighbors) is False
+        assert backward.accept(event, system, ref_table_atom0, neighbors) is True
+
 
 # ---------------------------------------------------------------------------
 # PointBias
@@ -296,6 +370,17 @@ class TestPointBias:
         idx, delta_t, ktot = bias.select(rejection_free, l_k, active, system, ref)
         assert idx == 1
 
+    def test_target_reached_across_periodic_border(self, ref_table_atom0):
+        """The direction toward the target is the minimum-image one."""
+        # cell of 10 A: the target at 9.8 is 0.4 A away in -x, not 9.6 A away in +x
+        system = make_system([[0.2, 0.0, 0.0]], cell=np.eye(3) * 10.0)
+        neighbors = make_neighbors_list({0: [0]})
+        bias = PointBias(target_point=[9.8, 0.0, 0.0])
+        toward = make_event(atom_index=0, final_positions=[[0.0, 0.0, 0.0]])
+        away = make_event(atom_index=0, final_positions=[[0.5, 0.0, 0.0]])
+        assert bias.accept(toward, system, ref_table_atom0, neighbors) is True
+        assert bias.accept(away, system, ref_table_atom0, neighbors) is False
+
 
 # ---------------------------------------------------------------------------
 # TopoBias
@@ -364,14 +449,54 @@ class TestTopoBias:
         assert bias.accept(event, system, ref) is False
 
     def test_accept_when_source_topology_absent(self):
-        """When no atom carries topo_source, all events are accepted (fallback)."""
+        """When no atom carries topo_source, no atom is a source atom."""
         system = make_system([[0.0, 0.0, 0.0], [5.0, 0.0, 0.0]])
         ae = make_atomic_environment({"sia": [1]})  # no "vac" atoms
         ref = make_reference_table(move_atom_idx=0, idx_ref=0)
         bias = TopoBias(topo_source="vac", topo_target="sia")
         bias._prepare(system, ref, ae)
         event = make_event(atom_index=0, final_positions=[[-1.0, 0.0, 0.0]])
-        assert bias.accept(event, system, ref) is True
+        assert bias.accept(event, system, ref) is bias.pass_unlisted
+
+    def test_select_falls_back_when_source_topology_absent(self):
+        """With no source atom, select() rejects every candidate and falls back."""
+        system = make_system([[0.0, 0.0, 0.0], [5.0, 0.0, 0.0]])
+        ae = make_atomic_environment({"sia": [1]})  # no "vac" atoms
+        ref = make_reference_table(move_atom_idx=0, idx_ref=0)
+        bias = TopoBias(topo_source="vac", topo_target="sia")
+        events = [make_event(atom_index=0, final_positions=[[-1.0, 0.0, 0.0]], k=1.0)]
+        active = make_active_table(events)
+        l_k = np.array([e["k"] for e in events])
+        idx, _, ktot = bias.select(rejection_free, l_k, active, system, ref, ae)
+        assert idx == 0
+        assert ktot > 0.0
+
+    def test_source_atom_identified_by_index_not_position(self):
+        """A non-source atom sharing a source atom's position is still rejected."""
+        # atoms 0 and 2 sit at the same position; only atom 0 carries "vac"
+        system = make_system(
+            [[0.0, 0.0, 0.0], [5.0, 0.0, 0.0], [0.0, 0.0, 0.0]],
+        )
+        ae = make_atomic_environment({"vac": [0], "sia": [1]})
+        ref = make_reference_table(move_atom_idx=0, idx_ref=0)
+        bias = TopoBias(topo_source="vac", topo_target="sia")
+        bias._prepare(system, ref, ae)
+        event = make_event(atom_index=2, final_positions=[[1.0, 0.0, 0.0]])
+        assert bias.accept(event, system, ref) is False
+
+    def test_nearest_target_across_periodic_border(self):
+        """The nearest target is found through the periodic boundary."""
+        # cell of 10 A; source at 0.5, target at 9.5 → nearest image is at -0.5
+        system = make_system([[0.5, 0.0, 0.0], [9.5, 0.0, 0.0]], cell=np.eye(3) * 10.0)
+        ae = make_atomic_environment({"vac": [0], "sia": [1]})
+        ref = make_reference_table(move_atom_idx=0, idx_ref=0)
+        bias = TopoBias(topo_source="vac", topo_target="sia")
+        bias._prepare(system, ref, ae)
+        # moving in -x closes the 1.0 A minimum-image gap
+        toward = make_event(atom_index=0, final_positions=[[0.2, 0.0, 0.0]])
+        away = make_event(atom_index=0, final_positions=[[0.8, 0.0, 0.0]])
+        assert bias.accept(toward, system, ref) is True
+        assert bias.accept(away, system, ref) is False
 
     def test_accept_when_target_topology_absent(self):
         """When no atom carries topo_target, all events are accepted (fallback)."""
@@ -516,12 +641,69 @@ class TestBoostMode:
     def test_undesired_events_can_still_fire(self):
         """In boost mode, undesired events (idx=1) are never blocked."""
         system, ref, active, l_k = _two_event_setup()
-        # Very low bias_weight: desired event rarely selected, undesired must appear
+        # bias_weight below the desired events' natural share leaves the rates alone
         bias = DirectionBias(direction=[1, 0, 0], mode="boost", bias_weight=0.01)
         selections = [
             bias.select(rejection_free, l_k, active, system, ref)[0] for _ in range(200)
         ]
         assert 1 in selections
+
+    def test_desired_already_dominant_not_suppressed(self):
+        """bias_weight is a floor: dominant desired events keep their true rates."""
+        system = make_system([[0.0, 0.0, 0.0]])
+        ref = make_reference_table(move_atom_idx=0, idx_ref=0)
+        events = [
+            make_event(atom_index=0, final_positions=[[1.0, 0.0, 0.0]], k=10.0),
+            make_event(atom_index=0, final_positions=[[-1.0, 0.0, 0.0]], k=1.0),
+        ]
+        active = make_active_table(events)
+        l_k = np.array([e["k"] for e in events])
+        bias = DirectionBias(direction=[1, 0, 0], mode="boost", bias_weight=0.5)
+        selector, seen = make_recording_selector()
+        _, _, ktot = bias.select(selector, l_k, active, system, ref)
+        assert np.allclose(seen[-1], l_k)
+        assert np.isclose(ktot, 11.0)
+
+    def test_thr_boost_excludes_high_barrier_events(self):
+        """Desired events above thr_boost keep their unboosted rate."""
+        system = make_system([[0.0, 0.0, 0.0]])
+        ref = make_reference_table(move_atom_idx=0, idx_ref=0)
+        events = [
+            make_event(
+                atom_index=0,
+                final_positions=[[1.0, 0.0, 0.0]],
+                k=1.0,
+                energy_barrier=0.1,
+            ),
+            make_event(
+                atom_index=0,
+                final_positions=[[1.0, 0.0, 0.0]],
+                k=1.0,
+                energy_barrier=0.9,
+            ),
+            make_event(
+                atom_index=0,
+                final_positions=[[-1.0, 0.0, 0.0]],
+                k=1.0,
+                energy_barrier=0.1,
+            ),
+        ]
+        active = make_active_table(events)
+        l_k = np.array([e["k"] for e in events])
+
+        selector, seen = make_recording_selector()
+        capped = DirectionBias(
+            direction=[1, 0, 0], mode="boost", bias_weight=0.8, thr_boost=0.5
+        )
+        capped.select(selector, l_k, active, system, ref)
+        # only the low-barrier event is boosted: k_boost=1, k_free=2, alpha=8
+        assert np.allclose(seen[-1], [8.0, 1.0, 1.0])
+
+        selector, seen = make_recording_selector()
+        uncapped = DirectionBias(direction=[1, 0, 0], mode="boost", bias_weight=0.8)
+        uncapped.select(selector, l_k, active, system, ref)
+        # both +x events are boosted: k_boost=2, k_free=1, alpha=2
+        assert np.allclose(seen[-1], [2.0, 2.0, 1.0])
 
     def test_pass_unlisted_true_with_atom_indices_raises_direction(self):
         """DirectionBias: boost + pass_unlisted=True + atom_indices → ValueError."""

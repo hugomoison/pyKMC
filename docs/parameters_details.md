@@ -645,6 +645,14 @@
   <details><summary>Description</summary>
   Whether atoms not in atom_indices pass through the bias predicate unchanged. False (default): non-listed atoms are rejected/undesired. True: non-listed atoms always pass; only valid in filter mode.
   </details>
+- **`require_center`** : `bool`, default = `False`
+  <details><summary>Description</summary>
+  Whether only the central atom of an event is tested against the bias predicate. False (default): the predicate is satisfied by any atom of atom_indices found in the event neighbourhood. Only meaningful when atom_indices is set.
+  </details>
+- **`thr_boost`** : `float`, optional
+  <details><summary>Description</summary>
+  Barrier cutoff in eV above which a desired event is excluded from the boost, keeping its unmodified rate. None (default) disables the cutoff. Only used in boost mode.
+  </details>
 - **`direction`** : `list[float]`, optional
   <details><summary>Description</summary>
   Direction vector [x, y, z] for 'direction' bias.

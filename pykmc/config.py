@@ -794,6 +794,22 @@ class BiasConfig(BaseModel):
             "True: non-listed atoms always pass; only valid in filter mode."
         ),
     )
+    require_center: bool = Field(
+        default=False,
+        description=(
+            "Whether only the central atom of an event is tested against the bias predicate. "
+            "False (default): the predicate is satisfied by any atom of atom_indices found "
+            "in the event neighbourhood. Only meaningful when atom_indices is set."
+        ),
+    )
+    thr_boost: Optional[float] = Field(
+        default=None,
+        description=(
+            "Barrier cutoff in eV above which a desired event is excluded from the boost, "
+            "keeping its unmodified rate. None (default) disables the cutoff. "
+            "Only used in boost mode."
+        ),
+    )
     direction: Optional[list[float]] = Field(
         default=None, description="Direction vector [x, y, z] for 'direction' bias."
     )
