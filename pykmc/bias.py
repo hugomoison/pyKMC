@@ -479,19 +479,35 @@ class PointBias(Bias):
 class TopoBias(Bias):
     """Bias events that reduce the distance between two topology defects.
 
-    On each KMC step :meth:`_prepare` locates all atoms carrying
-    ``topo_source`` and ``topo_target`` in the current atomic environment.
-    :meth:`accept` then accepts a candidate event only if the moving atom
-    belongs to the source topology and its displacement brings it closer to the
-    nearest target-topology atom.  If the target topology is absent the bias is
+    The source and target topology IDs are resolved once at construction from
+    the topologies ``atom_source_idx`` and ``atom_target_idx`` carry at that
+    moment.  On each KMC step :meth:`_prepare` locates all atoms carrying those
+    fixed IDs in the current atomic environment.  :meth:`accept` then accepts a
+    candidate event only if the moving atom belongs to the source topology and
+    either:
+
+    - moves toward the nearest target-topology atom (two-index mode), or
+    - its displacement projects onto *direction* above *threshold*
+      (one-index mode).
+
+    In two-index mode, if the target topology is absent from a step the bias is
     inactive for that step.
 
     Parameters
     ----------
-    topo_source : str | bytes
-        Topology ID of the defect to move (e.g. vacancy graph ID).
-    topo_target : str | bytes
-        Topology ID of the defect to approach (e.g. interstitial graph ID).
+    atom_source_idx : int
+        Index of an atom carrying the topology of the defect to move
+        (e.g. a vacancy site).
+    atomic_environment : AtomicEnvironment
+        Atomic environment the topology IDs are read from.
+    atom_target_idx : int or None, optional
+        Index of an atom carrying the topology of the defect to approach.
+        When *None* (default), one-index mode is active.
+    direction : array-like, shape (3,) or None, optional
+        Required in one-index mode.  Desired displacement direction
+        (normalised internally).
+    threshold : float, optional
+        Minimum projection onto *direction* in one-index mode.  Default is 0.
     mode : {"filter", "boost"}
         Selection mode.  Default is ``"filter"``.
     bias_weight : float
@@ -506,8 +522,11 @@ class TopoBias(Bias):
 
     def __init__(
         self,
-        topo_source: str | bytes,
-        topo_target: str | bytes,
+        atom_source_idx: int,
+        atomic_environment: AtomicEnvironment,
+        atom_target_idx: int | None = None,
+        direction: np.ndarray | None = None,
+        threshold: float = 0.0,
         mode: Literal["filter", "boost"] = "filter",
         bias_weight: float = 0.5,
         pass_unlisted: bool = False,
@@ -519,8 +538,22 @@ class TopoBias(Bias):
             pass_unlisted=pass_unlisted,
             thr_boost=thr_boost,
         )
-        self._topo_source = topo_source
-        self._topo_target = topo_target
+        self._topo_source = atomic_environment.atomic_environment_list[atom_source_idx]
+        self._topo_target = (
+            atomic_environment.atomic_environment_list[atom_target_idx]
+            if atom_target_idx is not None
+            else None
+        )
+        if self._topo_target is None:
+            if direction is None:
+                raise ValueError(
+                    "direction is required when atom_target_idx is not given"
+                )
+            d = np.asarray(direction, dtype=float)
+            self._direction = d / np.linalg.norm(d)
+        else:
+            self._direction = None
+        self._threshold = threshold
         self._source_atoms: set[int] = set()
         self._target_positions = None
 
@@ -534,20 +567,24 @@ class TopoBias(Bias):
         self._source_atoms = set(
             atomic_environment.get_atoms_with_id(self._topo_source)
         )
-        target_atoms = atomic_environment.get_atoms_with_id(self._topo_target)
-        self._target_positions = (
-            system.positions[target_atoms] if target_atoms else None
-        )
+        if self._topo_target is not None:
+            target_atoms = atomic_environment.get_atoms_with_id(self._topo_target)
+            self._target_positions = (
+                system.positions[target_atoms] if target_atoms else None
+            )
 
     def accept(self, event, system, reference_table, neighbors_list=None) -> bool:
         atom_idx = int(event["atom_index"])
         if atom_idx not in self._source_atoms:
             return self.pass_unlisted
+
+        displacement = self._get_displacement(event, system, neighbors_list, atom_idx)
+        if self._direction is not None:
+            return float(np.dot(displacement, self._direction)) >= self._threshold
         if self._target_positions is None:
             return True
 
         current_pos = system.positions[atom_idx]
-        displacement = self._get_displacement(event, system, neighbors_list, atom_idx)
         final_pos = current_pos + displacement
 
         current_min_dist = min(

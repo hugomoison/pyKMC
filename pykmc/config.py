@@ -823,12 +823,20 @@ class BiasConfig(BaseModel):
         default=0.0,
         description="Minimum projection onto the bias direction for acceptance.",
     )
-    topo_source: Optional[str] = Field(
-        default=None, description="Source topology ID for 'topo' bias (e.g. vacancy)."
-    )
-    topo_target: Optional[str] = Field(
+    atom_source_idx: Optional[int] = Field(
         default=None,
-        description="Target topology ID for 'topo' bias (e.g. interstitial).",
+        description=(
+            "Atom index for 'topo' bias. The topology ID of this atom at initialisation "
+            "is used as the source topology for the remainder of the simulation."
+        ),
+    )
+    atom_target_idx: Optional[int] = Field(
+        default=None,
+        description=(
+            "Atom index for 'topo' bias (two-index mode). The topology ID of this atom "
+            "at initialisation is used as the target topology. When absent, direction mode "
+            "is active and a direction vector must be provided."
+        ),
     )
 
     @field_validator("direction", "target_point", mode="before")

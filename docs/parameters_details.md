@@ -669,13 +669,13 @@
   <details><summary>Description</summary>
   Minimum projection onto the bias direction for acceptance.
   </details>
-- **`topo_source`** : `str`, optional
+- **`atom_source_idx`** : `int`, optional
   <details><summary>Description</summary>
-  Source topology ID for 'topo' bias (e.g. vacancy).
+  Atom index for 'topo' bias. The topology ID of this atom at initialisation is used as the source topology for the remainder of the simulation.
   </details>
-- **`topo_target`** : `str`, optional
+- **`atom_target_idx`** : `int`, optional
   <details><summary>Description</summary>
-  Target topology ID for 'topo' bias (e.g. interstitial).
+  Atom index for 'topo' bias (two-index mode). The topology ID of this atom at initialisation is used as the target topology. When absent, direction mode is active and a direction vector must be provided.
   </details>
 
 ---

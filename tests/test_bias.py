@@ -387,15 +387,26 @@ class TestPointBias:
 # ---------------------------------------------------------------------------
 
 
-def make_atomic_environment(topo_map: dict[str, list[int]]):
+def make_atomic_environment(topo_map: dict[str, list[int]], n_atoms: int | None = None):
     """Return an AtomicEnvironment-like mock.
 
     Parameters
     ----------
     topo_map : dict[str, list[int]]
         Maps topology ID to list of atom indices carrying that topology.
+    n_atoms : int or None, optional
+        Length of the per-atom topology list. Defaults to one past the highest
+        index in topo_map. Atoms carrying no listed topology get "bulk".
     """
+    listed = [i for indices in topo_map.values() for i in indices]
+    size = (max(listed) + 1) if n_atoms is None else n_atoms
+    env_list = ["bulk"] * size
+    for topo_id, indices in topo_map.items():
+        for i in indices:
+            env_list[i] = topo_id
+
     ae = MagicMock()
+    ae.atomic_environment_list = env_list
     ae.get_atoms_with_id.side_effect = lambda topo_id: topo_map.get(topo_id, [])
     return ae
 
@@ -411,7 +422,7 @@ class TestTopoBias:
         system = make_system([[0.0, 0.0, 0.0], [5.0, 0.0, 0.0]])
         ae = make_atomic_environment({"vac": [0], "sia": [1]})
         ref = make_reference_table(move_atom_idx=0, idx_ref=0)
-        bias = TopoBias(topo_source="vac", topo_target="sia")
+        bias = TopoBias(0, ae, atom_target_idx=1)
         bias._prepare(system, ref, ae)
         # displacement +x: moves from [0,0,0] toward [5,0,0] → final [1,0,0]
         event = make_event(atom_index=0, final_positions=[[1.0, 0.0, 0.0]])
@@ -422,7 +433,7 @@ class TestTopoBias:
         system = make_system([[0.0, 0.0, 0.0], [5.0, 0.0, 0.0]])
         ae = make_atomic_environment({"vac": [0], "sia": [1]})
         ref = make_reference_table(move_atom_idx=0, idx_ref=0)
-        bias = TopoBias(topo_source="vac", topo_target="sia")
+        bias = TopoBias(0, ae, atom_target_idx=1)
         bias._prepare(system, ref, ae)
         # displacement -x: moves away from [5,0,0] → final [-1,0,0]
         event = make_event(atom_index=0, final_positions=[[-1.0, 0.0, 0.0]])
@@ -433,7 +444,7 @@ class TestTopoBias:
         system = make_system([[0.0, 0.0, 0.0], [5.0, 0.0, 0.0], [2.0, 2.0, 0.0]])
         ae = make_atomic_environment({"vac": [0], "sia": [1]})
         ref = make_reference_table(move_atom_idx=0, idx_ref=0)
-        bias = TopoBias(topo_source="vac", topo_target="sia", pass_unlisted=True)
+        bias = TopoBias(0, ae, atom_target_idx=1, pass_unlisted=True)
         bias._prepare(system, ref, ae)
         event = make_event(atom_index=2, final_positions=[[1.0, 1.0, 0.0]])
         assert bias.accept(event, system, ref) is True
@@ -443,31 +454,34 @@ class TestTopoBias:
         system = make_system([[0.0, 0.0, 0.0], [5.0, 0.0, 0.0], [2.0, 2.0, 0.0]])
         ae = make_atomic_environment({"vac": [0], "sia": [1]})
         ref = make_reference_table(move_atom_idx=0, idx_ref=0)
-        bias = TopoBias(topo_source="vac", topo_target="sia")
+        bias = TopoBias(0, ae, atom_target_idx=1)
         bias._prepare(system, ref, ae)
         event = make_event(atom_index=2, final_positions=[[1.0, 1.0, 0.0]])
         assert bias.accept(event, system, ref) is False
 
     def test_accept_when_source_topology_absent(self):
-        """When no atom carries topo_source, no atom is a source atom."""
+        """When no atom still carries the source topology, none is a source atom."""
         system = make_system([[0.0, 0.0, 0.0], [5.0, 0.0, 0.0]])
-        ae = make_atomic_environment({"sia": [1]})  # no "vac" atoms
+        initial = make_atomic_environment({"vac": [0], "sia": [1]})
         ref = make_reference_table(move_atom_idx=0, idx_ref=0)
-        bias = TopoBias(topo_source="vac", topo_target="sia")
-        bias._prepare(system, ref, ae)
+        bias = TopoBias(0, initial, atom_target_idx=1)
+        # the vacancy is gone by the time this step is prepared
+        current = make_atomic_environment({"sia": [1]}, n_atoms=2)
+        bias._prepare(system, ref, current)
         event = make_event(atom_index=0, final_positions=[[-1.0, 0.0, 0.0]])
         assert bias.accept(event, system, ref) is bias.pass_unlisted
 
     def test_select_falls_back_when_source_topology_absent(self):
         """With no source atom, select() rejects every candidate and falls back."""
         system = make_system([[0.0, 0.0, 0.0], [5.0, 0.0, 0.0]])
-        ae = make_atomic_environment({"sia": [1]})  # no "vac" atoms
+        initial = make_atomic_environment({"vac": [0], "sia": [1]})
         ref = make_reference_table(move_atom_idx=0, idx_ref=0)
-        bias = TopoBias(topo_source="vac", topo_target="sia")
+        bias = TopoBias(0, initial, atom_target_idx=1)
+        current = make_atomic_environment({"sia": [1]}, n_atoms=2)
         events = [make_event(atom_index=0, final_positions=[[-1.0, 0.0, 0.0]], k=1.0)]
         active = make_active_table(events)
         l_k = np.array([e["k"] for e in events])
-        idx, _, ktot = bias.select(rejection_free, l_k, active, system, ref, ae)
+        idx, _, ktot = bias.select(rejection_free, l_k, active, system, ref, current)
         assert idx == 0
         assert ktot > 0.0
 
@@ -479,7 +493,7 @@ class TestTopoBias:
         )
         ae = make_atomic_environment({"vac": [0], "sia": [1]})
         ref = make_reference_table(move_atom_idx=0, idx_ref=0)
-        bias = TopoBias(topo_source="vac", topo_target="sia")
+        bias = TopoBias(0, ae, atom_target_idx=1)
         bias._prepare(system, ref, ae)
         event = make_event(atom_index=2, final_positions=[[1.0, 0.0, 0.0]])
         assert bias.accept(event, system, ref) is False
@@ -490,7 +504,7 @@ class TestTopoBias:
         system = make_system([[0.5, 0.0, 0.0], [9.5, 0.0, 0.0]], cell=np.eye(3) * 10.0)
         ae = make_atomic_environment({"vac": [0], "sia": [1]})
         ref = make_reference_table(move_atom_idx=0, idx_ref=0)
-        bias = TopoBias(topo_source="vac", topo_target="sia")
+        bias = TopoBias(0, ae, atom_target_idx=1)
         bias._prepare(system, ref, ae)
         # moving in -x closes the 1.0 A minimum-image gap
         toward = make_event(atom_index=0, final_positions=[[0.2, 0.0, 0.0]])
@@ -499,14 +513,50 @@ class TestTopoBias:
         assert bias.accept(away, system, ref) is False
 
     def test_accept_when_target_topology_absent(self):
-        """When no atom carries topo_target, all events are accepted (fallback)."""
-        system = make_system([[0.0, 0.0, 0.0]])
-        ae = make_atomic_environment({"vac": [0]})  # no "sia" atoms
+        """When no atom still carries the target topology, the bias is inactive."""
+        system = make_system([[0.0, 0.0, 0.0], [5.0, 0.0, 0.0]])
+        initial = make_atomic_environment({"vac": [0], "sia": [1]})
         ref = make_reference_table(move_atom_idx=0, idx_ref=0)
-        bias = TopoBias(topo_source="vac", topo_target="sia")
-        bias._prepare(system, ref, ae)
+        bias = TopoBias(0, initial, atom_target_idx=1)
+        # the interstitial is gone by the time this step is prepared
+        current = make_atomic_environment({"vac": [0]}, n_atoms=2)
+        bias._prepare(system, ref, current)
         event = make_event(atom_index=0, final_positions=[[-1.0, 0.0, 0.0]])
         assert bias.accept(event, system, ref) is True
+
+    # ------------------------------------------------------------------
+    # one-index (direction) mode
+    # ------------------------------------------------------------------
+
+    def test_direction_mode_projects_displacement(self):
+        """Without a target index, a source atom is judged on a direction projection."""
+        system = make_system([[0.0, 0.0, 0.0], [5.0, 0.0, 0.0]])
+        ae = make_atomic_environment({"vac": [0], "sia": [1]})
+        ref = make_reference_table(move_atom_idx=0, idx_ref=0)
+        bias = TopoBias(0, ae, direction=[0.0, 0.0, 1.0], threshold=0.1)
+        bias._prepare(system, ref, ae)
+        up = make_event(atom_index=0, final_positions=[[0.0, 0.0, 1.0]])
+        down = make_event(atom_index=0, final_positions=[[0.0, 0.0, -1.0]])
+        assert bias.accept(up, system, ref) is True
+        assert bias.accept(down, system, ref) is False
+
+    def test_direction_mode_follows_the_topology(self):
+        """Any atom that currently carries the source topology is judged, not atom 0."""
+        system = make_system([[0.0, 0.0, 0.0], [5.0, 0.0, 0.0]])
+        initial = make_atomic_environment({"vac": [0], "sia": [1]})
+        ref = make_reference_table(move_atom_idx=0, idx_ref=0)
+        bias = TopoBias(0, initial, direction=[0.0, 0.0, 1.0])
+        # the vacancy has migrated to atom 1
+        current = make_atomic_environment({"vac": [1], "sia": [0]})
+        bias._prepare(system, ref, current)
+        moved = make_event(atom_index=1, final_positions=[[5.0, 0.0, 1.0]])
+        assert bias.accept(moved, system, ref) is True
+
+    def test_direction_required_without_target_index(self):
+        """One-index mode without a direction is rejected at construction."""
+        ae = make_atomic_environment({"vac": [0], "sia": [1]})
+        with pytest.raises(ValueError, match="direction is required"):
+            TopoBias(0, ae)
 
     # ------------------------------------------------------------------
     # select() integration
@@ -525,7 +575,7 @@ class TestTopoBias:
         ae = make_atomic_environment({"vac": [0], "sia": [1]})
         ref = MagicMock()
         ref.table = pd.DataFrame({"idx_ref": [0, 0], "move_atom_idx": [0, 0]})
-        bias = TopoBias(topo_source="vac", topo_target="sia")
+        bias = TopoBias(0, ae, atom_target_idx=1)
         # event 0: moves source away from target (rejected)
         # event 1: moves source toward target (accepted)
         events = [
@@ -544,7 +594,7 @@ class TestTopoBias:
         system = make_system([[0.0, 0.0, 0.0], [10.0, 0.0, 0.0]])
         ae = make_atomic_environment({"vac": [0], "sia": [1]})
         ref = make_reference_table(move_atom_idx=0, idx_ref=0)
-        bias = TopoBias(topo_source="vac", topo_target="sia")
+        bias = TopoBias(0, ae, atom_target_idx=1)
         events = [
             make_event(atom_index=0, final_positions=[[-1.0, 0.0, 0.0]], k=1.0),
         ]
@@ -562,7 +612,7 @@ class TestTopoBias:
         system = make_system([[0.0, 0.0, 0.0], [10.0, 0.0, 0.0]])
         ae = make_atomic_environment({"vac": [0], "sia": [1]})
         ref = make_reference_table(move_atom_idx=0, idx_ref=0)
-        bias = TopoBias(topo_source="vac", topo_target="sia")
+        bias = TopoBias(0, ae, atom_target_idx=1)
         bias.enabled = False
         events = [make_event(atom_index=0, final_positions=[[-1.0, 0.0, 0.0]], k=1.0)]
         active = make_active_table(events)
@@ -724,10 +774,9 @@ class TestBoostMode:
 
     def test_pass_unlisted_true_raises_topo(self):
         """TopoBias: boost + pass_unlisted=True → ValueError (always, no atom_indices check)."""
+        ae = make_atomic_environment({"vac": [0], "sia": [1]})
         with pytest.raises(ValueError, match="pass_unlisted=True"):
-            TopoBias(
-                topo_source="vac", topo_target="sia", mode="boost", pass_unlisted=True
-            )
+            TopoBias(0, ae, atom_target_idx=1, mode="boost", pass_unlisted=True)
 
     def test_pass_unlisted_false_with_atom_indices_is_valid(self):
         """boost + pass_unlisted=False + atom_indices set is valid; non-listed atoms go to k_free."""
@@ -776,7 +825,7 @@ class TestPassUnlisted:
         system = make_system([[0.0, 0.0, 0.0], [5.0, 0.0, 0.0], [2.0, 2.0, 0.0]])
         ae = make_atomic_environment({"vac": [0], "sia": [1]})
         ref = make_reference_table(move_atom_idx=0, idx_ref=0)
-        bias = TopoBias(topo_source="vac", topo_target="sia")
+        bias = TopoBias(0, ae, atom_target_idx=1)
         bias._prepare(system, ref, ae)
         event = make_event(atom_index=2, final_positions=[[1.0, 1.0, 0.0]])
         assert bias.accept(event, system, ref) is False
@@ -785,9 +834,7 @@ class TestPassUnlisted:
         system = make_system([[0.0, 0.0, 0.0], [5.0, 0.0, 0.0], [2.0, 2.0, 0.0]])
         ae = make_atomic_environment({"vac": [0], "sia": [1]})
         ref = make_reference_table(move_atom_idx=0, idx_ref=0)
-        bias = TopoBias(
-            topo_source="vac", topo_target="sia", mode="filter", pass_unlisted=True
-        )
+        bias = TopoBias(0, ae, atom_target_idx=1, mode="filter", pass_unlisted=True)
         bias._prepare(system, ref, ae)
         event = make_event(atom_index=2, final_positions=[[1.0, 1.0, 0.0]])
         assert bias.accept(event, system, ref) is True
