@@ -1735,9 +1735,9 @@ flowchart TD
 <h3 id="the-dispatch-result">The dispatch result</h3>
 <p><code>_dispatch</code> runs on every rank and returns a <code>DispatchResult</code> (dataclass) carrying a <code>DispatchStatus</code> (enum) plus an optional value and error:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">DispatchStatus</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">SILENT</span> <span class="o">=</span> <span class="s2">&quot;silent&quot;</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">SUCCESS</span> <span class="o">=</span> <span class="s2">&quot;success&quot;</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">ERROR</span> <span class="o">=</span> <span class="s2">&quot;error&quot;</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">SILENT</span> <span class="o">=</span> <span class="s2">"silent"</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">SUCCESS</span> <span class="o">=</span> <span class="s2">"success"</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">ERROR</span> <span class="o">=</span> <span class="s2">"error"</span>
 </span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
 </span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
 </span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="nd">@dataclass</span>
@@ -1774,7 +1774,7 @@ flowchart TD
 </span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">comm</span><span class="o">=</span><span class="n">comm</span><span class="p">,</span>
 </span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">has_global</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 </span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">group_size</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">extra_ops</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;extra_operation&quot;</span><span class="p">:</span> <span class="n">extra_operation</span><span class="p">},</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">extra_ops</span><span class="o">=</span><span class="p">{</span><span class="s2">"extra_operation"</span><span class="p">:</span> <span class="n">extra_operation</span><span class="p">},</span>
 </span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="p">)</span><span class="o">.</span><span class="n">launch</span><span class="p">()</span>
 </span></code></pre></div>
 <p>Rank 0 is always the <code>Manager</code> and runs no worker. Ranks <code>1 … size-1</code> are split into <code>n_workers</code>.  Then, the provided comm is split, with <code>comm.Split</code>, so :</p>
@@ -1788,7 +1788,7 @@ flowchart TD
 <h2 id="engine-factory">Engine factory</h2>
 <p><code>EngineManagerFactory</code> is the pyKMC-specific subclass of <code>ManagerFactory</code>. It fixes the object-creation policy to the pyKMC convention: one <code>Engine</code> per worker for local mode, plus one shared <code>Engine</code> on the group, so you supply an engine style and config instead of an <code>obj_factory</code>. </p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">factory</span> <span class="o">=</span> <span class="n">EngineManagerFactory</span><span class="p">(</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">engine_style</span><span class="o">=</span><span class="s2">&quot;lammps&quot;</span><span class="p">,</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">engine_style</span><span class="o">=</span><span class="s2">"lammps"</span><span class="p">,</span>
 </span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">engine_config</span><span class="o">=</span><span class="n">cfg</span><span class="p">,</span>
 </span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">n_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
 </span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">group_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>

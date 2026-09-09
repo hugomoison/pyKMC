@@ -1580,7 +1580,7 @@ venv:</p>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>make<span class="w"> </span>install-python
 </span></code></pre></div>
 <p>Verify the module and its packages:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;import lammps; lmp = lammps.lammps(); print(lmp.installed_packages)&quot;</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import lammps; lmp = lammps.lammps(); print(lmp.installed_packages)"</span>
 </span></code></pre></div>
 <h3 id="building-lammps-from-scratch">Building LAMMPS from scratch</h3>
 <p>Use cmake — the traditional make path no longer supports the PLUGIN package:</p>
@@ -1615,11 +1615,11 @@ exports.</p>
 </span></code></pre></div>
 <p>More details in the <a href="https://mammasmias.github.io/IterativeRotationsAssignments/#compilation">IRA documentation</a>.</p>
 <h2 id="5-verify">5. Verify</h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"</span>
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="s2">from lammps import lammps</span>
 </span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="s2">import ase, pykmc, ira_mod, pypARTn</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="s2">print(&#39;All imports OK&#39;)</span>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="s2">&quot;</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="s2">print('All imports OK')</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="s2">"</span>
 </span></code></pre></div>
 <p>If an import fails, see <a href="../troubleshooting.html">Troubleshooting</a>.</p>
 <h2 id="6-running">6. Running</h2>
