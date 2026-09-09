@@ -1,0 +1,77 @@
+[Control]
+initial_config = initial_config.xyz
+n_steps = 10
+engine = lammps
+verbosity = 2
+n_sessions = 7
+bias = True
+
+[Lammps]
+pair_style = mtp/extrapolation
+pair_coeff = * * potential.almtp 0 1 2
+min_style = fire
+minimize = 1e-12 1e-12 1500 10000
+
+[AtomicEnvironment]
+style = graph
+rnei = 2.6
+rcut = 7.4
+
+[EventSearch]
+style = partn
+nsearch = 7
+emax_event = 5.0
+emin_event = -0.1
+delr_thr = 0.1
+
+[pARTn]
+verbosity = 2
+push_mode = rad
+push_dist_thr = 2.6
+push_step_size = 0.1
+ninit = 3
+lanczos_min_size = 5
+lanczos_max_size = 20
+lanczos_disp = 5e-3
+lanczos_eval_conv_thr = 1e-3
+eigval_thr = -0.5
+eigen_step_size = 0.1
+nsmooth = 2
+nnewchance = 10
+forc_thr = 0.01
+push_over = 2.0
+r_forc_thr = 1e-3
+nperp_limitation = [3, 8, 8, 8, -1]
+
+[RateConstant]
+style = constant
+k0 = 10
+T = 600.0
+
+[PSR]
+style = ira
+
+[IRA]
+
+[Basin]
+
+[Inactive_Atoms]
+region_type = plane
+region_normal = z
+region_threshold = 8.8
+side = below
+
+[Frozen_Atoms]
+region_type = plane
+region_normal = z
+region_threshold = 8.8
+side = below
+
+[Bias]
+style = direction
+mode = boost
+threshold = 0.00
+atom_indices = [0]
+direction = [0.0, 0.0, -1.0]
+bias_weight = 0.40
+
