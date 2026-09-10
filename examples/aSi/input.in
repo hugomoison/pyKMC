@@ -1,0 +1,60 @@
+[Control]
+initial_config = initial_config.xyz
+n_steps = 5
+engine = lammps
+verbosity = 2
+n_sessions = 7
+
+[Lammps]
+pair_style = sw
+pair_coeff = * * aSi.sw Si
+min_style = fire
+minimize = 1e-10 1e-10 1500 10000
+
+[AtomicEnvironment]
+style = graph
+rnei = 2.6
+rcut = 5.4
+
+[EventSearch]
+style = partn
+nsearch = 7
+
+[pARTn]
+verbosity = 2
+push_mode = rad
+push_dist_thr = 3.2
+push_step_size = 0.1
+ninit = 2
+lanczos_min_size = 5
+lanczos_max_size = 20
+lanczos_disp = 1e-3
+lanczos_eval_conv_thr = 1e-3
+eigval_thr = -0.5
+eigen_step_size = 0.1
+nsmooth = 2
+nnewchance = 5
+forc_thr = 0.01
+push_over = 2.0
+r_forc_thr = 1e-3
+nperp_limitation = [3, 8, 12, 16, -1]
+
+r_ninit = 1
+r_push_step_size = 0.005
+r_lanczos_min_size = 5
+r_nevalf_max = 999
+r_delr_sad_thr = 0.3
+
+[RateConstant]
+style = constant
+k0 = 10
+T = 1500.0
+
+[PSR]
+style = ira
+matching_score_thr = 0.15
+
+[IRA]
+matching_score_thr = 0.3
+
+[Basin]
