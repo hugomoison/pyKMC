@@ -114,6 +114,8 @@ class ErrorType(Enum):
     REFINEMENT_INVALID_MINIMA = 32
     RECONSTRUCTION_INVALID_MIN1 = 41
     RECONSTRUCTION_INVALID_MIN2 = 42
+    RECONSTRUCTION_INVALID_EVENT_DATA = 43
+    RECONSTRUCTION_EVENT_NOT_CONTAINED = 44
     BASIN_TEXIT_NOT_FOUND = 51
 
 
@@ -176,7 +178,12 @@ class EventRefinementOutput:
     num_reference_event : Optional[int]
         Index of the corresponding reference event (if matched).
     refined: Optional[str]
-        If the event has been refined (T: True, F: False, B: In basin)
+        If the event has been refined (T: True, F: False, B: In basin; an 'R'
+        prefix marks a row recycled from a previous step, e.g. RT/RF)
+    neighbors : Optional[np.ndarray]
+        Absolute atom indices of the in-rcut neighbour subset, captured at
+        refinement and used as the authoritative ordering for the stored
+        ``saddle_positions``/``min2_positions`` during reconstruction.
     """
 
     central_atom_index: int
@@ -186,6 +193,7 @@ class EventRefinementOutput:
     dE_forward: Optional[float] = None
     num_reference_event: Optional[int] = None
     refined: Optional[str] = None
+    neighbors: Optional[np.ndarray] = None
 
 
 @dataclass

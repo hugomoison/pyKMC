@@ -404,8 +404,8 @@ class BasinsGenericEvents:
                 supposed_final_positions,
                 new_system.positions,
                 new_system.cell,
-                self.config.psr.matching_score_thr,
                 neighbors,
+                central_atom=central_atom,
             )
             if not result.is_ok():
                 return result

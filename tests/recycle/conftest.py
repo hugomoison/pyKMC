@@ -41,6 +41,7 @@ def row(atom_index: int) -> dict:
         "atom_index": atom_index,
         "saddle_positions": np.zeros((1, 3)),
         "final_positions": np.zeros((1, 3)),
+        "neighbors": np.array([atom_index]),
         "energy_barrier": 0.5,
         "k": 1.0,
         "num_reference_event": 0,

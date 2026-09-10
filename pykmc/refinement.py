@@ -120,6 +120,9 @@ class Refinement:
             if res.is_ok():
                 res.ok_value().min2_positions = ctx["min2_positions"]
                 res.ok_value().num_reference_event = ctx["num_reference_event"]
+                # Persist the neighbour ordering the stored coordinates follow:
+                # it is rebuilt every step and must not be re-derived downstream.
+                res.ok_value().neighbors = np.asarray(ctx["neighbors"], dtype=int)
                 res.ok_value().saddle_positions = res.ok_value().saddle_positions[
                     ctx["neighbors"]
                 ]
