@@ -30,6 +30,10 @@ nav:
   - Getting Started:
       - Installation: install/installation.md
       - User Guide: user_guide.md
+  - Features:
+      - Basins: basins.md
+      - Active Volumes: active_volumes.md
+      - Symmetries: symmetries.md
   - Troubleshooting: troubleshooting.md
   - KMC Parameters: parameters.md
   - Developer Guide: 
@@ -54,9 +58,9 @@ nav:
       - PointSetRegistration : api/point_set_registration.md
       - Symmetries : api/symmetries.md
       - RateConstante : api/rate_constant.md
-      - Initialize : api/initializer.md
+      - Initialize : api/initialized.md
       - Result : api/result.md
-      - Info: api/info_simulations.md
+      - Info: api/info_simulation.md
       - Utils: api/utils.md
       - run : api/run.md
 
