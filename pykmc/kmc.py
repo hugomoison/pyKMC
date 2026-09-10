@@ -94,6 +94,7 @@ class KMC:
 
     def run(self) -> None:
         """Run the simulation."""
+        self.run_start_wall_time = time.perf_counter()
         # Initialize the simulation, KMC attributes and minimize the system
         #self._initialize()
         self.manager.initialize_sessions(self.config, self.system)
@@ -109,34 +110,33 @@ class KMC:
                 self.neighbors_list.neighbors_list["rcut"],
                 self.config.atomicenvironment.neighbors_add,
             )
-        #Set new positions to all sessions/engine : 
+        #Set new positions to all sessions/engine :
         self.manager.use_local()
         self.manager.set_all_positions(self.system.positions)
 
-        if self.config.control.restart_file is None: 
+        if self.config.control.restart_file is None:
         # Write initial step to file
             self._append_snapshot_to_trajectory()
-            last_step = 0 
+            last_step = 0
             total_time = 0.0
 
         else : #read restart file
             self.loggers.info("log", ":=> Reading restart file")
-            restart_info = np.load(self.config.control.restart_file) 
+            restart_info = np.load(self.config.control.restart_file)
             last_step = restart_info["last_step"]
             total_time = restart_info["last_time"]
             self.loggers.info("log", ":=> last step = {}, last_end_time = {}ps".format(last_step, total_time))
 
         # LOOP KMC PARAMETERS
         nkmc_steps = self.config.control.n_steps
-        last_step +=1 
+        last_step +=1
         nsearch = self.config.eventsearch.nsearch
 
-        
+
 
         # KMC LOOP
         for step in range(last_step, nkmc_steps+last_step):
-            start_real = time.time()
-            start_cpu = time.process_time()
+            start_wall_time = time.perf_counter()
 
             self.loggers.info(
                 "log",
@@ -185,6 +185,22 @@ class KMC:
             ##=>Refines all event in subset
             refinement = self.execute_refinements(subset_reference_event_table)
 
+            failed_refinement_refs = []
+            for res in refinement.results:
+                if res.is_ok():
+                    continue
+
+                err = res.err_value()
+                if isinstance(err.variables, dict) and "n_ref_event" in err.variables:
+                    failed_refinement_refs.append(int(err.variables["n_ref_event"]))
+
+            if len(failed_refinement_refs) != 0:
+                self.loggers.info(
+                    "log",
+                    "\t :=> Incrementing failure counter for reference events from which refinement failed."
+                )
+                self.reference_table.increment_failures(failed_refinement_refs)
+
             # == ADD ACTIVE EVENT TO ACTIVE EVENT TABLE ==
             active_table = self.add_active_events(refinement.get_successes_results())
             active_table.remove_duplicates(self.system.cell, self.neighbors_list)  #To be sure
@@ -195,11 +211,6 @@ class KMC:
             self.manager.use_global()
             result_reconstruction, delta_t, ktot, idx_selected_event, err_reference, err_ae = self.reconstruction(active_table)
             events_info = info_active_events(self.system.types, self.reference_table, active_table)
-            if len(err_reference) != 0 :
-                self.loggers.info("log", "\t :=> Removing reference event from which reconstruction failed.")
-                self.reference_table.remove(list(set(err_reference)))
-                self.loggers.info("log", "\t :=> Removing topology from known environments from which reconstruction failed.")
-                self.visited_environments = self.visited_environments.difference(set(err_ae))
             events_info = events_info.output_msg()
 
 
@@ -267,7 +278,7 @@ class KMC:
                 self.total_energy = result_reconstruction.ok_value().min2_etot
             total_time += delta_t * 10**-12  # time is in seconds
 
-            ###=> Synchronise all lammps instances with new positions 
+            ###=> Synchronise all lammps instances with new positions
             self.manager.use_local()
             self.manager.set_all_positions(positions=self.system.positions)
             ##=>Minimize
@@ -293,9 +304,9 @@ class KMC:
             self.loggers.info("info", kmc_loop_info.output_msg())
 
 
-            elapsed_real = time.time() - start_real
-            elapsed_cpu = time.process_time() - start_cpu
-            
+            step_wall_time = time.perf_counter() - start_wall_time
+            total_wall_time = time.perf_counter() - self.run_start_wall_time
+
             self.loggers.table_line_info_kmc(
                 "output",
                 step,
@@ -306,8 +317,8 @@ class KMC:
                 active_table.table.loc[idx_selected_event].at["k"],
                 ktot,
                 self.total_energy,
-                elapsed_cpu, 
-                elapsed_real
+                step_wall_time,
+                total_wall_time
             )
 
             # == Update variables ==
@@ -323,9 +334,19 @@ class KMC:
                 self.config.atomicenvironment.neighbors_add,
             )
 
+            self._remove_failed_reference_events()
             # == Save Reference Table and List visited environment :
             self._save()
             self._append_snapshot_to_trajectory()
+
+            if self._wall_time_limit_reached():
+                self.loggers.info(
+                    "log",
+                    ":=> Wall time limit reached. Stopping simulation cleanly."
+                )
+                self._save_restart_file(step, total_time)
+                self._close()
+
             del active_table
             # == Check if only cristalline environments ==
             if set(list(self.atomic_environment.atomic_environment_list)) == {
@@ -509,30 +530,33 @@ class KMC:
         return idx_selected_event, delta_t, ktot
 
 
-    def reconstruction(self, active_table) : 
+    def reconstruction(self, active_table) :
             #TODO make a Result
 
             err_reference = []
             err_ae = []
-            while len(active_table.table) > 0 : 
+            while len(active_table.table) > 0 :
                 ##=>Select event
                 idx_selected_event, delta_t, ktot = self._select_event(active_table)
-                ##=>Reconstruct event 
+                ##=>Reconstruct event
                 self.loggers.info("log", "\t :=> Event Reconstruction")
                 result_reconstruction = self._reconstruction_active_event(idx_selected_event, active_table)
-                if result_reconstruction.is_ok() : 
-                    break 
-                else : 
+                if result_reconstruction.is_ok() :
+                    break
+                else :
                     num_ref_event = active_table.table.loc[idx_selected_event].at['num_reference_event']
                     self.loggers.info("log", "\t :=> Reconstruction fails (reference event {}) :  {}".format(num_ref_event, result_reconstruction.err_value().message))
+                    self.reference_table.increment_failures([num_ref_event])
                     ae_topo = self.reference_table.table[self.reference_table.table['idx_ref'] == num_ref_event]['event_id'].values[0]
                     err_reference.append(num_ref_event)
                     err_ae.append(ae_topo)
 
                     self.loggers.info("log", "\t :=> Removing active event.")
                     active_table.remove(idx_selected_event)
-            else : 
+            else :
                 self.loggers.error("log", "All event reconstuctions failed.")
+                self._remove_failed_reference_events()
+                self._save()
                 self._close()
             return result_reconstruction, delta_t, ktot, idx_selected_event, err_reference, err_ae
 
@@ -575,9 +599,9 @@ class KMC:
 
     def minimize_system(self, positions = None) -> None:
         """Minimize the system and update its positions."""
-        if self.config.control.restart_file is None: 
+        if self.config.control.restart_file is None:
             self.loggers.info("log", ":=> Minimizing the system")
-        else : 
+        else :
             self.loggers.info("log", ":=> Computing energies")
         new_positions, total_energy = self.manager.global_minimize_with_results(self.config, positions=positions)
         #TEST
@@ -585,7 +609,7 @@ class KMC:
         #new_positions, total_energy = future.result()
         #np.savetxt('before_min.dat', self.system.positions)
         #np.savetxt('after_min.dat', new_positions)
-        if self.config.control.restart_file is None : 
+        if self.config.control.restart_file is None :
             self.system.update_positions(new_positions)
         self.total_energy = total_energy
         self.potential_energy = self.manager.global_get_potential_energy()
@@ -695,14 +719,71 @@ class KMC:
         with open(self.config.control.visited_environments_output, "wb") as file:
             pickle.dump(self.visited_environments, file)
 
-    def _save_restart_file(self, last_step, last_time) : 
-        """ 
+    def _save_restart_file(self, last_step, last_time) :
+        """
         Save end simulation informations
         """
-        np.savez("restart_"+str(last_step)+".npz", 
-                 last_step = last_step, 
+        np.savez("restart_"+str(last_step)+".npz",
+                 last_step = last_step,
                  last_time = last_time)
 
+
+    def _wall_time_limit_reached(self) -> bool:
+        """Check if the configured wall-clock time limit has been reached."""
+        wall_time_limit = self.config.control.wall_time_limit
+
+        if wall_time_limit is None:
+            return False
+
+        wall_time_buffer = self.config.control.wall_time_buffer
+        stop_time = max(0.0, wall_time_limit - wall_time_buffer)
+        elapsed_wall_time = time.perf_counter() - self.run_start_wall_time
+
+        return elapsed_wall_time >= stop_time
+
+    def _remove_failed_reference_events(self) -> None:
+        """Remove reference events whose failure counter reached the threshold."""
+        threshold = self.config.control.reference_event_failure_threshold
+
+        if threshold is None:
+            return
+
+        failed_events = self.reference_table.table[
+            self.reference_table.table["n_failures"] >= threshold
+        ]
+
+        if len(failed_events) == 0:
+            return
+
+        failed_refs = set(failed_events["idx_ref"].astype(int))
+
+        backward_refs = set(
+            self.reference_table.table.loc[
+                self.reference_table.table["idx_ref"].isin(failed_refs),
+                "idx_backward",
+            ].astype(int)
+        )
+
+        refs_to_remove = failed_refs | backward_refs
+
+        event_ids_to_remove = set(
+            self.reference_table.table.loc[
+                self.reference_table.table["idx_ref"].isin(refs_to_remove),
+                "event_id",
+            ]
+        )
+
+        self.loggers.info(
+            "log",
+            "\t :=> Removing {} reference events after reaching failure threshold.".format(
+                len(refs_to_remove)
+            ),
+        )
+
+        self.reference_table.remove(list(failed_refs))
+        self.visited_environments = self.visited_environments.difference(
+            event_ids_to_remove
+        )
 
     def _close(self) -> None:
         """Close the simulation."""

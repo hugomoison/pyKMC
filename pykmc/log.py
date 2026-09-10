@@ -433,14 +433,14 @@ class LogKMC(LogManager):
             "\t# k_tot(ps-1)   : Total rate constant of all possible events at this step",
         )
         self.info(logger_name, "\t# E(eV)         : Energy of the system.")
-        self.info(logger_name, "\t# Cpu time(s) : Cpu time in seconds. ")
-        self.info(logger_name, "\t# Wall time(s) : Wall time in seconds. ")
+        self.info(logger_name, "\t# Step wall(s) : Wall time spent during this KMC step. ")
+        self.info(logger_name, "\t# Total wall(s) : Total wall time since the start of run(). ")
         self.new_line(logger_name)
         # First line of the table
         self.info(
             logger_name,
             "{:<10s} {:<14s} {:<14s} {:<14s} {:<14s} {:<14s} {:<14s} {:<14s} {:<14s} {:<14s}".format(
-                "Step", "dT(s)", "T(s)", "Ref event", "Ea(eV)", "k_evt(ps-1)", "k_tot(ps-1)", "E(eV)", "Cpu time(s)", "Wall time(s)"
+                "Step", "dT(s)", "T(s)", "Ref event", "Ea(eV)", "k_evt(ps-1)", "k_tot(ps-1)", "E(eV)", "Step wall(s)", "Total wall(s)"
             ),
         )
         self.info(logger_name, "{:s}".format(110 * "-"))

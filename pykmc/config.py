@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, model_validator, ValidationError, field_v
 import configparser
 from typing import Any, Literal
 from dataclasses import dataclass
+import re
 
 
 @dataclass
@@ -18,6 +19,49 @@ class PhysicalConstants:
 
     kb = 8.6173303e-05  # eV.K^-1
     h = 4.135667e-3  # eV.ps
+
+
+def parse_wall_time_to_seconds(value: Any) -> Optional[float]:
+    """Convert wall-time input to seconds.
+
+    Accepted formats:
+    - seconds as int/float/string: 300, "300"
+    - simple units: "30s", "10m", "2h", "3d"
+    - SLURM-like: "HH:MM:SS" or "D-HH:MM:SS"
+    """
+    if value is None:
+        return None
+
+    if isinstance(value, (int, float)):
+        return float(value)
+
+    if isinstance(value, str):
+        value = value.strip().lower()
+
+        try:
+            return float(value)
+        except ValueError:
+            pass
+
+        unit_match = re.fullmatch(r"(\d+(?:\.\d+)?)([smhd])", value)
+        if unit_match:
+            number = float(unit_match.group(1))
+            unit = unit_match.group(2)
+            factors = {"s": 1, "m": 60, "h": 3600, "d": 86400}
+            return number * factors[unit]
+
+        slurm_match = re.fullmatch(r"(?:(\d+)-)?(\d{1,2}):(\d{2}):(\d{2})", value)
+        if slurm_match:
+            days = int(slurm_match.group(1) or 0)
+            hours = int(slurm_match.group(2))
+            minutes = int(slurm_match.group(3))
+            seconds = int(slurm_match.group(4))
+            return days * 86400 + hours * 3600 + minutes * 60 + seconds
+
+    raise ValueError(
+        f"Invalid wall time value: {value}. "
+        "Use seconds, '10m', '2h', '3d', 'HH:MM:SS', or 'D-HH:MM:SS'."
+    )
 
 
 class ControlConfig(BaseModel):
@@ -39,7 +83,7 @@ class ControlConfig(BaseModel):
     )
 
     visited_environments_output: Optional[str] = Field(
-        default="./visited_environments.pickle", 
+        default="./visited_environments.pickle",
         description="File path where the list of atomic environments that have been explored will be sore in pickle format."
     )
 
@@ -49,12 +93,12 @@ class ControlConfig(BaseModel):
     )
 
     visited_environments: Optional[str] = Field(
-        default=None, 
+        default=None,
         description="Path to a list of visited environment generated from a previous simulation."
     )
 
-    restart_file: Optional[str] = Field( 
-        default = None, 
+    restart_file: Optional[str] = Field(
+        default = None,
         description="File with restart informations."
     )
 
@@ -66,13 +110,48 @@ class ControlConfig(BaseModel):
         default=..., description="Total number of simulation steps to run.", gt=0
     )
 
+    wall_time_limit: Optional[float] = Field(
+        default=None,
+        gt=0,
+        description=(
+            "Wall-clock time limit. This is real elapsed runtime, not KMC physical time. "
+            "Accepted formats: seconds, '10m', '2h', '3d', 'HH:MM:SS', or 'D-HH:MM:SS'. "
+            "If set, the simulation stops cleanly when the elapsed wall time from the start "
+            "of run() reaches this limit."
+        ),
+    )
+
+    wall_time_buffer: float = Field(
+        default=120.0,
+        ge=0,
+        description=(
+            "Buffer time subtracted from wall_time_limit. "
+            "Default is 120 seconds. "
+            "Accepted formats: seconds, '10m', '2h', '3d', 'HH:MM:SS', or 'D-HH:MM:SS'."
+        ),
+    )
+
+    @field_validator("wall_time_limit", "wall_time_buffer", mode="before")
+    @classmethod
+    def parse_wall_time_fields(cls, value):
+        return parse_wall_time_to_seconds(value)
+
+    reference_event_failure_threshold: Optional[int] = Field(
+        default=None,
+        ge=1,
+        description=(
+            "Remove a reference event from the catalog after this many "
+            "refinement or reconstruction failures. If None, this check is disabled."
+        ),
+    )
+
     engine: Literal["lammps"] = Field(
         default=...,
         description="Which E/F Engine to use. Note : Only lammps is implemented.",
     )
 
     n_sessions: Optional[int] = Field(
-        default=1, 
+        default=1,
         description="Number of Sessions"
     )
 
@@ -145,12 +224,12 @@ class EventSearchConfig(BaseModel):
         description="To be used with `energy_assymetry`.",
     )
     energy_asymmetry: int = Field(
-        default=5, 
+        default=5,
         description="Prevent highly asymmetric event to be added to the reference table."
                     "The con"
     )
     refined_minimum_delr_thr: float = Field(
-        default = 0.1, 
+        default = 0.1,
         description="Refinement is accepted only if the central atom moves less than this distance between the current position and the refined minimum."
     )
     refined_energy_thr: float = Field(
@@ -163,28 +242,28 @@ class EventSearchConfig(BaseModel):
         description="delr threshold between one minima and the intial configuration to consider the event valid.",
     )
 
-    
+
 
 
 class PartnConfig(BaseModel):
     """pARTn parameters."""
 
-    #Control 
+    #Control
     verbosity: int = Field(default=2, description="pARTn verbosity")
 
     delr_thr: float = Field(
-        default=0.1, 
+        default=0.1,
         description="Threshold at which an atom is considered to have moved. This threshold affects the npart parameter in the artn.out output."
     )
 
     evalf_max: int = Field(
-        default = 9999, 
+        default = 9999,
         description="to stop an artn search before end when the number of force evaluations by the force engine is greater to nevalf_max."
     )
 
     #Exploration
     zseed: int = Field(
-        default=0, 
+        default=0,
         description="The value of zseed is used to seed the random number generator. If the value equals 0, a new radom seed gets geenrated. The exact zseed value of each research is written in file zseed.dat, which can be useful for debugging, or re-running exact same pARTn runs."
     )
 
@@ -214,14 +293,14 @@ class PartnConfig(BaseModel):
         description="Specify the minimal number of pushes with the initial push vector.",
     )
 
-    #Lanczos 
+    #Lanczos
     lanczos_min_size: int = Field(
-        default=10, 
+        default=10,
         description="Enforce Lanczos to always do at least this number of iterations."
     )
 
     lanczos_max_size: int = Field(
-        default=20, 
+        default=20,
         description="Maximum number of Lanczos iterations."
     )
 
@@ -231,13 +310,13 @@ class PartnConfig(BaseModel):
     )
 
     lanczos_eval_conv_thr: float = Field(
-        default=0.001, 
+        default=0.001,
         description="Threshold for convergence of eigenvalue in Lanczos. Once convergence is reached, the Lanczos scheme exits."
     )
 
-    #Eigenvector push 
+    #Eigenvector push
     eigval_thr: float = Field(
-        default=-0.01, 
+        default=-0.01,
         description="Threshold for eigenvalue, which determines when to start following the eigenvector"
     )
 
@@ -245,48 +324,48 @@ class PartnConfig(BaseModel):
         default=0.2,
         description="The limit to the maximum size of the displacement with eigenvector.",
     )
-    
+
     nsmooth: int = Field(
         default=3,
         description="Number of smoothing steps from initial displacement to eigenvector.",
     )
-    
+
     neigen: int = Field(
-        default=1, 
+        default=1,
         description="Number of pushes along the eignevector before starting a perpendicular relax."
     )
 
     alpha_mix_cr: float = Field(
-        default=0.2, 
+        default=0.2,
         description="This is the mixing coefficient used to create the push vector when the system enters into a convex region, i.e. when the negative curvature is lost. ",
-        ge=0.0, 
+        ge=0.0,
         le=1.0
     )
 
     nnewchance: int = Field(
-        default=0, 
+        default=0,
         description="Number of times a research is allowed to cross a convex region (without counting the starting convex region)."
     )
 
     #Perpendicular relaxation
     nperp: Optional[int] = Field(default=3, description="Control the perpendicular relaxation.")
-    nperp_limitation: Optional[list[int]] = Field( 
-        default=[ 4, 8, 12, 16, -1 ], 
+    nperp_limitation: Optional[list[int]] = Field(
+        default=[ 4, 8, 12, 16, -1 ],
         description="Limit of perpendicular relaxation steps for each ARTn step. More ARTn goes far from the basin more perpendicular relaxation are needed. This option allows the user to customize the number of perp relax. The value -1 means no limitation and -2 represent NULL."
     )
-    #Convergence 
+    #Convergence
     forc_thr: float = Field(
         default=0.001,
         description="The configuration has converged to either a saddle point, or a minimum, when the sum of the parallel and perpendicular components of the atomic forces is lower than this value.",
     )
-    
+
     convergence_property: Literal["maxval", "norm"] = Field(
-        default="maxval", 
+        default="maxval",
         description="Specify how to test convergence of the forces. 'maxval': the convergence will be tested by MAXVAL( ABS( force ) ); 'norm' the convergence will be tested by NORM2( force )."
     )
 
     nevalf_max: int = Field(
-        default=500, 
+        default=500,
         description="Stop an artn search before end when the number of force evaluations by the force engine is greater to nevalf_max"
     )
 
@@ -300,7 +379,7 @@ class PartnConfig(BaseModel):
         "\n",
     )
 
-    #Lammps 
+    #Lammps
     dmax: float = Field(
         default=6.0,
         description="dmax parameter used in fix ID all artn dmax value lammps command. should be higher than push_step_size.",
@@ -311,23 +390,23 @@ class PartnConfig(BaseModel):
 #################
 
     r_evalf_max: int = Field(
-        default = 300, 
+        default = 300,
         description="to stop an artn refinement before end when the number of force evaluations by the force engine is greater to nevalf_max."
     )
 
     #Max single refinement attempt
     r_max_attempts: int = Field(
-        default=5, 
+        default=5,
         description="When adjusting the saddle energy and positions, in some rare cases partn has trouble finding the saddle point and goes back to the minium."
         "In that case, we do another attempt with a different seed."
     )
 
     r_delr_sad_thr: float = Field(
-        default = 0.4, 
+        default = 0.4,
         description="When a saddle point is found by pARTn, we compare artn delr_sad to this threshold to check if the system went back to the minimum. If yes, new attempt."
     )
 
-    #Initial_push 
+    #Initial_push
     r_push_mode: Literal["list", "rad"] = Field(
         default="list",
         description="Determines how the initial atomic displacement (push) is generated around the central atom "
@@ -355,12 +434,12 @@ class PartnConfig(BaseModel):
 
     #Lanczos
     r_lanczos_min_size: int = Field(
-        default=20, 
+        default=20,
         description="Refinement: Enforce Lanczos to always do at least this number of iterations."
     )
 
     r_lanczos_max_size: int = Field(
-        default=50, 
+        default=50,
         description="Refinement: Maximum number of Lanczos iterations."
     )
 
@@ -370,13 +449,13 @@ class PartnConfig(BaseModel):
     )
 
     r_lanczos_eval_conv_thr: float = Field(
-        default=0.001, 
+        default=0.001,
         description="Threshold for convergence of eigenvalue in Lanczos. Once convergence is reached, the Lanczos scheme exits."
     )
 
     #Eigenvector push
     r_eigval_thr: float = Field(
-        default=-0.01, 
+        default=-0.01,
         description="Refinement: threshold for eigenvalue, which determines when to start following the eigenvector"
     )
 
@@ -389,29 +468,29 @@ class PartnConfig(BaseModel):
         default=0,
         description="Refinement: Number of smoothing steps from initial displacement to eigenvector.",
     )
-    
+
     r_neigen: int = Field(
-        default=1, 
+        default=1,
         description="Refinement: Number of pushes along the eignevector before starting a perpendicular relax."
     )
 
     r_alpha_mix_cr: float = Field(
-        default=0.2, 
+        default=0.2,
         description="Refinement: This is the mixing coefficient used to create the push vector when the system enters into a convex region, i.e. when the negative curvature is lost. ",
-        ge=0.0, 
+        ge=0.0,
         le=1.0
     )
 
     r_nnewchance: int = Field(
-        default=0, 
+        default=0,
         description="Refinement: Number of times a research is allowed to cross a convex region (without counting the starting convex region)."
     )
 
 
-    #Perpendicular relaxation 
+    #Perpendicular relaxation
     r_nperp: Optional[int] = Field(default=3, description="Refinement: Control the perpendicular relaxation.")
-    r_nperp_limitation: Optional[list[int]] = Field( 
-        default=[100], 
+    r_nperp_limitation: Optional[list[int]] = Field(
+        default=[100],
         description="Refinement: Limit of perpendicular relaxation steps for each ARTn step. More ARTn goes far from the basin more perpendicular relaxation are needed. This option allows the user to customize the number of perp relax. The value -1 means no limitation and -2 represent NULL."
     )
 
@@ -429,19 +508,19 @@ class PartnConfig(BaseModel):
     )
 
 
-    #To deal with nperp None if only using nperp_limitation : 
+    #To deal with nperp None if only using nperp_limitation :
     @field_validator("nperp", "r_nperp", mode="before")
     @classmethod
     def parse_optional_int(cls, v):
         if v is None or (isinstance(v, str) and v.strip().lower() == "none"):
             return None
-        return v 
+        return v
 
     #To deal with list
     @field_validator("nperp_limitation", "r_nperp_limitation", mode="before")
     @classmethod
     def parse_list_of_ints(cls, v):
-        if v is None or (isinstance(v, str) and v.strip().lower() == "none"): 
+        if v is None or (isinstance(v, str) and v.strip().lower() == "none"):
             return None
         if isinstance(v, str):
             v = v.strip("[]")
@@ -645,7 +724,7 @@ class Config(BaseModel):
                 f"Error while reading configuration file :\n{user_msg}"
             ) from None
 
-    
+
 
 
     @model_validator(mode="after")
@@ -677,7 +756,7 @@ class Config(BaseModel):
             ("control.engine", "lammps"): ["lammps"],
             ("eventsearch.style", "partn"): ["partn"],
             ("psr.style", "ira"): ["ira"],
-            ("control.basin", True) : ["basin"], 
+            ("control.basin", True) : ["basin"],
             ("control.active_volume", True) : ["activevolume"]
         }
 
