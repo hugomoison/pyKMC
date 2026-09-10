@@ -604,11 +604,15 @@ class ReconstructionConfig(BaseModel):
 class BasinConfig(BaseModel):
     """Basin parameters"""
 
+    debug: bool = Field(default = False, description="In debug mode, write basin informations during exploration.")
+
     style: Literal["global", "global/reconstruction"] = Field(
         default="global", description="Basin style used."
     )
 
     energy_thr: float = Field(default=0.0, description="Energy threshold")
+
+    
 
 
 class EventRecyclingConfig(BaseModel):

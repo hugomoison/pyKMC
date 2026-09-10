@@ -31,6 +31,19 @@ from pykmc.result import Ok, BasinOutput
 # TODO should also check if we apply same event to different central atoms but same saddle position meaning that it s a duplicate event, so remove.
 
 
+###### FOR DEBUG MODE 
+@dataclass
+class BasinExploration : 
+    id: str  = None
+    kind: str = None #state, psr, saddle 
+    from_state: int = None
+    to_state: int = None
+    initial_positions: np.ndarray = None#positions before operation 
+    final_positions: np.ndarray = None#positions after operation
+
+
+
+
 @dataclass
 class StateData:
     system: Optional[System]
@@ -81,6 +94,8 @@ class BasinsGenericEvents:
         self.states: dict[int, StateData] = {}  # Dictionnary of StateDate
         self.known_environments = known_environments
         self.absorbing_saddle_positions: dict[tuple[int, int], np.ndarray] = {}
+        if self.config.basin.debug == True : 
+            self.list_steps_operations = []
 
     def detection(self, params) -> bool:
         """Utility method."""
@@ -95,6 +110,8 @@ class BasinsGenericEvents:
         # explore the basin
         result = self.construct_connexion_table()
         if not result.is_ok():
+            for c in self.list_steps_operations : 
+                print(c)
             return result
         # reorder states index
         mapping = self.connectivity_table.reorder_states_index()
@@ -102,10 +119,14 @@ class BasinsGenericEvents:
         # Refine absorbing states
         result = self.refine_absorbing(system)
         if not result.is_ok():
+            for c in self.list_steps_operations : 
+                print(c)
             return result
         # apply selector algorithm to find t_exit and exit_state
         result = self.selector.select_from_connectivity(self.connectivity_table)
         if not result.is_ok():
+            for c in self.list_steps_operations : 
+                print(c)
             return result
         # Construct output KMC needs
         t_exit = result.ok_value().t_exit
@@ -120,6 +141,10 @@ class BasinsGenericEvents:
         neighbors = self.states[from_state].neighbors_list.get_neighbors(
             "rcut", central_atom
         )
+
+        for c in self.list_steps_operations : 
+            print(c)
+
         return Ok(
             BasinOutput(
                 initial_system_positions=self.states[from_state].system.positions,
@@ -173,7 +198,15 @@ class BasinsGenericEvents:
         # Loop over state to explore
         while len(self.states_to_explore) != 0:
             # next state to explore :
+
             to_explore = self.states_to_explore[0]
+
+            ############################
+            ##### DEBUG ################
+            if self.config.basin.debug : 
+                basin_exploration_debug = BasinExploration(id=len(self.list_steps_operations), kind="state", from_state=self.current_state, to_state=to_explore, initial_positions=self.state[self.current_state].positions)
+                self.list_steps_operations.append(basin_exploration_debug)
+
 
             if (
                 to_explore not in self.states

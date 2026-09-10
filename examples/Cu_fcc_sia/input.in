@@ -5,7 +5,7 @@ engine = lammps
 verbosity = 1
 n_sessions = 7
 engine_use_rank_0 = False
-basin = False
+basin = True
 active_volume = False
 #reference_table = ./reference_table.pickle 
 #visited_environments = ./visited_environments.pickle
@@ -25,7 +25,7 @@ rcut = 6.5
 [EventSearch] 
 style = partn
 nsearch = 10
-emin_event = 0.0
+emin_event = 0.15
 r_nnewchance = 3
 
 [pARTn] 
@@ -44,6 +44,7 @@ kmax_factor = 2.0
 
 [BASIN]
 energy_thr = 0.5
+debug = True
 
 [ActiveVolume]
 ract = 20.0 
