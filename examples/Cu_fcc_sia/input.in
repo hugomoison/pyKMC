@@ -1,14 +1,13 @@
 [Control] 
 initial_config = ./cu_fcc_defects.xyz 
-n_steps = 100
+n_steps = 1
 engine = lammps
 verbosity = 1
 n_sessions = 7
-engine_use_rank_0 = False
 basin = True
 active_volume = False
-#reference_table = ./reference_table.pickle 
-#visited_environments = ./visited_environments.pickle
+reference_table = ./reference_table.pickle 
+visited_environments = ./visited_environments.pickle
 
 [Lammps] 
 pair_style = eam/alloy 
@@ -19,7 +18,7 @@ minimize = 1e-10 1e-12 10000 10000
 [AtomicEnvironment] 
 style = cna/graph
 rnei = 2.9
-rcut = 6.5
+rcut = 9.0
 #neighbors_add = 1
 
 [EventSearch] 

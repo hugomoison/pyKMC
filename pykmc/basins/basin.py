@@ -48,6 +48,12 @@ class ReconstructionDebugData:
 
 
 @dataclass
+class RefinementDebugData:
+    success: bool = None
+    error_message: str = None
+
+
+@dataclass
 class BasinExploration :
     id: str  = None
     from_state: int = None
@@ -59,6 +65,7 @@ class BasinExploration :
     final_positions: np.ndarray = None#positions after operation
     psr: Optional[PSRDebugData] = None
     reconstruction: Optional[ReconstructionDebugData] = None
+    refinement: Optional[RefinementDebugData] = None
 
 
 
@@ -127,6 +134,13 @@ class BasinsGenericEvents:
         """Dump the list of BasinExploration debug steps to disk (pickle) for external analysis."""
         with open(self.config.basin.debug_exploration_output, "wb") as f:
             pickle.dump(self.list_steps_operations, f)
+
+    def _find_debug_entry(self, from_state, to_state) -> Optional[BasinExploration]:
+        """Find the BasinExploration debug entry already recorded for this transition."""
+        for step in self.list_steps_operations:
+            if step.from_state == from_state and step.to_state == to_state:
+                return step
+        return None
 
     def detection(self, params) -> bool:
         """Utility method."""
@@ -236,8 +250,8 @@ class BasinsGenericEvents:
 
             ############################
             ##### DEBUG ################
-            if self.config.basin.debug : 
-                basin_exploration_debug = BasinExploration(id=len(self.list_steps_operations), from_state=self.current_state, to_state=to_explore, initial_positions=self.states[self.current_state].system.positions)
+            if self.config.basin.debug :
+                basin_exploration_debug = BasinExploration(id=len(self.list_steps_operations), from_state=to_explore, to_state=to_explore)
                 self.list_steps_operations.append(basin_exploration_debug)
 
 
@@ -252,6 +266,8 @@ class BasinsGenericEvents:
                     )
                 )
                 if self.config.basin.debug:
+                    basin_exploration_debug.from_state = from_state
+                    basin_exploration_debug.initial_positions = self.states[from_state].system.positions
                     basin_exploration_debug.central_atom = central_atom
                     basin_exploration_debug.event_idx = event_idx
                     basin_exploration_debug.sym_idx = sym_idx
@@ -531,6 +547,12 @@ class BasinsGenericEvents:
         futures_context = {}  # idx → { "min": f_min, "saddle": f_sad }
         for idx, row in self.connectivity_table.df.iterrows():
             if row["transient"] == False:  # need to refine
+                ############################
+                ##### DEBUG ################
+                debug_entry = None
+                if self.config.basin.debug:
+                    debug_entry = self._find_debug_entry(row["state"], row["state_connexion"])
+
                 # tmp_system = copy.deepcopy(self.states[row["state"]].system)
                 tmp_system = System(
                     positions=self.states[row["state"]].system.positions.copy(),
@@ -567,10 +589,18 @@ class BasinsGenericEvents:
                     row["central_atom"],
                 ).match()
                 if not result.is_ok():  # PSR Err
+                    if debug_entry is not None:
+                        debug_entry.refinement = RefinementDebugData(
+                            success=False, error_message=result.err_value().message
+                        )
                     return result
                     # Check if PointSetRegistration match is valid
                 result = check_match(result, self.config.psr.matching_score_thr)
                 if not result.is_ok():  # PSR matching score not valid :
+                    if debug_entry is not None:
+                        debug_entry.refinement = RefinementDebugData(
+                            success=False, error_message=result.err_value().message
+                        )
                     return result
                 else:
                     psr_output = result.ok_value()  # get psr results
@@ -622,6 +652,7 @@ class BasinsGenericEvents:
                     "min": future1,
                     "saddle": future2,
                     "neighbors": neighbors,
+                    "debug_entry": debug_entry,
                 }
 
                 # RELEASE MEMORY :
@@ -632,7 +663,17 @@ class BasinsGenericEvents:
             E_min = ctx["min"].result()
             result_sad = ctx["saddle"].result()
             if not result_sad.is_ok():
+                if ctx["debug_entry"] is not None:
+                    err = result_sad.err_value()
+                    error_message = err.message
+                    if err.details:
+                        error_message = f"{error_message}\n{err.details}"
+                    ctx["debug_entry"].refinement = RefinementDebugData(
+                        success=False, error_message=error_message
+                    )
                 return result_sad
+            if ctx["debug_entry"] is not None:
+                ctx["debug_entry"].refinement = RefinementDebugData(success=True)
             E_sad = result_sad.ok_value().E_saddle
             if self.config.control.active_volume == True:
                 dE = E_sad

@@ -391,6 +391,24 @@ class LammpsEngine(Engine):
         if atoms_frozen:
             self.lmp.command(f"unfix {fix_name}")
 
+    def _read_artn_log(self) -> str | None:
+        """Read the last pARTn call's block from the log file ('artn.out.<engine_id>').
+
+        The file accumulates one block per pARTn call (appended across attempts/invocations),
+        so only the block after the last "Launched on" header is kept.
+        """
+        try:
+            with open("artn.out." + str(self.engine_id), "r") as f:
+                content = f.read()
+        except OSError:
+            return None
+        marker = "Launched on (dd.mm.yyyy):"
+        idx = content.rfind(marker)
+        if idx == -1:
+            return content
+        line_start = content.rfind("\n", 0, idx) + 1
+        return content[line_start:]
+
     def _delete_frozen_group(self, atoms_frozen: bool) -> None:
         if atoms_frozen:
             self.lmp.command("group g_frozen delete")
@@ -718,7 +736,8 @@ class LammpsEngine(Engine):
                     ErrorInfo(
                         type=ErrorType.EVENT_NOT_FOUND,
                         message="no event found",
-                        details=err,
+                        details=self._read_artn_log(),
+                        variables={"artn_error": err},
                     )
                 )
             return None
