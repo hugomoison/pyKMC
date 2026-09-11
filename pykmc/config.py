@@ -606,6 +606,11 @@ class BasinConfig(BaseModel):
 
     debug: bool = Field(default = False, description="In debug mode, write basin informations during exploration.")
 
+    debug_exploration_output: str = Field(
+        default="./basin_exploration.pickle",
+        description="File path where the list of BasinExploration debug steps will be stored in pickle format.",
+    )
+
     style: Literal["global", "global/reconstruction"] = Field(
         default="global", description="Basin style used."
     )

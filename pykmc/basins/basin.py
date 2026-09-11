@@ -19,6 +19,7 @@ from ..utils import geometry
 from ..rate_constant import compute_rate_Eyring
 import pandas as pd
 import copy
+import pickle
 import numpy as np
 from scipy.spatial import cKDTree
 from pykmc.result import Ok, BasinOutput
@@ -31,15 +32,33 @@ from pykmc.result import Ok, BasinOutput
 # TODO should also check if we apply same event to different central atoms but same saddle position meaning that it s a duplicate event, so remove.
 
 
-###### FOR DEBUG MODE 
+###### FOR DEBUG MODE
 @dataclass
-class BasinExploration : 
+class PSRDebugData:
+    success: bool = None
+    error_message: str = None
+    matching_score: float = None
+    saddle_positions: np.ndarray = None #system positions once moved to the saddle point
+
+
+@dataclass
+class ReconstructionDebugData:
+    success: bool = None
+    error_message: str = None
+
+
+@dataclass
+class BasinExploration :
     id: str  = None
-    kind: str = None #state, psr, saddle 
     from_state: int = None
     to_state: int = None
-    initial_positions: np.ndarray = None#positions before operation 
+    central_atom: int = None
+    event_idx: int = None
+    sym_idx: int = None
+    initial_positions: np.ndarray = None#positions before operation
     final_positions: np.ndarray = None#positions after operation
+    psr: Optional[PSRDebugData] = None
+    reconstruction: Optional[ReconstructionDebugData] = None
 
 
 
@@ -97,6 +116,18 @@ class BasinsGenericEvents:
         if self.config.basin.debug == True : 
             self.list_steps_operations = []
 
+    def _remap_debug_states(self, mapping: dict[int, int]) -> None:
+        """Apply a state-index mapping to already recorded debug steps (e.g. after
+        change_state_index or reorder_states_index), keeping from_state/to_state consistent."""
+        for step in self.list_steps_operations:
+            step.from_state = mapping.get(step.from_state, step.from_state)
+            step.to_state = mapping.get(step.to_state, step.to_state)
+
+    def _save_debug_operations(self) -> None:
+        """Dump the list of BasinExploration debug steps to disk (pickle) for external analysis."""
+        with open(self.config.basin.debug_exploration_output, "wb") as f:
+            pickle.dump(self.list_steps_operations, f)
+
     def detection(self, params) -> bool:
         """Utility method."""
         return self.detector.detection(**params)
@@ -110,23 +141,25 @@ class BasinsGenericEvents:
         # explore the basin
         result = self.construct_connexion_table()
         if not result.is_ok():
-            for c in self.list_steps_operations : 
-                print(c)
+            if self.config.basin.debug:
+                self._save_debug_operations()
             return result
         # reorder states index
         mapping = self.connectivity_table.reorder_states_index()
         self.states = {mapping[old]: val for old, val in self.states.items()}
+        if self.config.basin.debug:
+            self._remap_debug_states(mapping)
         # Refine absorbing states
         result = self.refine_absorbing(system)
         if not result.is_ok():
-            for c in self.list_steps_operations : 
-                print(c)
+            if self.config.basin.debug:
+                self._save_debug_operations()
             return result
         # apply selector algorithm to find t_exit and exit_state
         result = self.selector.select_from_connectivity(self.connectivity_table)
         if not result.is_ok():
-            for c in self.list_steps_operations : 
-                print(c)
+            if self.config.basin.debug:
+                self._save_debug_operations()
             return result
         # Construct output KMC needs
         t_exit = result.ok_value().t_exit
@@ -142,8 +175,8 @@ class BasinsGenericEvents:
             "rcut", central_atom
         )
 
-        for c in self.list_steps_operations : 
-            print(c)
+        if self.config.basin.debug:
+            self._save_debug_operations()
 
         return Ok(
             BasinOutput(
@@ -204,7 +237,7 @@ class BasinsGenericEvents:
             ############################
             ##### DEBUG ################
             if self.config.basin.debug : 
-                basin_exploration_debug = BasinExploration(id=len(self.list_steps_operations), kind="state", from_state=self.current_state, to_state=to_explore, initial_positions=self.state[self.current_state].positions)
+                basin_exploration_debug = BasinExploration(id=len(self.list_steps_operations), from_state=self.current_state, to_state=to_explore, initial_positions=self.states[self.current_state].system.positions)
                 self.list_steps_operations.append(basin_exploration_debug)
 
 
@@ -218,14 +251,23 @@ class BasinsGenericEvents:
                         target_state=to_explore
                     )
                 )
+                if self.config.basin.debug:
+                    basin_exploration_debug.central_atom = central_atom
+                    basin_exploration_debug.event_idx = event_idx
+                    basin_exploration_debug.sym_idx = sym_idx
 
                 # Create new system by applying (reconstruction) the generic event to the from_state
-                result = self.system_from_state(
+                result, psr_debug, reconstruction_debug = self.system_from_state(
                     from_state, event_idx, central_atom, sym_idx
                 )
+                if self.config.basin.debug:
+                    basin_exploration_debug.psr = psr_debug
+                    basin_exploration_debug.reconstruction = reconstruction_debug
                 if not result.is_ok():
                     return result
                 new_system = result.ok_value()
+                if self.config.basin.debug:
+                    basin_exploration_debug.final_positions = new_system.positions
 
                 # Check if it is a new_system or already in states
                 is_new_state = self.is_new_state(new_system)
@@ -234,6 +276,8 @@ class BasinsGenericEvents:
                     self.connectivity_table.change_state_index(
                         current_index=to_explore, new_index=is_new_state
                     )
+                    if self.config.basin.debug:
+                        self._remap_debug_states({to_explore: is_new_state})
                     self.explored_states.append(to_explore)
                     self.states_to_explore.remove(to_explore)
 
@@ -368,11 +412,24 @@ class BasinsGenericEvents:
             central_atom,
         ).match()
         if not result.is_ok():  # PSR Err
-            return result
+            psr_debug = (
+                PSRDebugData(success=False, error_message=result.err_value().message)
+                if self.config.basin.debug
+                else None
+            )
+            return result, psr_debug, None
             # Check if PointSetRegistration match is valid
         result = check_match(result, self.config.psr.matching_score_thr)
         if not result.is_ok():  # PSR matching score not valid :
-            return result
+            psr_debug = None
+            if self.config.basin.debug:
+                err = result.err_value()
+                psr_debug = PSRDebugData(
+                    success=False,
+                    error_message=err.message,
+                    matching_score=(err.variables or {}).get("matching_score"),
+                )
+            return result, psr_debug, None
         else:
             psr_output = result.ok_value()  # get psr results
 
@@ -418,6 +475,18 @@ class BasinsGenericEvents:
             "rcut", central_atom
         )
 
+        psr_debug = None
+        if self.config.basin.debug:
+            saddle_system_positions = new_system.positions.copy()
+            saddle_system_positions[neighbors] = saddle_positions
+            psr_debug = PSRDebugData(
+                success=True,
+                matching_score=psr_output.matching_score,
+                saddle_positions=saddle_system_positions,
+            )
+
+        reconstruction_debug = None
+
         if self.config.basin.style == "global":
             new_system.update_positions(supposed_final_positions, atom_idx=neighbors)
             min2_pos, _ = self.manager.group_minimize_with_results(
@@ -441,13 +510,19 @@ class BasinsGenericEvents:
                 neighbors,
             )
             if not result.is_ok():
-                return result
+                if self.config.basin.debug:
+                    reconstruction_debug = ReconstructionDebugData(
+                        success=False, error_message=result.err_value().message
+                    )
+                return result, psr_debug, reconstruction_debug
+            if self.config.basin.debug:
+                reconstruction_debug = ReconstructionDebugData(success=True)
             new_system.update_positions(result.ok_value().min2_positions)
 
         else:
             raise ValueError(f"Unknown {self.config.basin.style} style parameter.")
 
-        return Ok(new_system)
+        return Ok(new_system), psr_debug, reconstruction_debug
 
     def refine_absorbing(self, system):
         """When connectivity table is build, and that we have dict of states, we refine the energy barrier and k_forward of the transient -> absorbing event"""
