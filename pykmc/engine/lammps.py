@@ -678,6 +678,7 @@ class LammpsEngine(Engine):
         atoms_frozen = self._make_frozen_group(config, positions, types)
         self._apply_frozen_fix("f_frozen_pre", atoms_frozen)
 
+        last_failure_reason = None
         while attempt < max_attempts:
             exit_flag = False
             result = None
@@ -713,6 +714,13 @@ class LammpsEngine(Engine):
                                 refined="T",
                             )
                         )
+                    else:
+                        last_failure_reason = (
+                            f"delr_sad={delr_sad:.4f} Ang >= "
+                            f"r_delr_sad_thr={config.partn.r_delr_sad_thr:.4f} Ang"
+                        )
+                else:
+                    last_failure_reason = f"artn error code {err[0]}"
 
             exit_flag = (
                 self.comm.bcast(exit_flag, root=0)
@@ -732,10 +740,13 @@ class LammpsEngine(Engine):
             self._delete_frozen_group(atoms_frozen)
             if self._is_rank0:
                 err = artn.get_error()
+                message = "no event found"
+                if last_failure_reason is not None:
+                    message = f"{message}: {last_failure_reason}"
                 return Err(
                     ErrorInfo(
                         type=ErrorType.EVENT_NOT_FOUND,
-                        message="no event found",
+                        message=message,
                         details=self._read_artn_log(),
                         variables={"artn_error": err},
                     )

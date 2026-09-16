@@ -396,6 +396,8 @@ class KMC:
                     basin.connectivity_table.save(
                         "basin_connectivity_" + str(step) + ".pickle"
                     )
+                if self.config.basin.debug:
+                    basin.save_debug_operations(step)
                 # Basin super-event spans many atoms; recycling is deferred (the
                 # prune below runs with the recycler detached).
                 prune_detach_recycler = True

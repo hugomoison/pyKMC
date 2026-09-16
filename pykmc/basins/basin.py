@@ -19,6 +19,7 @@ from ..utils import geometry
 from ..rate_constant import compute_rate_Eyring
 import pandas as pd
 import copy
+import os
 import pickle
 import numpy as np
 from scipy.spatial import cKDTree
@@ -130,9 +131,13 @@ class BasinsGenericEvents:
             step.from_state = mapping.get(step.from_state, step.from_state)
             step.to_state = mapping.get(step.to_state, step.to_state)
 
-    def _save_debug_operations(self) -> None:
-        """Dump the list of BasinExploration debug steps to disk (pickle) for external analysis."""
-        with open(self.config.basin.debug_exploration_output, "wb") as f:
+    def save_debug_operations(self, step: int = 0) -> None:
+        """Dump the list of BasinExploration debug steps to disk (pickle) for external analysis.
+
+        The KMC step number is appended to the configured output path so that
+        successive basin explorations don't overwrite each other's dump."""
+        base, ext = os.path.splitext(self.config.basin.debug_exploration_output)
+        with open(f"{base}_{step}{ext}", "wb") as f:
             pickle.dump(self.list_steps_operations, f)
 
     def _find_debug_entry(self, from_state, to_state) -> Optional[BasinExploration]:
@@ -155,8 +160,6 @@ class BasinsGenericEvents:
         # explore the basin
         result = self.construct_connexion_table()
         if not result.is_ok():
-            if self.config.basin.debug:
-                self._save_debug_operations()
             return result
         # reorder states index
         mapping = self.connectivity_table.reorder_states_index()
@@ -166,14 +169,10 @@ class BasinsGenericEvents:
         # Refine absorbing states
         result = self.refine_absorbing(system)
         if not result.is_ok():
-            if self.config.basin.debug:
-                self._save_debug_operations()
             return result
         # apply selector algorithm to find t_exit and exit_state
         result = self.selector.select_from_connectivity(self.connectivity_table)
         if not result.is_ok():
-            if self.config.basin.debug:
-                self._save_debug_operations()
             return result
         # Construct output KMC needs
         t_exit = result.ok_value().t_exit
@@ -188,9 +187,6 @@ class BasinsGenericEvents:
         neighbors = self.states[from_state].neighbors_list.get_neighbors(
             "rcut", central_atom
         )
-
-        if self.config.basin.debug:
-            self._save_debug_operations()
 
         return Ok(
             BasinOutput(
@@ -451,22 +447,24 @@ class BasinsGenericEvents:
 
         # Apply PSR to generic event to move
 
-        # Apply symmetry matrix if sym != 0
+        # Apply symmetry to the saddle/final displacements (relative to the raw
+        # initial positions), then rebuild saddle/final from those raw initial
+        # positions. Mirrors refinement.py: avoids rotating initial_positions
+        # itself, which only introduced the symmetry match's tolerance as noise.
         if sym_idx != 0:
-            sym_matrices = ref_event["sym_matrix"]
-            sym_matrix = sym_matrices[sym_idx]
-            supposed_initial_positions = geometry.transform_positions(
-                supposed_initial_positions,
+            sym_matrix = ref_event["sym_matrix"][sym_idx]
+            sym_perm = ref_event["sym_perm"][sym_idx]
+            displacement_saddle = geometry.transform_positions(
+                saddle_positions - supposed_initial_positions, sym_matrix, 0, sym_perm
+            )
+            displacement_final = geometry.transform_positions(
+                supposed_final_positions - supposed_initial_positions,
                 sym_matrix,
                 0,
-                ref_event["sym_perm"][sym_idx],
+                sym_perm,
             )
-            saddle_positions = geometry.transform_positions(
-                saddle_positions, sym_matrix, 0, ref_event["sym_perm"][sym_idx]
-            )
-            supposed_final_positions = geometry.transform_positions(
-                supposed_final_positions, sym_matrix, 0, ref_event["sym_perm"][sym_idx]
-            )
+            saddle_positions = supposed_initial_positions + displacement_saddle
+            supposed_final_positions = supposed_initial_positions + displacement_final
         supposed_initial_positions = geometry.transform_positions(
             supposed_initial_positions,
             psr_output.rotation_matrix,
@@ -576,6 +574,7 @@ class BasinsGenericEvents:
                 ref_event = ref_event.iloc[0].copy()
                 # ref_event = self.reference_table.table.iloc[row["event_connexion"]].copy()
                 saddle_positions = ref_event["saddle_positions"].copy()
+                initial_positions = ref_event["initial_positions"].copy()
                 # Apply PSR between event initial position and environment positions of the central_atoms
 
                 # ENSURE "STATE" FULL
@@ -605,16 +604,16 @@ class BasinsGenericEvents:
                 else:
                     psr_output = result.ok_value()  # get psr results
 
-                # Apply symmetry matrix if sym != 0
+                # Apply symmetry to the saddle displacement (relative to the raw
+                # initial positions), then rebuild from those raw initial positions.
+                # Mirrors refinement.py / system_from_state.
                 if row["sym"] != 0:
-                    sym_matrices = ref_event["sym_matrix"]
-                    sym_matrix = sym_matrices[row["sym"]]
-                    saddle_positions = geometry.transform_positions(
-                        saddle_positions,
-                        sym_matrix,
-                        0,
-                        ref_event["sym_perm"][row["sym"]],
+                    sym_matrix = ref_event["sym_matrix"][row["sym"]]
+                    sym_perm = ref_event["sym_perm"][row["sym"]]
+                    displacement_saddle = geometry.transform_positions(
+                        saddle_positions - initial_positions, sym_matrix, 0, sym_perm
                     )
+                    saddle_positions = initial_positions + displacement_saddle
                 saddle_positions = geometry.transform_positions(
                     saddle_positions,
                     psr_output.rotation_matrix,
