@@ -1,6 +1,6 @@
 # Result type
 
-> **Refactoring in progress.** `ErrorType` is the legacy shared enumeration. It is emptied module by module and will be removed once every module declares its own `ErrorCode` subclass. See [Migration status](https://claude.ai/chat/d96b1fd1-364a-4186-a73b-866134238879#migration-status).
+> **Refactoring in progress.** `ErrorType` is the legacy shared enumeration. It is emptied module by module and will be removed once every module declares its own `ErrorCode` subclass. See Migration status.
 
 ## Why
 
