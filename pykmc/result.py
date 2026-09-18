@@ -1,124 +1,57 @@
-"""Result handling and data structures.
-
-This module provides a lightweight implementation of a `Result` type, inspired by Rust/rustedpy,
-to clearly distinguish between successful and unsuccessful operations. It also defines structured outputs for
-various simulation steps such as event search, refinement, and point set registration.
-
+"""Output data structures for the simulation steps.
+ 
+The `Result` type logic has moved to `_core/result.py`. This module re-exports it
+so existing imports keep working, the output dataclasses will be dispatched to
+their respective modules when each module will be refactored with the strategy pattern. 
+ 
 Includes:
-- `Ok` / `Err` result wrapper types.
-- Enumerated error types for diagnostics.
+- Re-export of `Ok` / `Err` / `Result` / `ErrorInfo` / `ErrorType`.
 - Output data containers (`EventSearchOutput`, `PSROutput`, `KMCLoopInfo`, etc.)
 """
-
-from typing import TypeAlias, TypeVar, Generic, Optional, Dict, Any
-from dataclasses import dataclass, field, asdict
-from enum import Enum
+ 
+from dataclasses import asdict, dataclass, field
+from typing import Optional
+ 
 import numpy as np
-import yaml
 import pandas as pd
+import yaml
+ 
+# Re-export: the Result infrastructure now lives in _core.result.
+# Listing these names in __all__ marks the re-export as intentional, which both
+# ruff (F401) and mypy's no_implicit_reexport require.
+# TODO : Migrate each dataclass to their respective module after refactoring.
 
-# Construction of the Result Type :
-
-TOK = TypeVar("TOK")
-TERR = TypeVar("TERR")
-
-
-class Ok(Generic[TOK]):
-    """Wrapper representing a successful computation result.
-
-    Attributes
-    ----------
-    _value : TOK
-        The result of the successful operation.
-
-    """
-
-    _value: TOK
-
-    def __init__(self, value: TOK) -> None:
-        self._value = value
-
-    def is_ok(self) -> bool:
-        """Return True indicating a successful result."""
-        return True
-
-    def ok_value(self) -> TOK:
-        """Return the value stored in the successful result."""
-        return self._value
-
-
-class Err(Generic[TERR]):
-    """Wrapper representing a failed computation result.
-
-    Attributes
-    ----------
-    _err : TERR
-        The error object or message describing the failure.
-
-    """
-
-    _err = TERR
-
-    def __init__(self, err: TERR) -> None:
-        self._err = err
-
-    def is_ok(self) -> bool:
-        """Return False indicating a failed result."""
-        return False
-
-    def err_value(self) -> TERR:
-        """Return the error stored in the failed result."""
-        return self._err
-
-
-Result: TypeAlias = Ok[TOK] | Err[TERR]
-"""Alias representing either a successful (`Ok`) or failed (`Err`) result."""
-
-
-@dataclass
-class ErrorInfo:
-    """Structured information about an error that occurred during a simulation step.
-
-    Attributes
-    ----------
-    type : ErrorType
-        Type of the error.
-    message : str
-        Human-readable message describing the error.
-    details : Optional[str]
-        Optional technical details or context.
-    variables : Optional[Dict[str, Any]]
-        Optional dictionary of variables related to the error context.
-
-    """
-
-    type: "ErrorType"
-    message: str
-    details: Optional[str] = None
-    variables: Optional[Dict[str, Any]] = None
-
-
-class ErrorType(Enum):
-    """Enumeration of all error types that may occur during the simulation."""
-
-    EVENT_NOT_FOUND = 1
-    EVENT_MINIMA_NOT_MATCH_POSITIONS = 2
-    EVENT_ENERGY_HIGHER_THAN_THRESHOLD = 11
-    EVENT_ENERGY_LOWER_THAN_THRESHOLD = 12
-    EVENT_BACKWARD_ENERGY_LOWER_THAN_THRESHOLD = 13
-    EVENT_ASYMMETRIC = 14
-    EVENT_NOT_NEW = 15
-    PSR_NO_MATCH_FOUND = 21
-    PSR_MATCHING_SCORE_ABOVE_ACCEPTANCE_THRESHOLD = 22
-    REFINEMENT_INVALID_ENERGY_BARRIER = 31
-    REFINEMENT_INVALID_MINIMA = 32
-    RECONSTRUCTION_INVALID_MIN1 = 41
-    RECONSTRUCTION_INVALID_MIN2 = 42
-    BASIN_TEXIT_NOT_FOUND = 51
-
-
+from pykmc._core.result import (
+    Err,
+    ErrorInfo,
+    ErrorType,
+    Ok,
+    Result,
+)
+ 
+__all__ = [
+    "Ok",
+    "Err",
+    "Result",
+    "ErrorInfo",
+    "ErrorType",
+    "EventSearchOutput",
+    "EventRefinementOutput",
+    "PSROutput",
+    "ReconstructionOutput",
+    "BasinSelectorOutput",
+    "BasinExitTimeSolverOutput",
+    "BasinOutput",
+    "AtomicEnvironmentInfo",
+    "ReferenceEventSearchInfo",
+    "ReferenceValidEventsInfo",
+    "RefinementsInfo",
+    "EventsInfo",
+    "KMCLoopInfo",
+]
+ 
+ 
 # Dataclass to store operation outputs
-
 
 @dataclass
 class EventSearchOutput:
