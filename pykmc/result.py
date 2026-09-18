@@ -1,21 +1,21 @@
 """Output data structures for the simulation steps.
- 
+
 The `Result` type logic has moved to `_core/result.py`. This module re-exports it
 so existing imports keep working, the output dataclasses will be dispatched to
-their respective modules when each module will be refactored with the strategy pattern. 
- 
+their respective modules when each module will be refactored with the strategy pattern.
+
 Includes:
 - Re-export of `Ok` / `Err` / `Result` / `ErrorInfo` / `ErrorType`.
 - Output data containers (`EventSearchOutput`, `PSROutput`, `KMCLoopInfo`, etc.)
 """
- 
+
 from dataclasses import asdict, dataclass, field
 from typing import Optional
- 
+
 import numpy as np
 import pandas as pd
 import yaml
- 
+
 # Re-export: the Result infrastructure now lives in _core.result.
 # Listing these names in __all__ marks the re-export as intentional, which both
 # ruff (F401) and mypy's no_implicit_reexport require.
@@ -28,7 +28,7 @@ from pykmc._core.result import (
     Ok,
     Result,
 )
- 
+
 __all__ = [
     "Ok",
     "Err",
@@ -49,9 +49,10 @@ __all__ = [
     "EventsInfo",
     "KMCLoopInfo",
 ]
- 
- 
+
+
 # Dataclass to store operation outputs
+
 
 @dataclass
 class EventSearchOutput:

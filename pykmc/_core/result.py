@@ -1,11 +1,11 @@
 """Result handling infrastructure.
- 
+
 This module provides a lightweight implementation of a `Result` type, inspired by
 Rust/rustedpy, to clearly distinguish between successful and unsuccessful operations.
- 
+
 It holds **no** domain logic: output dataclasses (`EventSearchOutput`, `PSROutput`,
 ...) belong to the modules that produce them.
- 
+
 Includes:
 - `Ok` / `Err` result wrapper types.
 - `Result`, the alias for their union.
@@ -45,7 +45,7 @@ class Ok(Generic[TOK]):
     def ok_value(self) -> TOK:
         """Return the value stored in the successful result."""
         return self._value
-    
+
     def __repr__(self) -> str:
         return f"Ok({self._value!r})"
 
@@ -60,7 +60,7 @@ class Err(Generic[TERR]):
 
     """
 
-    _err : TERR
+    _err: TERR
 
     def __init__(self, err: TERR) -> None:
         self._err = err
@@ -72,7 +72,7 @@ class Err(Generic[TERR]):
     def err_value(self) -> TERR:
         """Return the error stored in the failed result."""
         return self._err
-    
+
     def __repr__(self) -> str:
         return f"Err({self._err!r})"
 
@@ -131,27 +131,27 @@ class ErrorType(Enum):
     RECONSTRUCTION_INVALID_MIN2 = 42
     BASIN_TEXIT_NOT_FOUND = 51
 
+
 class ErrorCode(Enum):
     """Base class for per-module error enumerations.
- 
+
     Each module declares its own subclass listing the failures it can report::
- 
+
         class PSRError(ErrorCode):
             NO_MATCH_FOUND = auto()
- 
+
     Two subclasses may reuse the same member name without clashing: they are
     distinct classes, so ``PSRError.NOT_FOUND != BasinError.NOT_FOUND``.
     """
- 
+
     @property
     def key(self) -> str:
         """Return a stable identifier for output.
- 
+
         Prefixed with the owning enumeration, so codes sharing a member name
         across modules remain distinguishable::
- 
+
             >>> PSRError.NO_MATCH_FOUND.key
             'PSRError.NO_MATCH_FOUND'
         """
         return f"{type(self).__name__}.{self.name}"
- 
