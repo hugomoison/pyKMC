@@ -34,6 +34,7 @@ nav:
   - KMC Parameters: parameters.md
   - Developer Guide: 
       - Strategy pattern : dev_strategy_pattern.md
+      - Result type : dev_results.md
       - Engine : dev_engine.md
       - Manager and Parallelization : dev_parallelization_manager.md
       - Code formatting : dev_code_formatting.md
