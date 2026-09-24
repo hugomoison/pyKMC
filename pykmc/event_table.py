@@ -21,7 +21,7 @@ from .result import (
     EventSearchOutput,
     EventRefinementOutput,
 )
-from .point_set_registration import simple_ira, check_match
+from .psr import simple_ira, check_match
 from .utils.geometry import compute_delr
 
 if TYPE_CHECKING:

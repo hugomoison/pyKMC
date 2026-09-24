@@ -1,7 +1,7 @@
 """Module implementing the Refinement class that deals with the event refinement procedure."""
 
 from .result import Result, EventRefinementOutput, ErrorInfo, ErrorType, Err, Ok
-from .point_set_registration import PointSetRegistration, check_match
+from .psr import PointSetRegistration, check_match
 from .utils import geometry
 from .config import Config
 from .system import System
