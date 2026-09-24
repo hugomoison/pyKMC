@@ -2,7 +2,8 @@
 
 import ira_mod
 import numpy as np
-from .result import Result, ErrorInfo, PSROutput, Ok, Err, ErrorType
+from .result import Result, ErrorInfo, Ok, Err
+from .psr import PSROutput, PSRError
 from .config import Config
 from .system import System
 import pandas as pd
@@ -159,7 +160,7 @@ class PointSetRegistration:
         except Exception:
             return Err(
                 ErrorInfo(
-                    type=ErrorType.PSR_NO_MATCH_FOUND,
+                    type=PSRError.NO_MATCH_FOUND,
                     message="IRA did not find a match",
                 )
             )
@@ -189,7 +190,7 @@ def check_match(
         if result_match.ok_value().matching_score > matching_score:
             return Err(
                 ErrorInfo(
-                    type=ErrorType.PSR_MATCHING_SCORE_ABOVE_ACCEPTANCE_THRESHOLD,
+                    type=PSRError.MATCHING_SCORE_ABOVE_ACCEPTANCE_THRESHOLD,
                     message="PSR found a match but matching score is above acceptance threshold",
                     details="Hausdorff distance = {}, acceptance threshold = {} ".format(
                         result_match.ok_value().matching_score, matching_score
@@ -223,7 +224,7 @@ def simple_ira(nat1, typ1, coords1, nat2, typ2, coords2, kmax_factor):
     except Exception:
         return Err(
             ErrorInfo(
-                type=ErrorType.PSR_NO_MATCH_FOUND,
+                type=PSRError.NO_MATCH_FOUND,
                 message="IRA did not find a match",
             )
         )

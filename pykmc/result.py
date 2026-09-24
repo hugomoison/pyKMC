@@ -6,7 +6,7 @@ their respective modules when each module will be refactored with the strategy p
 
 Includes:
 - Re-export of `Ok` / `Err` / `Result` / `ErrorInfo` / `ErrorType`.
-- Output data containers (`EventSearchOutput`, `PSROutput`, `KMCLoopInfo`, etc.)
+- Output data containers not yet migrated (`EventSearchOutput`, `KMCLoopInfo`, etc.)
 """
 
 from dataclasses import asdict, dataclass, field
@@ -37,7 +37,6 @@ __all__ = [
     "ErrorType",
     "EventSearchOutput",
     "EventRefinementOutput",
-    "PSROutput",
     "ReconstructionOutput",
     "BasinSelectorOutput",
     "BasinExitTimeSolverOutput",
@@ -120,29 +119,6 @@ class EventRefinementOutput:
     dE_forward: Optional[float] = None
     num_reference_event: Optional[int] = None
     refined: Optional[str] = None
-
-
-@dataclass
-class PSROutput:
-    """Store the result of a point set registration operation.
-
-    Attributes
-    ----------
-    rotation_matrix : np.ndarray
-        Rotation matrix used to align two patterns.
-    translation_matrix : np.ndarray
-        Translation vector applied for alignment.
-    permutation_matrix : np.ndarray
-        Mapping of atom indices from reference to current configuration.
-    matching_score : float
-        Score representing the quality of the match.
-
-    """
-
-    rotation_matrix: np.ndarray
-    translation_matrix: np.ndarray
-    permutation_matrix: np.ndarray
-    matching_score: float
 
 
 @dataclass
