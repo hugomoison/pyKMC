@@ -42,4 +42,10 @@ class PSRStrategy(Registrable, root=True):
         Result[PSROutput, ErrorInfo]
             The transformation found, or the failure encountered.
 
+        Notes
+        -----
+        The transformation maps the *second* point set onto the first: applying
+        `rotation_matrix`/`translation_matrix`/`permutation_matrix` to `coords2`
+         reproduces `coords1`.
+
         """

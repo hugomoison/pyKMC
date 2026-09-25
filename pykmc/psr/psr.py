@@ -43,7 +43,8 @@ class PointSetRegistration:
         Returns
         -------
         Result[PSROutput, ErrorInfo]
-            Results of the point set registration.
+            Results of the point set registration. The transformation maps the
+            *second* point set onto the first (coords2 -> coords1).
 
         """
         return self._strategy.match(nat1, typ1, coords1, nat2, typ2, coords2)

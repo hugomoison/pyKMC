@@ -32,6 +32,7 @@ class IRAStrategy(PSRStrategy):
         -------
         Result[PSROutput, ErrorInfo]
             The results of the ira psr procedure.
+            Transformation's direction convention (coords2 -> coords1).
 
         """
         ira = ira_mod.IRA()
