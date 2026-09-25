@@ -21,7 +21,7 @@ from .result import (
     EventSearchOutput,
     EventRefinementOutput,
 )
-from .psr import simple_ira, check_match
+from .psr import PointSetRegistration, check_match
 from .utils.geometry import compute_delr
 
 if TYPE_CHECKING:
@@ -214,14 +214,15 @@ class ReferenceEventTable:
                         nat_ref = len(ref_saddle)
                         typ_event = nat_ref * ["X"]
                         typ_ref = typ_event
-                        result = simple_ira(
+                        result = PointSetRegistration(
+                            self.config.psr.style, self.config.ira.kmax_factor
+                        ).match(
                             nat_ref,
                             typ_event,
                             dfevent_backward["saddle_positions"].copy(),
                             nat_ref,
                             typ_ref,
                             ref_saddle,
-                            self.config.ira.kmax_factor,
                         )
 
                         # if match
@@ -321,14 +322,15 @@ class ReferenceEventTable:
                 else nat_ref * ["X"]
             )
 
-            result = simple_ira(
+            result = PointSetRegistration(
+                self.config.psr.style, self.config.ira.kmax_factor
+            ).match(
                 nat_event,
                 typ_event,
                 event_saddle,
                 nat_ref,
                 typ_ref,
                 ref_saddle,
-                self.config.ira.kmax_factor,
             )
 
             if not result.is_ok():  # no match
