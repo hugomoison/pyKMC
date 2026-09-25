@@ -1,50 +1,50 @@
 """Manages Point Set Registration (shape matching) methods."""
 
 import ira_mod
-import numpy as np
 from ..result import Result, ErrorInfo, Ok, Err
 from .result import PSROutput, PSRError
-from ..config import Config
-from ..system import System
-import pandas as pd
-from ..neighbors_list import NeighborsList
 
 
 class PointSetRegistration:
-    """Perform a point set registration between a reference event and an atomic environment of an atom based on the configuration parameters.
+    """Perform a point set registration between two point sets, based on the given style.
+
+    Operates on plain point-cloud arrays only. Preparing those arrays from a
+    `System`/reference event -- extracting a local neighborhood, colouring atom
+    types (including the "grey alloy" species-blind case), unwrapping across
+    periodic boundaries, ... -- is the caller's job.
 
     Parameters
     ----------
-    config : Config
-        The configuration.
-    system : System
-        The atomic system.
-    dfevent : pd.Series
-        The reference event.
-    neighbors_list : NeighborsList
-        The NeighborsList of the System.
-    central_atom_index : int
-        Index of the central atom in the System for which we want to perfrom the point set registration.
+    style : str
+        Point set registration style to use (e.g. "ira").
+    kmax_factor : float
+        Passed to the underlying registration algorithm.
 
     """
 
-    def __init__(
-        self,
-        config: Config,
-        system: System,
-        dfevent: pd.Series,
-        neighbors_list: NeighborsList,
-        central_atom_index: int,
-    ) -> None:
-        self.system = system
-        self.config = config
-        self.dfevent = dfevent
-        self.neighbors_list = neighbors_list
-        self.central_atom_index = central_atom_index
-        self.psr_style = self.config.psr.style
+    def __init__(self, style: str, kmax_factor: float) -> None:
+        self.style = style
+        self.kmax_factor = kmax_factor
 
-    def match(self) -> Result[PSROutput, ErrorInfo]:
-        """Run the point set registration based on the style defined in the configuration.
+    def match(
+        self, nat1, typ1, coords1, nat2, typ2, coords2
+    ) -> Result[PSROutput, ErrorInfo]:
+        """Run the point set registration based on the configured style.
+
+        Parameters
+        ----------
+        nat1 : int
+            Number of atoms in the first point set.
+        typ1 : list[str]
+            Atom types of the first point set.
+        coords1 : np.ndarray
+            Positions of the first point set.
+        nat2 : int
+            Number of atoms in the second point set.
+        typ2 : list[str]
+            Atom types of the second point set.
+        coords2 : np.ndarray
+            Positions of the second point set.
 
         Returns
         -------
@@ -57,19 +57,14 @@ class PointSetRegistration:
             If the style in not known.
 
         """
-        match self.psr_style:
+        match self.style:
             case "ira":
-                return self.ira(self.central_atom_index)
+                return self.ira(nat1, typ1, coords1, nat2, typ2, coords2)
             case _:
                 raise Exception("Point set registration style unknown")
 
-    def ira(self, central_atom_index: int) -> Result[PSROutput, ErrorInfo]:
+    def ira(self, nat1, typ1, coords1, nat2, typ2, coords2) -> Result[PSROutput, ErrorInfo]:
         """Use IRA to extract rotation, translation, permutation matrix to apply on generic event.
-
-        Parameters
-        ----------
-        central_atom_index : int
-           index of the system's central atom
 
         Returns
         -------
@@ -77,93 +72,7 @@ class PointSetRegistration:
             The results of the ira psr procedure.
 
         """
-        # Initialize IRA
-        ira = ira_mod.IRA()
-
-        # Event informations :
-        coords2 = self.dfevent.at["initial_positions"]
-        nat2 = len(coords2)
-
-        # atom in the rcutevent around the central atom
-        neighbor_list = self.neighbors_list.get_neighbors("rcut", central_atom_index)
-
-        coords1 = self.system.positions[neighbor_list]
-
-        if self.config.atomicenvironment.atom_coloring_mode == "full":
-            typ1 = list(np.array(self.system.types)[neighbor_list])
-            typ2 = list(self.dfevent.at["types"])
-        else:
-            # Grey alloy: all atoms treated identically -> species-blind IRA
-            # matching (a single shared dummy label, sized per structure).
-            typ1 = ["X"] * len(coords1)
-            typ2 = ["X"] * nat2
-
-        # unwrap if close to cell limits :
-        alat = self.system.cell[0][0]
-        for i in range(len(coords1)):
-            if (
-                np.linalg.norm(
-                    coords1[i][0] - self.system.positions[central_atom_index][0]
-                )
-                > alat / 2
-            ):
-                coords1[i][0] = (
-                    coords1[i][0]
-                    + np.sign(
-                        self.system.positions[central_atom_index][0] - coords1[i][0]
-                    )
-                    * alat
-                )
-            if (
-                np.linalg.norm(
-                    coords1[i][1] - self.system.positions[central_atom_index][1]
-                )
-                > alat / 2
-            ):
-                coords1[i][1] = (
-                    coords1[i][1]
-                    + np.sign(
-                        self.system.positions[central_atom_index][1] - coords1[i][1]
-                    )
-                    * alat
-                )
-            if (
-                np.linalg.norm(
-                    coords1[i][2] - self.system.positions[central_atom_index][2]
-                )
-                > alat / 2
-            ):
-                coords1[i][2] = (
-                    coords1[i][2]
-                    + np.sign(
-                        self.system.positions[central_atom_index][2] - coords1[i][2]
-                    )
-                    * alat
-                )
-        nat1 = len(coords1)
-        kmax_factor = self.config.ira.kmax_factor
-
-        # Run ira to find transformation matrices
-        try:
-            rmat, tr, perm, dh = ira.match(
-                nat1, typ1, coords1, nat2, typ2, coords2, kmax_factor
-            )
-
-            return Ok(
-                PSROutput(
-                    rotation_matrix=rmat,
-                    translation_matrix=tr,
-                    permutation_matrix=perm,
-                    matching_score=dh,
-                )
-            )
-        except Exception:
-            return Err(
-                ErrorInfo(
-                    type=PSRError.NO_MATCH_FOUND,
-                    message="IRA did not find a match",
-                )
-            )
+        return simple_ira(nat1, typ1, coords1, nat2, typ2, coords2, self.kmax_factor)
 
 
 def check_match(
