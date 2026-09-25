@@ -13,7 +13,7 @@ class PSRStrategy(Registrable, root=True):
 
     A strategy registers two point sets and reports the rigid transformation
     (rotation, translation, permutation) and matching score found between them.
-    Operates on plain point-cloud arrays only, no `System`/config awareness.
+    Operates on plain point-cloud arrays only.
     """
 
     @abstractmethod

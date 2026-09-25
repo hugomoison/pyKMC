@@ -8,7 +8,7 @@ from .strategies import PSRStrategy
 class PointSetRegistration:
     """Perform a point set registration between two point sets, using a pluggable strategy.
 
-    Operates on plain point-cloud arrays only. 
+    Operates on plain point-cloud arrays only.
 
     Parameters
     ----------
@@ -51,7 +51,7 @@ class PointSetRegistration:
     def match_and_check(
         self, nat1, typ1, coords1, nat2, typ2, coords2, matching_score_thr: float
     ) -> Result[PSROutput, ErrorInfo]:
-        """Match two point sets and reject the result if its score is above threshold.
+        """Try to match two point sets and reject the result if its score is above threshold.
 
         Parameters
         ----------
