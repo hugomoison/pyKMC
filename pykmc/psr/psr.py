@@ -8,10 +8,7 @@ from .strategies import PSRStrategy
 class PointSetRegistration:
     """Perform a point set registration between two point sets, using a pluggable strategy.
 
-    Operates on plain point-cloud arrays only. Preparing those arrays from a
-    `System`/reference event -- extracting a local neighborhood, colouring atom
-    types (including the "grey alloy" species-blind case), unwrapping across
-    periodic boundaries, ... -- is the caller's job.
+    Operates on plain point-cloud arrays only. 
 
     Parameters
     ----------
@@ -26,7 +23,7 @@ class PointSetRegistration:
     def match(
         self, nat1, typ1, coords1, nat2, typ2, coords2
     ) -> Result[PSROutput, ErrorInfo]:
-        """Register two point sets using the configured strategy.
+        """Try to match two point sets using the configured strategy.
 
         Parameters
         ----------
@@ -51,6 +48,41 @@ class PointSetRegistration:
         """
         return self._strategy.match(nat1, typ1, coords1, nat2, typ2, coords2)
 
+    def match_and_check(
+        self, nat1, typ1, coords1, nat2, typ2, coords2, matching_score_thr: float
+    ) -> Result[PSROutput, ErrorInfo]:
+        """Match two point sets and reject the result if its score is above threshold.
+
+        Parameters
+        ----------
+        nat1, typ1, coords1, nat2, typ2, coords2
+            Forwarded to `match`.
+        matching_score_thr : float
+            Maximum acceptable matching score.
+
+        Returns
+        -------
+        Result[PSROutput, ErrorInfo]
+            The match, or an error if no match was found or its score is above
+            `matching_score_thr`.
+
+        """
+        result = self.match(nat1, typ1, coords1, nat2, typ2, coords2)
+        if not result.is_ok():
+            return result
+        if result.ok_value().matching_score > matching_score_thr:
+            return Err(
+                ErrorInfo(
+                    type=PSRError.MATCHING_SCORE_ABOVE_ACCEPTANCE_THRESHOLD,
+                    message="PSR found a match but matching score is above acceptance threshold",
+                    details="Hausdorff distance = {}, acceptance threshold = {} ".format(
+                        result.ok_value().matching_score, matching_score_thr
+                    ),
+                    variables={"matching_score": result.ok_value().matching_score},
+                )
+            )
+        return result
+
     @classmethod
     def create(cls, style: str, **kwargs) -> "PointSetRegistration":
         """Build a PointSetRegistration wired with the requested strategy.
@@ -64,42 +96,3 @@ class PointSetRegistration:
 
         """
         return cls(strategy=PSRStrategy.create(style, **kwargs))
-
-
-def check_match(
-    result_match: Result[PSROutput, ErrorInfo], matching_score: float
-) -> Result[PSROutput, ErrorInfo]:
-    """Check if a result from the point set registration method is valid and gives a matching score lower than the matching score threshold defined in the configuration.
-
-    Parameters
-    ----------
-    result_match : Result[PSROutput, ErrorInfo]
-        Result of the PSR procedure.
-    matching_score : float
-        matching score threshold.
-
-    Returns
-    -------
-    Result[PSROutput, ErrorInfo]
-        Result of the check.
-
-    """
-    if not result_match.is_ok():
-        return result_match  # ErrorInfo no match
-    else:
-        if result_match.ok_value().matching_score > matching_score:
-            return Err(
-                ErrorInfo(
-                    type=PSRError.MATCHING_SCORE_ABOVE_ACCEPTANCE_THRESHOLD,
-                    message="PSR found a match but matching score is above acceptance threshold",
-                    details="Hausdorff distance = {}, acceptance threshold = {} ".format(
-                        result_match.ok_value().matching_score, matching_score
-                    ),
-                    variables={
-                        "matching_score": result_match.ok_value().matching_score
-                    },
-                )
-            )
-
-        else:
-            return result_match  # Ok(PSROutput)

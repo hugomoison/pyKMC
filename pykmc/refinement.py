@@ -1,7 +1,7 @@
 """Module implementing the Refinement class that deals with the event refinement procedure."""
 
 from .result import Result, EventRefinementOutput, ErrorInfo, ErrorType, Err, Ok
-from .psr import PointSetRegistration, check_match
+from .psr import PointSetRegistration
 from .utils import geometry
 from .config import Config
 from .system import System
@@ -195,12 +195,18 @@ class Refinement:
             coords1, self.system.positions[at_idx], self.system.cell
         )
 
+        ##=>Check results if match or match < matching_score
         result_psr = PointSetRegistration.create(
             self.config.psr.style, config=self.config.ira
-        ).match(len(coords1), typ1, coords1, len(coords2), typ2, coords2)
-
-        ##=>Check results if match or match < matching_score
-        result_psr = check_match(result_psr, self.config.psr.matching_score_thr)
+        ).match_and_check(
+            len(coords1),
+            typ1,
+            coords1,
+            len(coords2),
+            typ2,
+            coords2,
+            self.config.psr.matching_score_thr,
+        )
         if not result_psr.is_ok():
             f = concurrent.futures.Future()
             f.set_result(result_psr)

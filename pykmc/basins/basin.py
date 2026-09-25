@@ -11,7 +11,6 @@ from pykmc import (
     AtomicEnvironment,
     ReferenceEventTable,
     PointSetRegistration,
-    check_match,
     Reconstruction,
 )
 from typing import Optional
@@ -328,6 +327,9 @@ class BasinsGenericEvents:
 
         # Apply PSR between event initial position and environment positions of the central_atoms
 
+        # TODO: duplicated in refine_absorbing() below and in Refinement.refine_single().
+        # Extract into a shared method once basin.py calls Refinement directly instead
+        # of re-implementing this preprocessing.
         # Build the point clouds PointSetRegistration needs: local neighborhood of
         # central_atom in new_system (coords1/typ1) against the reference event's
         # initial positions (coords2/typ2)
@@ -354,12 +356,16 @@ class BasinsGenericEvents:
 
         result = PointSetRegistration.create(
             self.config.psr.style, config=self.config.ira
-        ).match(len(coords1), typ1, coords1, len(coords2), typ2, coords2)
-        if not result.is_ok():  # PSR Err
-            return result
-            # Check if PointSetRegistration match is valid
-        result = check_match(result, self.config.psr.matching_score_thr)
-        if not result.is_ok():  # PSR matching score not valid :
+        ).match_and_check(
+            len(coords1),
+            typ1,
+            coords1,
+            len(coords2),
+            typ2,
+            coords2,
+            self.config.psr.matching_score_thr,
+        )
+        if not result.is_ok():  # PSR Err or matching score not valid
             return result
         else:
             psr_output = result.ok_value()  # get psr results
@@ -472,6 +478,10 @@ class BasinsGenericEvents:
                 # ENSURE "STATE" FULL
                 self.states[row["state"]].ensure_full_state(self.config)
 
+                # TODO: duplicated in system_from_state() above and in
+                # Refinement.refine_single(). Extract into a shared method once
+                # basin.py calls Refinement directly instead of re-implementing
+                # this preprocessing.
                 # Build the point clouds PointSetRegistration needs: local neighborhood
                 # of central_atom in tmp_system (coords1/typ1) against the reference
                 # event's initial positions (coords2/typ2)
@@ -498,12 +508,16 @@ class BasinsGenericEvents:
 
                 result = PointSetRegistration.create(
                     self.config.psr.style, config=self.config.ira
-                ).match(len(coords1), typ1, coords1, len(coords2), typ2, coords2)
-                if not result.is_ok():  # PSR Err
-                    return result
-                    # Check if PointSetRegistration match is valid
-                result = check_match(result, self.config.psr.matching_score_thr)
-                if not result.is_ok():  # PSR matching score not valid :
+                ).match_and_check(
+                    len(coords1),
+                    typ1,
+                    coords1,
+                    len(coords2),
+                    typ2,
+                    coords2,
+                    self.config.psr.matching_score_thr,
+                )
+                if not result.is_ok():  # PSR Err or matching score not valid
                     return result
                 else:
                     psr_output = result.ok_value()  # get psr results

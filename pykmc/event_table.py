@@ -21,7 +21,7 @@ from .result import (
     EventSearchOutput,
     EventRefinementOutput,
 )
-from .psr import PointSetRegistration, check_match
+from .psr import PointSetRegistration
 from .utils.geometry import compute_delr
 
 if TYPE_CHECKING:
@@ -216,23 +216,19 @@ class ReferenceEventTable:
                         typ_ref = typ_event
                         result = PointSetRegistration.create(
                             self.config.psr.style, config=self.config.ira
-                        ).match(
+                        ).match_and_check(
                             nat_ref,
                             typ_event,
                             dfevent_backward["saddle_positions"].copy(),
                             nat_ref,
                             typ_ref,
                             ref_saddle,
+                            self.config.psr.matching_score_thr,
                         )
 
-                        # if match
-                        if result.is_ok():
-                            # if matching score
-                            result = check_match(
-                                result, self.config.psr.matching_score_thr
-                            )
-                            if result.is_ok():  # same backward and forward event
-                                return Ok(dfevent_forward.to_frame().T)
+                        # if match and matching score is acceptable
+                        if result.is_ok():  # same backward and forward event
+                            return Ok(dfevent_forward.to_frame().T)
                         else:
                             if self.is_new_event(dfevent=dfevent_backward):
                                 dfevent = pd.concat(
@@ -324,20 +320,17 @@ class ReferenceEventTable:
 
             result = PointSetRegistration.create(
                 self.config.psr.style, config=self.config.ira
-            ).match(
+            ).match_and_check(
                 nat_event,
                 typ_event,
                 event_saddle,
                 nat_ref,
                 typ_ref,
                 ref_saddle,
+                self.config.psr.matching_score_thr,
             )
 
-            if not result.is_ok():  # no match
-                continue
-
-            result = check_match(result, self.config.psr.matching_score_thr)
-            if not result.is_ok():  # matching score > thr
+            if not result.is_ok():  # no match, or matching score > thr
                 continue
 
             return False
