@@ -352,8 +352,8 @@ class BasinsGenericEvents:
             coords1, new_system.positions[central_atom], new_system.cell
         )
 
-        result = PointSetRegistration(
-            self.config.psr.style, self.config.ira.kmax_factor
+        result = PointSetRegistration.create(
+            self.config.psr.style, config=self.config.ira
         ).match(len(coords1), typ1, coords1, len(coords2), typ2, coords2)
         if not result.is_ok():  # PSR Err
             return result
@@ -496,8 +496,8 @@ class BasinsGenericEvents:
                     coords1, tmp_system.positions[row["central_atom"]], tmp_system.cell
                 )
 
-                result = PointSetRegistration(
-                    self.config.psr.style, self.config.ira.kmax_factor
+                result = PointSetRegistration.create(
+                    self.config.psr.style, config=self.config.ira
                 ).match(len(coords1), typ1, coords1, len(coords2), typ2, coords2)
                 if not result.is_ok():  # PSR Err
                     return result

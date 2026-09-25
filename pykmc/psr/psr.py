@@ -1,12 +1,12 @@
 """Manages Point Set Registration (shape matching) methods."""
 
-import ira_mod
-from ..result import Result, ErrorInfo, Ok, Err
+from ..result import Err, ErrorInfo, Result
 from .result import PSROutput, PSRError
+from .strategies import PSRStrategy
 
 
 class PointSetRegistration:
-    """Perform a point set registration between two point sets, based on the given style.
+    """Perform a point set registration between two point sets, using a pluggable strategy.
 
     Operates on plain point-cloud arrays only. Preparing those arrays from a
     `System`/reference event -- extracting a local neighborhood, colouring atom
@@ -15,21 +15,18 @@ class PointSetRegistration:
 
     Parameters
     ----------
-    style : str
-        Point set registration style to use (e.g. "ira").
-    kmax_factor : float
-        Passed to the underlying registration algorithm.
+    strategy : PSRStrategy
+        The point set registration strategy to use.
 
     """
 
-    def __init__(self, style: str, kmax_factor: float) -> None:
-        self.style = style
-        self.kmax_factor = kmax_factor
+    def __init__(self, strategy: PSRStrategy) -> None:
+        self._strategy = strategy
 
     def match(
         self, nat1, typ1, coords1, nat2, typ2, coords2
     ) -> Result[PSROutput, ErrorInfo]:
-        """Run the point set registration based on the configured style.
+        """Register two point sets using the configured strategy.
 
         Parameters
         ----------
@@ -51,28 +48,22 @@ class PointSetRegistration:
         Result[PSROutput, ErrorInfo]
             Results of the point set registration.
 
-        Raises
-        ------
-        Exception
-            If the style in not known.
+        """
+        return self._strategy.match(nat1, typ1, coords1, nat2, typ2, coords2)
+
+    @classmethod
+    def create(cls, style: str, **kwargs) -> "PointSetRegistration":
+        """Build a PointSetRegistration wired with the requested strategy.
+
+        Parameters
+        ----------
+        style : str
+            Name of the registered strategy (e.g. "ira").
+        **kwargs
+            Forwarded to the strategy's constructor (e.g. ``config=config.ira``).
 
         """
-        match self.style:
-            case "ira":
-                return self.ira(nat1, typ1, coords1, nat2, typ2, coords2)
-            case _:
-                raise Exception("Point set registration style unknown")
-
-    def ira(self, nat1, typ1, coords1, nat2, typ2, coords2) -> Result[PSROutput, ErrorInfo]:
-        """Use IRA to extract rotation, translation, permutation matrix to apply on generic event.
-
-        Returns
-        -------
-        Result[PSROutput, ErrorInfo]
-            The results of the ira psr procedure.
-
-        """
-        return simple_ira(nat1, typ1, coords1, nat2, typ2, coords2, self.kmax_factor)
+        return cls(strategy=PSRStrategy.create(style, **kwargs))
 
 
 def check_match(
@@ -112,28 +103,3 @@ def check_match(
 
         else:
             return result_match  # Ok(PSROutput)
-
-
-def simple_ira(nat1, typ1, coords1, nat2, typ2, coords2, kmax_factor):
-    # Run ira to find transformation matrices
-    ira = ira_mod.IRA()
-    try:
-        rmat, tr, perm, dh = ira.match(
-            nat1, typ1, coords1, nat2, typ2, coords2, kmax_factor
-        )
-
-        return Ok(
-            PSROutput(
-                rotation_matrix=rmat,
-                translation_matrix=tr,
-                permutation_matrix=perm,
-                matching_score=dh,
-            )
-        )
-    except Exception:
-        return Err(
-            ErrorInfo(
-                type=PSRError.NO_MATCH_FOUND,
-                message="IRA did not find a match",
-            )
-        )

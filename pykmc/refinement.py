@@ -195,8 +195,8 @@ class Refinement:
             coords1, self.system.positions[at_idx], self.system.cell
         )
 
-        result_psr = PointSetRegistration(
-            self.config.psr.style, self.config.ira.kmax_factor
+        result_psr = PointSetRegistration.create(
+            self.config.psr.style, config=self.config.ira
         ).match(len(coords1), typ1, coords1, len(coords2), typ2, coords2)
 
         ##=>Check results if match or match < matching_score

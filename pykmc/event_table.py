@@ -214,8 +214,8 @@ class ReferenceEventTable:
                         nat_ref = len(ref_saddle)
                         typ_event = nat_ref * ["X"]
                         typ_ref = typ_event
-                        result = PointSetRegistration(
-                            self.config.psr.style, self.config.ira.kmax_factor
+                        result = PointSetRegistration.create(
+                            self.config.psr.style, config=self.config.ira
                         ).match(
                             nat_ref,
                             typ_event,
@@ -322,8 +322,8 @@ class ReferenceEventTable:
                 else nat_ref * ["X"]
             )
 
-            result = PointSetRegistration(
-                self.config.psr.style, self.config.ira.kmax_factor
+            result = PointSetRegistration.create(
+                self.config.psr.style, config=self.config.ira
             ).match(
                 nat_event,
                 typ_event,

@@ -1,10 +1,11 @@
 from .result import PSROutput, PSRError
-from .psr import PointSetRegistration, check_match, simple_ira
+from .strategies import PSRStrategy
+from .psr import PointSetRegistration, check_match
 
 __all__ = [
     "PSROutput",
     "PSRError",
+    "PSRStrategy",
     "PointSetRegistration",
     "check_match",
-    "simple_ira",
 ]
