@@ -8,9 +8,13 @@
       
       
       
-        <link rel="canonical" href="https://hugomoison.github.io/pyKMC/develop/basins.html">
+        <link rel="canonical" href="https://hugomoison.github.io/pyKMC/develop/dev_results.html">
       
       
+        <link rel="prev" href="dev_strategy_pattern.html">
+      
+      
+        <link rel="next" href="dev_engine.html">
       
       
         
@@ -21,7 +25,7 @@
     
     
       
-        <title>Basins - pyKMC</title>
+        <title>Result type - pyKMC</title>
       
     
     
@@ -76,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#basins" class="md-skip">
+        <a href="#result-type" class="md-skip">
           Skip to content
         </a>
       
@@ -116,7 +120,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Basins
+              Result type
             
           </span>
         </div>
@@ -426,18 +430,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
         
           
           <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
@@ -458,7 +464,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_5">
             <span class="md-nav__icon md-icon"></span>
             
@@ -501,10 +507,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="dev_results.html" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Result type
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="dev_results.html" class="md-nav__link md-nav__link--active">
         
   
   
@@ -520,6 +553,92 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#producing-a-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Producing a result
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consuming-a-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consuming a result
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#per-module-resultspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-module results.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration status
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1285,10 +1404,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#general-idea" class="md-nav__link">
+  <a href="#why" class="md-nav__link">
     <span class="md-ellipsis">
       
-        General Idea
+        Why
       
     </span>
   </a>
@@ -1296,10 +1415,54 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#algorithm" class="md-nav__link">
+  <a href="#structure" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Algorithm
+        Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#producing-a-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Producing a result
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consuming-a-result" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consuming a result
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#per-module-resultspy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-module results.py
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#migration-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Migration status
       
     </span>
   </a>
@@ -1323,80 +1486,112 @@
 
 
 
-<h1 id="basins">Basins</h1>
-<p>Basin settings are defined in the <code>[Basin]</code> section of the input file.
-The only required parameter is the energy threshold below which a state is considered part of the basin.
-You must also enable basin mode in the <code>[Control]</code> section.</p>
-<p>Example:</p>
-<div class="language-INI highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="k">[Control]</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="na">...</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="na">basin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">True</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="na">...</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="k">[Basin]</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="na">energy_thr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.1</span>
+<h1 id="result-type">Result type</h1>
+<blockquote>
+<p><strong>Refactoring in progress.</strong> <code>ErrorType</code> is the legacy shared enumeration. It is emptied module by module and will be removed once every module declares its own <code>ErrorCode</code> subclass. See Migration status.</p>
+</blockquote>
+<h2 id="why">Why</h2>
+<p>During a KMC simulation, many operations can fail without the failure being fatal: an event search finds nothing, a refinement produces an invalid barrier, a point set registration finds no match. These are somewhat expected outcomes, not bugs, the simulation carries on, counts them, and reports them.</p>
+<p>Raising an exception for each forces a <code>try</code>/<code>except</code> around every call, and it conflates "this attempt did not succeed" with "the code is broken". <code>pykmc._core.result</code> therefore exposes a <code>Result</code> type, so that an operation can report failure as a value that the caller must look at.</p>
+<p>The point is not only to keep the simulation running, but to keep enough structured information to tell the user afterwards what went wrong and how often for analysis.</p>
+<h2 id="structure">Structure</h2>
+<p>An operation that can fail returns a <code>Result</code>, which is either:
+- <code>Ok</code> : the operation's output, usually a dataclass 
+- <code>Err</code> : an <code>ErrorInfo</code> describing the failure</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Result
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>├── Ok(value)          value: the operation's output dataclass
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>└── Err(error)         error: ErrorInfo
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>                                ├── type      : an ErrorCode member  (what failed)
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>                                ├── message   : str                  (human readable)
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>                                ├── details   : str | None           (optional context)
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>                                └── variables : dict | None          (diagnostic values)
 </span></code></pre></div>
-<p><em>Note: currently only one basin-handling strategy is implemented.
-The <code>[Basin]</code> section is intended for future extensions when multiple algorithms (e.g., FTPA, MRT, local basins, …) will be available.</em></p>
-<hr />
-<h2 id="general-idea">General Idea</h2>
-<p>During a KMC step, if the selected event has both forward and backward barriers lower than <code>energy_thr</code>, a <code>Basin</code> object is created.
-It explores the basin, computes the exit time, and determines the exit state.
-Once finished, the selected event in the KMC loop is replaced with the basin event.</p>
-<p>FIGURE</p>
-<p>While exploring, the main objective is to build a connectivity table containing all information required to apply the exit algorithm.
-This table is stored as a <code>pandas.DataFrame</code>, managed by a <code>Connectivity</code> object (merge, remove, search for connections, ...).</p>
-<p>FIGURE</p>
-<p>Column meaning:</p>
+<p><code>Ok</code> and <code>Err</code> know nothing about each other, and <code>ErrorInfo</code> knows nothing about the error codes a given module declares. </p>
+<h2 id="producing-a-result">Producing a result</h2>
+<p>Every exit point states explicitly whether it succeeded:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pykmc._core.result</span><span class="w"> </span><span class="kn">import</span> <span class="n">Err</span><span class="p">,</span> <span class="n">ErrorInfo</span><span class="p">,</span> <span class="n">Ok</span><span class="p">,</span> <span class="n">Result</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pykmc.my_module.results</span><span class="w"> </span><span class="kn">import</span> <span class="n">MyModuleError</span><span class="p">,</span> <span class="n">MyModuleOutput</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Result</span><span class="p">[</span><span class="n">MyModuleOutput</span><span class="p">,</span> <span class="n">ErrorInfo</span><span class="p">]:</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">    </span><span class="sd">"""Run the operation this module is responsible for."""</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="k">if</span> <span class="o">&lt;</span><span class="nb">input</span> <span class="ow">is</span> <span class="n">unusable</span><span class="o">&gt;</span><span class="p">:</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        <span class="k">return</span> <span class="n">Err</span><span class="p">(</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>            <span class="n">ErrorInfo</span><span class="p">(</span>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>                <span class="nb">type</span><span class="o">=</span><span class="n">MyModuleError</span><span class="o">.</span><span class="n">INVALID_INPUT</span><span class="p">,</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>                <span class="n">message</span><span class="o">=</span><span class="s2">"&lt;what went wrong, in plain words&gt;"</span><span class="p">,</span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>                <span class="n">variables</span><span class="o">=</span><span class="p">{</span><span class="s2">"&lt;name&gt;"</span><span class="p">:</span> <span class="o">&lt;</span><span class="n">value</span><span class="o">&gt;</span><span class="p">},</span>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>            <span class="p">)</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>        <span class="p">)</span>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>    <span class="n">result</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">do</span> <span class="n">the</span> <span class="n">work</span><span class="o">&gt;</span>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>    <span class="k">if</span> <span class="o">&lt;</span><span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">acceptable</span><span class="o">&gt;</span><span class="p">:</span>
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>        <span class="k">return</span> <span class="n">Err</span><span class="p">(</span>
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>            <span class="n">ErrorInfo</span><span class="p">(</span>
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>                <span class="nb">type</span><span class="o">=</span><span class="n">MyModuleError</span><span class="o">.</span><span class="n">ABOVE_THRESHOLD</span><span class="p">,</span>
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>                <span class="n">message</span><span class="o">=</span><span class="s2">"&lt;what went wrong, in plain words&gt;"</span><span class="p">,</span>
+</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>                <span class="n">variables</span><span class="o">=</span><span class="p">{</span><span class="s2">"value"</span><span class="p">:</span> <span class="n">result</span><span class="p">,</span> <span class="s2">"threshold"</span><span class="p">:</span> <span class="n">threshold</span><span class="p">},</span>
+</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>            <span class="p">)</span>
+</span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>        <span class="p">)</span>
+</span><span id="__span-1-26"><a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>
+</span><span id="__span-1-27"><a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>    <span class="k">return</span> <span class="n">Ok</span><span class="p">(</span><span class="n">MyModuleOutput</span><span class="p">(</span><span class="o">...</span><span class="p">))</span>
+</span></code></pre></div>
+<p>Fill in <code>variables</code> generously for diagnosing.</p>
+<h2 id="consuming-a-result">Consuming a result</h2>
+<p>Test the class with <code>isinstance</code>, then unwrap:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">res</span> <span class="o">=</span> <span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">Ok</span><span class="p">):</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">output</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">ok_value</span><span class="p">()</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="o">...</span>
+</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="k">else</span><span class="p">:</span>
+</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">err_info</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">err_value</span><span class="p">()</span>
+</span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="o">...</span>
+</span></code></pre></div>
+<p>To unwrap a result, use <code>isinstance</code>. It narrows the type in both branches, so a type checker flags <code>ok_value()</code> called on what may be an <code>Err</code>.</p>
+<p>To merely test a result without unwrapping it, <code>is_ok()</code> is fine and reads better, e.g. :</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">if</span> <span class="n">res</span><span class="o">.</span><span class="n">is_ok</span><span class="p">():</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">"operation succeeded"</span><span class="p">)</span>
+</span></code></pre></div>
+<p>When an intermediate function cannot handle the failure itself, it forwards the <code>Err</code> untouched rather than unwrapping it:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">res</span> <span class="o">=</span> <span class="n">operation</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">Ok</span><span class="p">):</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="k">return</span> <span class="n">res</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">output</span> <span class="o">=</span> <span class="n">res</span><span class="o">.</span><span class="n">ok_value</span><span class="p">()</span>
+</span></code></pre></div>
+<h2 id="per-module-resultspy">Per-module <code>results.py</code></h2>
+<p>A module that corresponds to a single operation declares its own outputs and error codes in a <code>results.py</code>, next to the code that produces them, e.g. :</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="sd">"""Outputs and error codes for &lt;this module&gt;."""</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">auto</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pykmc._core.result</span><span class="w"> </span><span class="kn">import</span> <span class="n">ErrorCode</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyModuleError</span><span class="p">(</span><span class="n">ErrorCode</span><span class="p">):</span>
+</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="sd">"""Failures this module can report."""</span>
+</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
+</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>    <span class="n">INVALID_INPUT</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+</span><span id="__span-5-13"><a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>    <span class="n">ABOVE_THRESHOLD</span> <span class="o">=</span> <span class="n">auto</span><span class="p">()</span>
+</span><span id="__span-5-14"><a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>
+</span><span id="__span-5-15"><a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>
+</span><span id="__span-5-16"><a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="nd">@dataclass</span>
+</span><span id="__span-5-17"><a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyModuleOutput</span><span class="p">:</span>
+</span><span id="__span-5-18"><a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">    </span><span class="sd">"""Store the result of a successful operation."""</span>
+</span><span id="__span-5-19"><a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a>
+</span><span id="__span-5-20"><a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>    <span class="o">...</span>
+</span></code></pre></div>
+<h2 id="migration-status">Migration status</h2>
+<p><code>ErrorType</code>, the single project-wide enumeration, is being replaced by per-module <code>ErrorCode</code> subclasses. While both coexist:</p>
 <ul>
-<li><strong>state</strong>: a transient state</li>
-<li><strong>state_connexion</strong>: a state reachable from <code>state</code></li>
-<li><strong>event_connexion</strong>: ID of the event that takes <code>state → state_connexion</code></li>
-<li><strong>central_atom</strong>: atom index on which the event must be applied</li>
-<li><strong>sym</strong>: symmetry index of the event</li>
-<li><strong>transient</strong>: whether <code>state_connexion</code> is transient or not</li>
-<li><strong>dE_forward / k_forward</strong>: barrier and rate from <code>state</code> to <code>state_connexion</code></li>
-<li><strong>dE_backward / k_backward</strong>: barrier and rate from <code>state_connexion</code> back to <code>state</code></li>
+<li><code>ErrorInfo.type</code> is annotated <code>ErrorType | ErrorCode</code>.</li>
+<li>Modules not yet refactored keep raising <code>ErrorType</code> members and keying their counters with <code>.name</code>, migrated ones use their own enumeration and <code>.key</code>.</li>
+<li>Counters and YAML reports may therefore mix both key formats (<code>EVENT_NOT_FOUND</code> and <code>MyModuleError.INVALID_INPUT</code>). Analysis scripts should tolerate both until the migration completes.</li>
 </ul>
-<p><em>Note: Pandas Dataframe were choosen for fast querying and sorting, and it can easily be converted to a graph for analysis and characterization.</em></p>
-<p>The <code>Basin</code> object uses two additional components:</p>
-<ul>
-<li><strong>Explorer</strong>: explores a given state by creating its connectivity table</li>
-<li><strong>Selector</strong>: use the connectivity table to compute the exit state and exit time</li>
-</ul>
-<p><em>This structure is designed to support multiple future exploration/selection algorithms.</em></p>
-<h2 id="algorithm">Algorithm</h2>
-<ol>
-<li><strong>Initialization</strong>: state to explore = current state</li>
-<li>
-<p><strong>While states remain to explore:</strong></p>
-</li>
-<li>
-<p>If the state is already known (distance-based check), stop</p>
-</li>
-<li>If the state has an unknown atomic environment → mark as absorbing → stop</li>
-<li>If the state is absorbing, stop</li>
-<li>Find the connection (event) between a known state and this state</li>
-<li>Apply the event (reconstruction using a generic event)</li>
-<li>
-<p>Send the state to the Explorer:</p>
-<ul>
-<li>detect applicable events</li>
-<li>build its connectivity table</li>
-<li>Merge with the global connectivity table</li>
-<li><strong>Refine</strong> all transient → absorbing transitions (update dE and k)</li>
-<li><strong>Selector step</strong>:</li>
-</ul>
-</li>
-<li>
-<p>build matrix ( M ), solve ( P = e^{-Mt} P_0 )</p>
-</li>
-<li>use bisection to find ( t_{\text{exit}} ) and the exit state</li>
-<li>Build the result and return it to the KMC loop</li>
-<li>Replace the initially chosen KMC event with the basin event</li>
-</ol>
-<p>The basin process may fail during PSR, refinement, reconstruction, or exit-time calculation.
-If a failure occurs, the basin returns an <code>Err</code>, and the originally selected KMC event is applied instead.</p>
+<p>When a module is refactored, its members are removed from <code>ErrorType</code> and redeclared in its own subclass. Once <code>ErrorType</code> is empty it is deleted, and <code>ErrorInfo.type</code> narrows to <code>ErrorCode</code>.</p>
+<p>The same applies to the output dataclasses, which currently still live in <code>pykmc/result.py</code>. That module is a temporary bridge, it re-exports the <code>Result</code> infrastructure from <code>_core</code> and holds the dataclasses that have not moved yet.</p>
 
 
 

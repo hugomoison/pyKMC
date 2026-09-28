@@ -504,6 +504,34 @@
   
   
     <li class="md-nav__item">
+      <a href="dev_results.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Result type
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="dev_engine.html" class="md-nav__link">
         
   
@@ -1785,34 +1813,6 @@
       
     </span>
   </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pykmc.CustomDumper" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        CustomDumper
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="CustomDumper">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#pykmc.CustomDumper.increase_indent" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        increase_indent
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
         
@@ -3252,17 +3252,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#pykmc.clean_dict" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        clean_dict
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#pykmc.cna_signature" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3406,17 +3395,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#pykmc.represent_list_preserve_flow" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        represent_list_preserve_flow
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#pykmc.unique_symmetries" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3500,6 +3478,18 @@
     <div class="doc doc-contents ">
 
         <p>Alias representing either a successful (<code>Ok</code>) or failed (<code>Err</code>) result.</p>
+<p>To unwrap a result, test the class rather than calling <code>is_ok()</code>: only
+<code>isinstance</code> (or <code>match</code>) narrows the type in both branches.</p>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>if isinstance(res, Ok):
+...     value = res.ok_value()   # res: Ok[...]
+... else:
+...     info = res.err_value()   # res: Err[...]</p>
+</blockquote>
+</blockquote>
+</blockquote>
 
     </div>
 
@@ -5653,146 +5643,6 @@ missing or invalid entries.</p>
 
 
 
-<h3 id="pykmc.CustomDumper" class="doc doc-heading">
-            <span class="doc doc-object-name doc-class-name">CustomDumper</span>
-
-
-</h3>
-
-
-    <div class="doc doc-contents ">
-            <p class="doc doc-class-bases">
-              Bases: <code><span title="yaml.Dumper">Dumper</span></code></p>
-
-
-
-        <p>YAML dumper class that forces proper indentation and formatting.</p>
-
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-<div class="doc doc-object doc-function">
-
-
-<h4 id="pykmc.CustomDumper.increase_indent" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">increase_indent</span>
-
-
-</h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">increase_indent</span><span class="p">(</span><span class="n">flow</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">indentless</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-</span></code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Increase indentation level for nested YAML structures.</p>
-<p>Overrides the default behavior to ensure proper formatting of
-nested mappings and sequences in block style.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>flow</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Whether to use flow style (default: False).</p>
-              </div>
-            </td>
-            <td>
-                  <code>False</code>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>indentless</code>
-            </td>
-            <td>
-                  <code><span title="bool">bool</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Whether to omit indentation on the first level (ignored here).</p>
-              </div>
-            </td>
-            <td>
-                  <code>False</code>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code>None</code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div>
-
-
-
-  </div>
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-class">
-
-
-
 <h3 id="pykmc.CustomFormatter" class="doc doc-heading">
             <span class="doc doc-object-name doc-class-name">CustomFormatter</span>
 
@@ -6159,7 +6009,7 @@ Both thresholds are in Angstroms.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="typing.Generic">Generic</span>[<span title="pykmc.result.TERR">TERR</span>]</code></p>
+              Bases: <code><span title="typing.Generic">Generic</span>[<span title="pykmc._core.result.TERR">TERR</span>]</code></p>
 
 
 
@@ -6179,7 +6029,7 @@ Both thresholds are in Angstroms.</p>
           <tr class="doc-section-item">
             <td><code><span title="pykmc.Err._err">_err</span></code></td>
             <td>
-                  <code><span title="pykmc.result.TERR">TERR</span></code>
+                  <code><span title="pykmc._core.result.TERR">TERR</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6294,7 +6144,7 @@ Both thresholds are in Angstroms.</p>
           <tr class="doc-section-item">
             <td><code><span title="pykmc.ErrorInfo.type">type</span></code></td>
             <td>
-                  <code><a class="autorefs autorefs-internal" title="ErrorType (pykmc.result.ErrorType)" href="api/result.html#pykmc.result.ErrorType">ErrorType</a></code>
+                  <code><a class="autorefs autorefs-internal" title="ErrorType (pykmc._core.result.ErrorType)" href="#pykmc.ErrorType">ErrorType</a></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -10124,7 +9974,7 @@ All other workers are idle for the duration of the call.</p>
 
     <div class="doc doc-contents ">
             <p class="doc doc-class-bases">
-              Bases: <code><span title="typing.Generic">Generic</span>[<span title="pykmc.result.TOK">TOK</span>]</code></p>
+              Bases: <code><span title="typing.Generic">Generic</span>[<span title="pykmc._core.result.TOK">TOK</span>]</code></p>
 
 
 
@@ -10144,7 +9994,7 @@ All other workers are idle for the duration of the call.</p>
           <tr class="doc-section-item">
             <td><code><span title="pykmc.Ok._value">_value</span></code></td>
             <td>
-                  <code><span title="pykmc.result.TOK">TOK</span></code>
+                  <code><span title="pykmc._core.result.TOK">TOK</span></code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -13746,80 +13596,6 @@ Defaults to True (all directions).</p>
 <div class="doc doc-object doc-function">
 
 
-<h3 id="pykmc.clean_dict" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">clean_dict</span>
-
-
-</h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">clean_dict</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
-</span></code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Recursively remove empty or None fields from a dictionary or list.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>d</code>
-            </td>
-            <td>
-                  <code><span title="dict">dict</span> or <span title="list">list</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The input structure to clean.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="dict">dict</span> or <span title="list">list</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>Cleaned structure.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
 <h3 id="pykmc.cna_signature" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">cna_signature</span>
 
@@ -14857,98 +14633,6 @@ $$</p>
 <li>ktot : float
     The total rate constant (sum of l_k)</li>
 </ul>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="pykmc.represent_list_preserve_flow" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">represent_list_preserve_flow</span>
-
-
-</h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">represent_list_preserve_flow</span><span class="p">(</span><span class="n">dumper</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
-</span></code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Represent lists in YAML with inline (flow) style if they contain only integers.</p>
-<p>Ensures that short lists (e.g., atom indices) are rendered inline
-for compact and readable YAML output.</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>dumper</code>
-            </td>
-            <td>
-                  <code><span title="yaml.Dumper">Dumper</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The YAML dumper instance.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>data</code>
-            </td>
-            <td>
-                  <code><span title="list">list</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The list to represent.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="yaml.nodes.SequenceNode">SequenceNode</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>YAML node representing the sequence.</p>
               </div>
             </td>
           </tr>
