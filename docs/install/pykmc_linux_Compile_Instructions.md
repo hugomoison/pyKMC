@@ -10,9 +10,9 @@
 
 ## Automated install (recommended)
 
-`install_pykmc_linux.sh` creates a `pykmc/` directory **inside your current working directory** and installs everything there. Choose where you want the install to live before running it.
+`install_pykmc_linux.sh` creates a `pykmc_install/` directory **inside your current working directory** and installs everything there. Choose where you want the install to live before running it.
 
-1. Create (or choose) the folder where the install should live, and `cd` into it. Replace `/path/to/your/install-folder` with wherever you want the install to live (the script will create a `pykmc/` subfolder inside it):
+1. Create (or choose) the folder where the install should live, and `cd` into it. Replace `/path/to/your/install-folder` with wherever you want the install to live (the script will create a `pykmc_install/` subfolder inside it):
 
    ```bash
    mkdir -p /path/to/your/install-folder
@@ -50,7 +50,12 @@ To use a specific Python interpreter, set `PYTHON_BIN` before running:
 PYTHON_BIN=/usr/bin/python3.12 /path/to/install_pykmc_linux.sh
 ```
 
-When it finishes you'll have `pykmc/pykmc_env/`, `pykmc/lammps/`, `pykmc/IterativeRotationsAssignments/`, `pykmc/artn-plugin/`, and `pykmc/activate.sh` under the folder you chose.
+When it finishes you'll have `pykmc_install/pykmc_env/`, `pykmc_install/lammps/`, `pykmc_install/IterativeRotationsAssignments/`, `pykmc_install/artn-plugin/`, and `pykmc_install/activate.sh` under the folder you chose.
+
+> The install root is **not** called `pykmc`: a directory of that name makes `import pykmc` resolve
+> to it as an empty namespace package whenever Python runs from its parent, which fails later and
+> misleadingly (`ImportError: cannot import name 'NeighborsList' from 'pykmc' (unknown location)`).
+> The same applies if you follow the manual steps below — don't name your working directory `pykmc`.
 
 ---
 
@@ -122,7 +127,7 @@ cmake --version
 ## 1. Clone repositories
 
 ```bash
-mkdir pykmc && cd pykmc
+mkdir pykmc_install && cd pykmc_install   # any name but "pykmc" — see the namespace-package note above
 
 git clone -b develop https://github.com/hugomoison/pyKMC.git
 git clone -b stable_22Jul2025_update3 --depth 1 https://github.com/lammps/lammps.git
@@ -276,10 +281,11 @@ cmake --install build
 > install, drop the old `export PYTHONPATH=…/artn-plugin/interface` and
 > `…/IterativeRotationsAssignments/interface` lines: they would shadow the venv packages.
 
-Verify:
+Verify (under `mpirun -np 1`: instantiating pARTn/LAMMPS from bare `python` uses MPI
+"singleton" init, which can crash the terminal on OpenMPI 5 systems such as Ubuntu 26.04):
 
 ```bash
-python -c "import pypARTn; a=pypARTn.artn(engine='lmp'); print('pypARTn OK')"
+mpirun -np 1 python -c "import pypARTn; a=pypARTn.artn(engine='lmp'); print('pypARTn OK')"
 ```
 
 ---
@@ -333,8 +339,8 @@ the template below scales the same pattern to a full node:
 
 module purge
 module load StdEnv/2023 gcc/12.3 openmpi/4.1.5 python/3.12.4 mpi4py/4.1.0 cmake/3.31.0
-source "$SCRATCH/pykmc/pykmc_env/bin/activate"
-export LD_LIBRARY_PATH="$SCRATCH/pykmc/lammps/build:${LD_LIBRARY_PATH:-}"
+source "$SCRATCH/pykmc_install/pykmc_env/bin/activate"
+export LD_LIBRARY_PATH="$SCRATCH/pykmc_install/lammps/build:${LD_LIBRARY_PATH:-}"
 
 cd "$SCRATCH/your_run_dir"           # run from $SCRATCH — $HOME/$PROJECT are read-only in jobs
 
@@ -361,7 +367,7 @@ sbatch scripts (not re-exercised in the Trillium validation):
 #SBATCH --mem-per-cpu=2048M
 
 module load StdEnv/2023 python/3.12.4 openmpi mpi4py
-source /home/$USER/pykmc/pykmc_env/bin/activate
+source /home/$USER/pykmc_install/pykmc_env/bin/activate
 
 srun --ntasks=$SLURM_NTASKS --distribution=block:block \
      --cpu-bind=cores --mem-bind=local \

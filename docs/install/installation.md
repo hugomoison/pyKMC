@@ -145,7 +145,8 @@ prefer your site's `mpi4py` module if one is provided.
 ## Automated install and platform guides
 
 - **One-shot installers** build the whole stack (pyKMC + LAMMPS + pARTn + IRA)
-  into a `pykmc/` folder under the current directory:
+  into a `pykmc_install/` folder under the current directory (deliberately not
+  `pykmc`, which would shadow the package on import — see the platform guides):
   [`install_pykmc_linux.sh`](install_pykmc_linux.sh),
   [`install_pykmc_mac.sh`](install_pykmc_mac.sh)
 - **Step-by-step platform walkthroughs** (system prerequisites, exact commands,
