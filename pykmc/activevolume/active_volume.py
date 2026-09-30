@@ -5,6 +5,7 @@ from ase.data import atomic_numbers, atomic_masses
 import pypARTn
 import numpy as np
 import ctypes
+from typing import Protocol, TypedDict
 from ase.geometry import find_mic
 from ..system import System
 from ..config import Config
@@ -71,17 +72,65 @@ def make_AV(engine, av_indices, buffer_indices):
     engine.command("run 0 post no")
 
 
-def reset(engine, config, cell) -> None:
-    """
-    Clear lammps instance, preps it for the new sim:
-    """
+class TypeEntry(TypedDict):
+    """One LAMMPS atom type: its 1-based index and its mass."""
 
+    ref: int
+    mass: float
+
+
+class _CommandEngine(Protocol):
+    """Minimal engine surface the active-volume box rebuild drives."""
+
+    def command(self, cmd: str) -> None:
+        """Run one LAMMPS command string."""
+        ...
+
+
+def map_types(
+    types: list[str] | np.ndarray,
+) -> tuple[np.ndarray, dict[str, TypeEntry]]:
+    """Map element symbols to LAMMPS integer types.
+
+    Same rule as ``LammpsEngine.initialize_system`` (alphabetical
+    ``sorted(set(types))``), so an integer type means the same species in the
+    active-volume engine as in the main engine. ``types`` must be the
+    full-system species list: the box size and the integer refs follow its
+    species set, which ``pair_coeff`` was written against and which is
+    assumed fixed for the run. Returns the per-atom integer types and the
+    ``{symbol: {"ref": int, "mass": float}}`` map.
+    """
+    map_type: dict[str, TypeEntry] = {
+        atom_type: {"ref": i + 1, "mass": atomic_masses[atomic_numbers[atom_type]]}
+        for i, atom_type in enumerate(sorted(set(types)))
+    }
+    int_types = np.array([map_type[element]["ref"] for element in types])
+    return int_types, map_type
+
+
+def reset(
+    engine: _CommandEngine,
+    config: object,
+    cell: np.ndarray,
+    map_type: dict[str, TypeEntry],
+) -> None:
+    """Clear the LAMMPS instance and rebuild an empty box for the active volume.
+
+    ``map_type`` is the ``{symbol: {"ref", "mass"}}`` map ``map_types`` built
+    from the full-system types. The box gets one LAMMPS atom type per species
+    and one ``mass`` per type, both before ``pair_coeff``: a multi-element
+    ``pair_coeff`` (``eam/alloy``, ``eam/fs``) needs the full type count to
+    exist, and pair styles that do not set masses themselves (``lj/cut``,
+    ``mlip``, ``sw``) need them before the first ``run 0``.
+    """
     engine.command("clear")
     initialize_parameters(engine)
     # Create cell
     xhi, yhi, zhi = cell[0][0], cell[1, 1], cell[2, 2]
     engine.command("region box block 0.0 {} 0.0 {} 0.0 {}".format(xhi, yhi, zhi))
-    engine.command("create_box 1 box")  # NEEDS TO BE UPDATED FOR ALLOYS
+    engine.command("create_box {} box".format(len(map_type)))
+    for entry in map_type.values():
+        engine.command("mass {} {}".format(entry["ref"], entry["mass"]))
     initialize_potential(engine, config)
 
 
@@ -113,20 +162,14 @@ def redefine_atoms(engine, positions, type=None) -> None:
 def partn_search_AV(
     engine, config, central_atom_idx: int, positions, cell, type
 ) -> [np.array, int]:
-    reset(engine, config, cell)
+    int_types, map_type = map_types(type)
+    reset(engine, config, cell, map_type=map_type)
     av_positions, av_idx, buffer_idx = define_AV(
         config, central_atom_idx, positions, cell
     )
 
-    # Need to map type to positions
     atom_map = np.array(av_idx, dtype=int)
-    map_type = {
-        atom_type: {"ref": i + 1, "mass": atomic_masses[atomic_numbers[atom_type]]}
-        for i, atom_type in enumerate(sorted(set(type)))
-    }
-    type = np.array([map_type[element]["ref"] for element in type])  # map to integer
-
-    av_type = type[atom_map]
+    av_type = int_types[atom_map]
 
     redefine_atoms(engine, av_positions, av_type)
     make_AV(engine, av_idx, buffer_idx)
@@ -151,23 +194,10 @@ def partn_refine_AV(
     Active Volumes.
     """
 
-    reset(engine, config, cell)
-    av_positions, av_idx, buffer_idx = define_AV(
-        config, central_atom_idx, positions, cell
+    atom_map, central_lammps_id = partn_search_AV(
+        engine, config, central_atom_idx, positions, cell, type
     )
-
-    # Need to map types to positions
-    atom_map = np.array(av_idx, dtype=int)
-    map_type = {
-        atom_type: {"ref": i + 1, "mass": atomic_masses[atomic_numbers[atom_type]]}
-        for i, atom_type in enumerate(sorted(set(type)))
-    }
-    type = np.array([map_type[element]["ref"] for element in type])  # map to integer
-
-    av_type = type[atom_map]
-
-    redefine_atoms(engine, av_positions, av_type)
-    make_AV(engine, av_idx, buffer_idx)
+    av_positions = positions[atom_map]
 
     if config.activevolume.AV_debug == True:
         E_before = get_potential_energy(engine)
@@ -201,7 +231,7 @@ def partn_refine_AV(
     engine.command("minimize {}".format(config.lammps.frz_min))
     engine.command("unfix f_core")
 
-    return E_init, atom_map, (np.where(atom_map == central_atom_idx)[0] + 1)
+    return E_init, atom_map, central_lammps_id
 
 
 def position_results_AV(
