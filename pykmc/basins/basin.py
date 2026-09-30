@@ -11,7 +11,6 @@ from pykmc import (
     AtomicEnvironment,
     ReferenceEventTable,
     PointSetRegistration,
-    check_match,
     Reconstruction,
 )
 from typing import Optional
@@ -327,18 +326,46 @@ class BasinsGenericEvents:
         # new_system = copy.deepcopy(self.states[from_state].system)
 
         # Apply PSR between event initial position and environment positions of the central_atoms
-        result = PointSetRegistration(
-            self.config,
-            new_system,
-            ref_event,
-            self.states[from_state].neighbors_list,
-            central_atom,
-        ).match()
-        if not result.is_ok():  # PSR Err
-            return result
-            # Check if PointSetRegistration match is valid
-        result = check_match(result, self.config.psr.matching_score_thr)
-        if not result.is_ok():  # PSR matching score not valid :
+
+        # TODO: duplicated in refine_absorbing() below and in Refinement.refine_single().
+        # Extract into a shared method once basin.py calls Refinement directly instead
+        # of re-implementing this preprocessing.
+        # Build the point clouds PointSetRegistration needs: local neighborhood of
+        # central_atom in new_system (coords1/typ1) against the reference event's
+        # initial positions (coords2/typ2)
+        neighbor_list = self.states[from_state].neighbors_list.get_neighbors(
+            "rcut", central_atom
+        )
+        coords1 = new_system.positions[neighbor_list]
+        coords2 = ref_event.at["initial_positions"]
+
+        if self.config.atomicenvironment.atom_coloring_mode == "full":
+            typ1 = list(np.array(new_system.types)[neighbor_list])
+            typ2 = list(ref_event.at["types"])
+        else:
+            # Grey alloy: all atoms treated identically -> species-blind IRA
+            # matching (a single shared dummy label, sized per structure).
+            typ1 = ["X"] * len(coords1)
+            typ2 = ["X"] * len(coords2)
+
+        # unwrap around the central atom (minimum-image convention, valid for
+        # orthorhombic and triclinic cells alike)
+        coords1 = geometry.unwrap_relative_to(
+            coords1, new_system.positions[central_atom], new_system.cell
+        )
+
+        result = PointSetRegistration.create(
+            self.config.psr.style, config=self.config.ira
+        ).match_and_check(
+            len(coords1),
+            typ1,
+            coords1,
+            len(coords2),
+            typ2,
+            coords2,
+            self.config.psr.matching_score_thr,
+        )
+        if not result.is_ok():  # PSR Err or matching score not valid
             return result
         else:
             psr_output = result.ok_value()  # get psr results
@@ -451,18 +478,46 @@ class BasinsGenericEvents:
                 # ENSURE "STATE" FULL
                 self.states[row["state"]].ensure_full_state(self.config)
 
-                result = PointSetRegistration(
-                    self.config,
-                    tmp_system,
-                    ref_event,
-                    self.states[row["state"]].neighbors_list,
-                    row["central_atom"],
-                ).match()
-                if not result.is_ok():  # PSR Err
-                    return result
-                    # Check if PointSetRegistration match is valid
-                result = check_match(result, self.config.psr.matching_score_thr)
-                if not result.is_ok():  # PSR matching score not valid :
+                # TODO: duplicated in system_from_state() above and in
+                # Refinement.refine_single(). Extract into a shared method once
+                # basin.py calls Refinement directly instead of re-implementing
+                # this preprocessing.
+                # Build the point clouds PointSetRegistration needs: local neighborhood
+                # of central_atom in tmp_system (coords1/typ1) against the reference
+                # event's initial positions (coords2/typ2)
+                neighbor_list = self.states[row["state"]].neighbors_list.get_neighbors(
+                    "rcut", row["central_atom"]
+                )
+                coords1 = tmp_system.positions[neighbor_list]
+                coords2 = ref_event.at["initial_positions"]
+
+                if self.config.atomicenvironment.atom_coloring_mode == "full":
+                    typ1 = list(np.array(tmp_system.types)[neighbor_list])
+                    typ2 = list(ref_event.at["types"])
+                else:
+                    # Grey alloy: all atoms treated identically -> species-blind IRA
+                    # matching (a single shared dummy label, sized per structure).
+                    typ1 = ["X"] * len(coords1)
+                    typ2 = ["X"] * len(coords2)
+
+                # unwrap around the central atom (minimum-image convention, valid
+                # for orthorhombic and triclinic cells alike)
+                coords1 = geometry.unwrap_relative_to(
+                    coords1, tmp_system.positions[row["central_atom"]], tmp_system.cell
+                )
+
+                result = PointSetRegistration.create(
+                    self.config.psr.style, config=self.config.ira
+                ).match_and_check(
+                    len(coords1),
+                    typ1,
+                    coords1,
+                    len(coords2),
+                    typ2,
+                    coords2,
+                    self.config.psr.matching_score_thr,
+                )
+                if not result.is_ok():  # PSR Err or matching score not valid
                     return result
                 else:
                     psr_output = result.ok_value()  # get psr results

@@ -1,7 +1,7 @@
 """Module implementing the Refinement class that deals with the event refinement procedure."""
 
 from .result import Result, EventRefinementOutput, ErrorInfo, ErrorType, Err, Ok
-from .point_set_registration import PointSetRegistration, check_match
+from .psr import PointSetRegistration
 from .utils import geometry
 from .config import Config
 from .system import System
@@ -172,12 +172,41 @@ class Refinement:
         """
 
         ##=>PSR between generic event and at_idx environments
-        result_psr = PointSetRegistration(
-            self.config, self.system, dfevent, self.neighbors_list, at_idx
-        ).match()
+
+        # Build the point clouds PointSetRegistration needs: local neighborhood of
+        # at_idx in self.system (coords1/typ1) against the reference event's
+        # initial positions (coords2/typ2)
+        neighbor_list = self.neighbors_list.get_neighbors("rcut", at_idx)
+        coords1 = self.system.positions[neighbor_list]
+        coords2 = dfevent.at["initial_positions"]
+
+        if self.config.atomicenvironment.atom_coloring_mode == "full":
+            typ1 = list(np.array(self.system.types)[neighbor_list])
+            typ2 = list(dfevent.at["types"])
+        else:
+            # Grey alloy: all atoms treated identically -> species-blind IRA
+            # matching (a single shared dummy label, sized per structure).
+            typ1 = ["X"] * len(coords1)
+            typ2 = ["X"] * len(coords2)
+
+        # unwrap around the central atom (minimum-image convention, valid for
+        # orthorhombic and triclinic cells alike)
+        coords1 = geometry.unwrap_relative_to(
+            coords1, self.system.positions[at_idx], self.system.cell
+        )
 
         ##=>Check results if match or match < matching_score
-        result_psr = check_match(result_psr, self.config.psr.matching_score_thr)
+        result_psr = PointSetRegistration.create(
+            self.config.psr.style, config=self.config.ira
+        ).match_and_check(
+            len(coords1),
+            typ1,
+            coords1,
+            len(coords2),
+            typ2,
+            coords2,
+            self.config.psr.matching_score_thr,
+        )
         if not result_psr.is_ok():
             f = concurrent.futures.Future()
             f.set_result(result_psr)

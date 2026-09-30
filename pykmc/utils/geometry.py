@@ -7,6 +7,7 @@ __all__ = [
     "compute_delr",
     "per_atom_displacement",
     "minimum_image_distance",
+    "unwrap_relative_to",
 ]
 import ase.geometry
 import numpy as np
@@ -141,6 +142,40 @@ def per_atom_displacement(
     for i in range(3):
         disp[:, i] -= cell_lengths[i] * np.round(disp[:, i] / cell_lengths[i])
     return np.linalg.norm(disp, axis=1)
+
+
+def unwrap_relative_to(
+    positions: np.ndarray,
+    reference_position: np.ndarray,
+    cell: np.ndarray,
+    pbc: bool = True,
+) -> np.ndarray:
+    """Unwrap positions into the periodic image closest to a reference position.
+
+    A single-snapshot, reference-relative unwrap (not the trajectory unwrap
+    that reconstructs continuous paths across many frames). Thin wrapper
+    around `ase.geometry.find_mic`, so it works for orthorhombic and
+    triclinic cells alike.
+
+    Parameters
+    ----------
+    positions : np.ndarray
+        Shape (N, 3) positions to unwrap.
+    reference_position : np.ndarray
+        Shape (3,) position each unwrapped position is placed closest to.
+    cell : np.ndarray
+        3x3 simulation cell (row-wise lattice vectors).
+    pbc : bool
+        Periodic boundary conditions, forwarded to `find_mic`.
+
+    Returns
+    -------
+    np.ndarray
+        Shape (N, 3) unwrapped positions.
+
+    """
+    vectors, _ = ase.geometry.find_mic(positions - reference_position, cell, pbc=pbc)
+    return reference_position + vectors
 
 
 def minimum_image_distance(

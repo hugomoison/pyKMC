@@ -3,7 +3,7 @@ from .environments import *
 from .system import *
 from .neighbors_list import *
 from .event_table import *
-from .point_set_registration import *
+from .psr import *
 from .reconstruction import *
 from .result import *
 from .log import *

@@ -12,6 +12,7 @@ from .result import (
     EventRefinementOutput,
     EventsInfo,
 )
+from .psr import PSRError
 from typing import TYPE_CHECKING
 import numpy as np
 
@@ -166,12 +167,12 @@ def info_refinements(
             n_successes += 1
         else:
             match res.err_value().type:
-                case ErrorType.PSR_NO_MATCH_FOUND:
+                case PSRError.NO_MATCH_FOUND:
                     n_fails["no_match_found"]["n"] += 1
                     n_fails["no_match_found"]["ref_event"].append(
                         res.err_value().variables["n_ref_event"]
                     )
-                case ErrorType.PSR_MATCHING_SCORE_ABOVE_ACCEPTANCE_THRESHOLD:
+                case PSRError.MATCHING_SCORE_ABOVE_ACCEPTANCE_THRESHOLD:
                     n_fails["matching_score_>_matching_threshold"]["n"] += 1
                     n_fails["matching_score_>_matching_threshold"]["ref_event"].append(
                         res.err_value().variables["n_ref_event"]
