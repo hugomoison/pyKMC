@@ -741,6 +741,7 @@ class KMC:
                 self.system,
                 self.reference_table,
                 self.atomic_environment,
+                self.neighbors_list,
             )
         return idx_selected_event, delta_t, ktot
 

@@ -794,6 +794,22 @@ class BiasConfig(BaseModel):
             "True: non-listed atoms always pass; only valid in filter mode."
         ),
     )
+    require_center: bool = Field(
+        default=False,
+        description=(
+            "Whether only the central atom of an event is tested against the bias predicate. "
+            "False (default): the predicate is satisfied by any atom of atom_indices found "
+            "in the event neighbourhood. Only meaningful when atom_indices is set."
+        ),
+    )
+    thr_boost: Optional[float] = Field(
+        default=None,
+        description=(
+            "Barrier cutoff in eV above which a desired event is excluded from the boost, "
+            "keeping its unmodified rate. None (default) disables the cutoff. "
+            "Only used in boost mode."
+        ),
+    )
     direction: Optional[list[float]] = Field(
         default=None, description="Direction vector [x, y, z] for 'direction' bias."
     )
@@ -807,13 +823,55 @@ class BiasConfig(BaseModel):
         default=0.0,
         description="Minimum projection onto the bias direction for acceptance.",
     )
-    topo_source: Optional[str] = Field(
-        default=None, description="Source topology ID for 'topo' bias (e.g. vacancy)."
-    )
-    topo_target: Optional[str] = Field(
+    atom_source_idx: Optional[int] = Field(
         default=None,
-        description="Target topology ID for 'topo' bias (e.g. interstitial).",
+        description=(
+            "Atom index for 'topo' bias. The topology ID of this atom at initialisation "
+            "is used as the source topology for the remainder of the simulation."
+        ),
     )
+    atom_target_idx: Optional[int] = Field(
+        default=None,
+        description=(
+            "Atom index for 'topo' bias (two-index mode). The topology ID of this atom "
+            "at initialisation is used as the target topology. When absent, direction mode "
+            "is active and a direction vector must be provided."
+        ),
+    )
+
+    @field_validator("direction", "target_point", mode="before")
+    @classmethod
+    def parse_float_list(cls, v):
+        if v is None or isinstance(v, list):
+            return v
+        if isinstance(v, str):
+            stripped = v.strip()
+            if stripped.lower() == "none" or stripped == "":
+                return None
+            stripped = stripped.strip("[]")
+            parts = [p for p in stripped.replace(",", " ").split() if p]
+            try:
+                return [float(x) for x in parts]
+            except ValueError:
+                raise ValueError(f"Invalid float list: {v!r}")
+        return v
+
+    @field_validator("atom_indices", mode="before")
+    @classmethod
+    def parse_int_list(cls, v):
+        if v is None or isinstance(v, list):
+            return v
+        if isinstance(v, str):
+            stripped = v.strip()
+            if stripped.lower() == "none" or stripped == "":
+                return None
+            stripped = stripped.strip("[]")
+            parts = [p for p in stripped.replace(",", " ").split() if p]
+            try:
+                return [int(x) for x in parts]
+            except ValueError:
+                raise ValueError(f"Invalid integer list: {v!r}")
+        return v
 
 
 class Config(BaseModel):
