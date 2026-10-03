@@ -38,6 +38,9 @@ class _FakeManager:
     def set_all_positions(self, positions: Optional[np.ndarray] = None) -> None:
         """Pretend to broadcast positions to the engines."""
 
+    def broadcast(self, *args: Any, **kwargs: Any) -> None:
+        """Pretend to broadcast a call to the engines."""
+
     def close_all(self) -> None:
         """Pretend to shut the pool down."""
 
