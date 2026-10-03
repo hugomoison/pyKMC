@@ -209,11 +209,17 @@ def info_active_events(system_types, reference_table, active_table) -> EventsInf
     mapping_energy = dict(zip(idx_ref, reference_table.table["energy_barrier"].values))
 
     # get info applying mapping
-    initial_topologies = np.array([mapping_event_id[ref] for ref in reference_events])
-    dra_i = np.array([mapping_dra[ref] for ref in reference_events])
-    backward_events = np.array([mapping_backward[ref] for ref in reference_events])
-    dE_backward = np.array([mapping_energy[ref] for ref in backward_events])
-    dra_f = np.array([mapping_dra[ref] for ref in backward_events])
+    # Defensive: KMC.run evicts active rows whose reference event was purged, so
+    # every key should be present. A missing one only blanks its own log line.
+    initial_topologies = np.array(
+        [mapping_event_id.get(ref) for ref in reference_events]
+    )
+    dra_i = np.array([mapping_dra.get(ref, np.nan) for ref in reference_events])
+    backward_events = np.array(
+        [mapping_backward.get(ref, -1) for ref in reference_events]
+    )
+    dE_backward = np.array([mapping_energy.get(ref, np.nan) for ref in backward_events])
+    dra_f = np.array([mapping_dra.get(ref, np.nan) for ref in backward_events])
 
     dE_asym = np.abs(dE_forward - dE_backward)
 

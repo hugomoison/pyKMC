@@ -53,9 +53,14 @@ class DetectorThreshold(Detector):
 
                 # generic event of the active one
                 # pds_generic_event_forward = df_reference_table.iloc[idx_reference_event]
-                pds_generic_event_forward = df_reference_table[
+                df_generic_event_forward = df_reference_table[
                     df_reference_table["idx_ref"] == idx_reference_event
-                ].iloc[0]  # is a pd.Serie
+                ]
+                # The executed row's ref may have been purged this step (a sibling
+                # sharing it failed reconstruction): no generic event, no basin.
+                if df_generic_event_forward.empty:
+                    return False
+                pds_generic_event_forward = df_generic_event_forward.iloc[0]
 
             else:
                 pds_generic_event_forward = pds_selected_active_event
