@@ -623,13 +623,21 @@ class ReferenceEventTable:
                 }
             )
 
-    def remove(self, idx_refs: list[int]) -> None:
+    def remove(self, idx_refs: list[int]) -> set[int]:
         """Remove events with ind == idx_ref as well as its backward event
 
         Parameters
         ----------
-        ind : int
-            index of the event to be removed
+        idx_refs : list[int]
+            logical ids (``idx_ref``) of the events to be removed.
+
+        Returns
+        -------
+        set[int]
+            The ``idx_ref`` values actually deleted: the requested ones together
+            with their backward siblings. The caller uses it to evict active rows
+            orphaned by the purge (see :meth:`ActiveEventTable.drop_orphans`).
+
         """
 
         idx_refs = set(idx_refs)  # make a set if there are doublons
@@ -642,9 +650,16 @@ class ReferenceEventTable:
 
         all_refs = idx_refs | backward_refs  # all ref to remove
 
+        # Only refs that were actually present count as removed.
+        removed = set(
+            self.table.loc[self.table["idx_ref"].isin(all_refs), "idx_ref"].astype(int)
+        )
+
         self.table = self.table[~self.table["idx_ref"].isin(all_refs)].reset_index(
             drop=True
         )  # keep event not (~) in all refs
+
+        return removed
 
     def save(self, outfile: str = "reference_table.pickle") -> None:
         """Save the reference event table to a pickle file.
@@ -833,6 +848,33 @@ class ActiveEventTable:
         """
         self.table = self.table.drop(ind)
         self.table = self.table.reset_index(drop=True)
+
+    def drop_orphans(self, removed_refs: set[int]) -> int:
+        """Evict active rows whose reference event was purged.
+
+        The active table persists across KMC steps (recycled rows carry over),
+        so when ``ReferenceEventTable.remove`` deletes a reference event the rows
+        still pointing at it become orphans that crash the next step's lookups.
+
+        Parameters
+        ----------
+        removed_refs : set[int]
+            ``idx_ref`` values just deleted from the reference table (forward and
+            backward), as returned by :meth:`ReferenceEventTable.remove`.
+
+        Returns
+        -------
+        int
+            Number of active rows evicted.
+
+        """
+        if not removed_refs or len(self.table) == 0:
+            return 0
+        orphan_mask = self.table["num_reference_event"].isin(removed_refs)
+        n_orphans = int(orphan_mask.sum())
+        if n_orphans:
+            self.table = self.table[~orphan_mask].reset_index(drop=True)
+        return n_orphans
 
     def remove_duplicates(self, cell, neighbors_list: NeighborsList = None) -> None:
         """Loop over all active events in the DataFrame, check if there are duplicates by computing delr."""
