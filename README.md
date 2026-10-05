@@ -9,7 +9,7 @@ pyKMC currently requires LAMMPS, pARTn and IRA (no alternative implementations e
 
 - Python ≥ 3.10
 - [LAMMPS](https://github.com/lammps/lammps) : compiled with `PKG_BASIC`, `PKG_EXTRA_COMPUTE`, `PKG_PLUGIN`
-- [pARTn](https://gitlab.com/mammasmias/artn-plugin) : LAMMPS plugin for saddle point searches
+- [pARTn](https://gitlab.com/mammasmias/artn-plugin/-/tree/v1.1.0) `v1.1.0` : LAMMPS plugin for saddle point searches
 - [IRA](https://github.com/mammasmias/IterativeRotationsAssignments) : shape matching library
 
 > [!NOTE]
@@ -47,10 +47,12 @@ More details available in the [LAMMPS cmake guide](https://docs.lammps.org/Build
 
 ### pARTn
 
-The following commands install the python module `pypARTn` into your environment:
+pyKMC targets the pARTn release `v1.1.0`; later pARTn versions may introduce breaking changes.
+The following commands fetch that tag and install the python module `pypARTn` into your environment:
 
 ```bash
-cd path/to/artn-plugin
+git clone -b v1.1.0 --depth 1 https://gitlab.com/mammasmias/artn-plugin.git
+cd artn-plugin
 cmake -B build -DWITH_LAMMPS=ON -DLAMMPS_PATH=path/to/lammps/build -DARTN_INSTALL_PYTHON=ON
 cmake --build build && cmake --install build
 ```

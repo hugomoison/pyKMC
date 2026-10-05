@@ -4,7 +4,7 @@ pyKMC is a Python package; a working simulation also needs three other codes,
 all currently required (no alternative implementations exist yet):
 
 - **[LAMMPS](https://github.com/lammps/lammps)** — the energy/force engine
-- **[pARTn](https://gitlab.com/mammasmias/artn-plugin)** — saddle-point searches (event discovery)
+- **[pARTn](https://gitlab.com/mammasmias/artn-plugin/-/tree/v1.1.0)** `v1.1.0` — saddle-point searches (event discovery)
 - **[IRA](https://github.com/mammasmias/IterativeRotationsAssignments)** — shape matching (event reconstruction)
 
 The steps below assume you are comfortable building LAMMPS and managing Python
@@ -85,11 +85,13 @@ More details in the [LAMMPS cmake guide](https://docs.lammps.org/Build_cmake.htm
 
 ## 3. pARTn
 
-Build against your LAMMPS; this installs the `pypARTn` module into the active
-venv:
+pyKMC targets the pARTn release `v1.1.0`; later pARTn versions may introduce
+breaking changes. Fetch that tag and build against your LAMMPS; this installs
+the `pypARTn` module into the active venv:
 
 ```bash
-cd /path/to/artn-plugin
+git clone -b v1.1.0 --depth 1 https://gitlab.com/mammasmias/artn-plugin.git
+cd artn-plugin
 cmake -B build -DWITH_LAMMPS=ON -DLAMMPS_PATH=/path/to/lammps/build -DARTN_INSTALL_PYTHON=ON
 cmake --build build && cmake --install build
 ```
