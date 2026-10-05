@@ -1,0 +1,1548 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://hugomoison.github.io/pyKMC/main/atomic_environments.html">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Atomic Environments - pyKMC</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="stylesheets/gruvbox.css">
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="deep-orange" data-md-color-accent="red">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#atomic-environments" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="index.html" title="pyKMC" class="md-header__button md-logo" aria-label="pyKMC" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            pyKMC
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Atomic Environments
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="deep-orange" data-md-color-accent="red"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="deep-orange" data-md-color-accent="red"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.04 7 9.54s-2.94 8.27-7 9.54c.95.3 1.95.46 3 .46a10 10 0 0 0 10-10A10 10 0 0 0 9 2"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="index.html" title="pyKMC" class="md-nav__button md-logo" aria-label="pyKMC" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    pyKMC
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="index.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="install/installation.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="user_guide.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="troubleshooting.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="parameters.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    KMC Parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="developer_guide.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/system.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    System
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/neighbors_list.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    NeighborsList
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/atomic_environment.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AtomicEnvironment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/config.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/log.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Log
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/algorithms.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Algorithms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/kmc.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    KMC
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/environments.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Environments
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/engine.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/lammpsengine.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LammpsEngine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/event_table.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    EventTable
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/eventsearch.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    EventSearch
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/refinement.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Refinement
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/point_set_registration.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PointSetRegistration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/symmetries.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Symmetries
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/rate_constant.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RateConstante
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/initializer.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Initialize
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/result.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Result
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/info_simulations.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Info
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/utils.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utils
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="api/run.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    run
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-atomic-environments-are-used-in-pykmc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How atomic environments are used in pyKMC
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#environment-styles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Environment styles
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Environment styles">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cna" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cna
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        graph
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cnagraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cna/graph
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#diamondgraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        diamond/graph
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#which-style-should-i-use" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Which style should I use?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#choosing-the-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Choosing the parameters
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Choosing the parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rnei" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        rnei
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rcut" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        rcut
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#neighbors_add" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        neighbors_add
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#references" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        References
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="atomic-environments">Atomic Environments</h1>
+<p>During a simulation, pyKMC assigns an atomic environment ID to each atom according to the topology of its local neighborhood. These IDs provide a compact description of local structure and are used to determine where stored reference events may be applicable.</p>
+<p>Atomic-environment settings are defined in the <code>[AtomicEnvironment]</code> section of the INI configuration file.</p>
+<p>The main parameters are:</p>
+<ul>
+<li><code>style</code> <em>(mandatory)</em>: method used to generate the atomic environment ID. Available values are <code>cna</code>, <code>graph</code>, <code>cna/graph</code>, and <code>diamond/graph</code>.</li>
+<li><code>rnei</code> <em>(mandatory)</em>: radial cutoff (in Å) used to define the first-neighbor network.</li>
+<li><code>rcut</code> <em>(currently required in practice)</em>: radial cutoff (in Å) defining the extent of the local environment used for graph-based identification.</li>
+<li><code>neighbors_add</code> <em>(optional, default: <code>0</code>)</em>: controls whether graph-based identification is extended to atoms neighboring non-crystalline sites when using a hybrid style.</li>
+</ul>
+<h2 id="how-atomic-environments-are-used-in-pykmc">How atomic environments are used in pyKMC</h2>
+<p>Atomic environments provide the connection between the current atomic configuration and the reference events stored by pyKMC.</p>
+<p>When a reference event is created, pyKMC identifies the atom that moves the most during the transition. This atom is used as the central atom of the event.</p>
+<p>For this atom, pyKMC constructs graph-based topology IDs for the local environments corresponding to:</p>
+<ul>
+<li>the initial minimum,</li>
+<li>the saddle point,</li>
+<li>the final minimum.</li>
+</ul>
+<p>For the forward event, the graph ID of the initial minimum is stored as the event's <code>event_id</code>. For the corresponding backward event, the transition is reversed, so the forward event's final minimum becomes the initial minimum of the backward event and its graph ID is stored as the backward event's <code>event_id</code>. The graph IDs of the saddle point and the final state of each direction are also stored with the reference event.</p>
+<p>During a KMC step, pyKMC computes atomic environment IDs for the atoms in the current configuration according to the selected <code>style</code>.</p>
+<p>Atomic environment IDs are also used to determine when new event searches are required. pyKMC keeps track of previously visited environment IDs. When an environment ID is encountered for the first time, atoms carrying that environment are selected as central atoms for new event searches. The number of searches performed for each newly encountered environment is controlled by the <code>nsearch</code> parameter in the <code>[EventSearch]</code> section.</p>
+<p>For each stored reference event, pyKMC then searches for atoms whose current environment ID matches the event's <code>event_id</code>. The reference event is refined only around matching atoms. If several atoms have the same matching environment, the event may be refined around each of them. Symmetry-equivalent realizations of the event are also considered.</p>
+<p>Conceptually, the procedure is:</p>
+<ol>
+<li>Compute atomic environment IDs for the current configuration.</li>
+<li>Identify environment IDs that have not been encountered previously.</li>
+<li>For each newly encountered environment, perform new event searches around atoms carrying that environment.</li>
+<li>Identify stored reference events whose <code>event_id</code> is present in the current configuration.</li>
+<li>Find the atoms whose environment IDs match each applicable reference event's <code>event_id</code>.</li>
+<li>Refine the reference event around each compatible atom.</li>
+<li>Use successful refinements to build the set of events available to the KMC step.</li>
+</ol>
+<p>Atomic-environment matching therefore acts as an initial structural filter. Reference events do not need to be refined around every atom in the system, only around atoms with a compatible local topology.</p>
+<hr />
+<h2 id="environment-styles">Environment styles</h2>
+<p>The <code>style</code> parameter determines how the environment ID of each atom in the current configuration is calculated.</p>
+<h3 id="cna"><code>cna</code></h3>
+<p>The <code>cna</code> style uses Common Neighbor Analysis (CNA) to distinguish crystalline from non-crystalline local environments.</p>
+<p>pyKMC analyzes the connectivity between an atom and its first neighbors. Environments matching recognized crystalline CNA signatures are assigned the ID <code>crystal</code>, while all other environments are assigned <code>noncrystal</code>.</p>
+<p>The current implementation recognizes:</p>
+<ul>
+<li>FCC/HCP local order,</li>
+<li>BCC local order,</li>
+<li>icosahedral local order.</li>
+</ul>
+<p>Because all recognized crystalline environments receive the same <code>crystal</code> ID and all other environments receive <code>noncrystal</code>, this style provides a coarse structural classification rather than a unique description of each local topology.</p>
+<div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+  <img src="images/atomic_env_base.png" width="220" />
+  <div style="text-align: center; font-weight: bold;">
+    Using style=cna gives:
+  </div>
+  <img src="images/atomic_env_cna.png" width="300" />
+</div>
+
+<blockquote>
+<p><strong>Current implementation note:</strong> reference-event IDs are generated using graph-based topology IDs, while the pure <code>cna</code> style produces only <code>crystal</code> and <code>noncrystal</code>. In the standard event-matching workflow, reference events are selected by directly matching their graph-based <code>event_id</code> against the current atomic-environment IDs. Therefore, pure <code>cna</code> is not currently compatible with the standard reference-event matching/refinement workflow unless additional handling is introduced.</p>
+</blockquote>
+<h3 id="graph"><code>graph</code></h3>
+<p>The <code>graph</code> style provides a detailed description of local topology.</p>
+<p>For each central atom, atoms within <code>rcut</code> form the vertices of a graph. First-neighbor relationships defined by <code>rnei</code> form the edges.</p>
+<p>pyKMC uses pyNauty to compute a canonical certificate for this graph. This certificate is then used to construct the atomic environment ID.</p>
+<p>Local environments having the same graph topology therefore receive the same graph-based identifier.</p>
+<div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+  <img src="images/atomic_env_base.png" width="220" />
+  <div style="text-align: center; font-weight: bold;">
+    Using style=graph gives:
+  </div>
+  <img src="images/atomic_env_graph.png" width="300" />
+</div>
+
+<p>The <code>graph</code> style is useful when detailed local topology is required throughout the system. However, graph construction is more detailed than the simple crystalline/non-crystalline classification provided by CNA.</p>
+<blockquote>
+<p><strong>Current implementation note:</strong> In the current implementation, graph-based environment IDs describe connectivity only. Atomic species are not encoded in the pyNauty graph, so environments with the same topology but different chemical identities can receive the same graph ID.</p>
+</blockquote>
+<h3 id="cnagraph"><code>cna/graph</code></h3>
+<p>The <code>cna/graph</code> style combines CNA with graph-based identification.</p>
+<p>CNA is first applied to every atom. Atoms belonging to recognized crystalline environments initially retain the simple <code>crystal</code> ID, while atoms classified as <code>noncrystal</code> are assigned detailed graph-based IDs.</p>
+<p>This approach is particularly useful for systems that are predominantly crystalline but contain localized defects such as vacancies, interstitials, surfaces, or other structurally perturbed regions.</p>
+<p>Instead of computing detailed graph IDs throughout the perfect crystal, graph identification is concentrated around non-crystalline regions.</p>
+<div style="display: flex; align-items: center; justify-content: center; gap: 20px;">
+  <img src="images/atomic_env_base.png" width="220" />
+  <div style="text-align: center; font-weight: bold;">
+    Using style=cna/graph gives:
+  </div>
+  <img src="images/atomic_env_cnagraph.png" width="300" />
+</div>
+
+<h3 id="diamondgraph"><code>diamond/graph</code></h3>
+<p>The <code>diamond/graph</code> style provides a similar hybrid approach for diamond-type crystalline structures.</p>
+<p>pyKMC first constructs a second-neighbor network and uses it to identify atoms belonging to the crystalline diamond environment. This identification is based on the second-neighbor structural analysis described in OVITO's <a href="https://www.ovito.org/manual/reference/pipelines/modifiers/identify_diamond.html"><em>Identify Diamond Structure</em> method</a> and by Maras et al. (2016).</p>
+<p>Atoms identified as belonging to the regular diamond crystal retain the <code>crystal</code> ID, while atoms classified as <code>noncrystal</code> receive detailed graph-based IDs.</p>
+<p>As with <code>cna/graph</code>, the purpose is to concentrate detailed topology identification around defects and other structurally perturbed regions rather than throughout the regular crystal.</p>
+<hr />
+<h2 id="which-style-should-i-use">Which style should I use?</h2>
+<table>
+<thead>
+<tr>
+<th>Style</th>
+<th>Typical use</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cna</code></td>
+<td>Coarse crystal/non-crystal classification</td>
+<td>Produces <code>crystal</code> and <code>noncrystal</code> IDs. In the current implementation, it is not compatible with the standard graph-based reference-event matching workflow.</td>
+</tr>
+<tr>
+<td><code>graph</code></td>
+<td>Detailed topology throughout the system</td>
+<td>Computes a graph-based environment ID for every atom.</td>
+</tr>
+<tr>
+<td><code>cna/graph</code></td>
+<td>Conventional crystalline materials containing localized defects</td>
+<td>Uses CNA in regular crystalline regions and detailed graph IDs around non-crystalline regions.</td>
+</tr>
+<tr>
+<td><code>diamond/graph</code></td>
+<td>Diamond-type crystals containing localized defects</td>
+<td>Uses diamond-structure identification in the regular crystal and graph IDs around non-crystalline regions.</td>
+</tr>
+</tbody>
+</table>
+<p>For a predominantly crystalline system whose bulk structure is recognized by the CNA implementation (for example FCC/HCP or BCC) and that contains localized defects, <code>cna/graph</code> is generally the most natural hybrid choice.</p>
+<p>For diamond-type crystalline systems, use <code>diamond/graph</code>.</p>
+<p>Use <code>graph</code> when detailed topology must be distinguished throughout the system rather than only around defects.</p>
+<hr />
+<h2 id="choosing-the-parameters">Choosing the parameters</h2>
+<h3 id="rnei"><code>rnei</code></h3>
+<p><code>rnei</code> defines the first-neighbor network.</p>
+<p>Atoms separated by less than this cutoff are considered direct neighbors. This neighbor network is used both by CNA-based methods and when constructing graph edges.</p>
+<p>Choosing <code>rnei</code> correctly is important because it directly changes the topology seen by pyKMC.</p>
+<p>If <code>rnei</code> is too small, true first neighbors may be excluded. This can break expected CNA signatures and remove edges that should be present in graph-based environments.</p>
+<p>If <code>rnei</code> is too large, atoms belonging to the second or more distant coordination shells may incorrectly be treated as first neighbors, again changing both CNA classification and graph topology.</p>
+<p>For crystalline systems, a useful starting point is therefore a cutoff lying between the first and second coordination-shell distances.</p>
+<p>For relaxed or finite-temperature configurations, the cutoff should not be placed too close to the first-neighbor distance. Enough margin should be allowed for thermal motion and small structural relaxation without repeatedly changing the neighbor network.</p>
+<p>Inspection of the radial distribution function or known coordination-shell distances can help select an appropriate value.</p>
+<h3 id="rcut"><code>rcut</code></h3>
+<p><code>rcut</code> defines the spatial extent of the local environment used for graph-based identification.</p>
+<p>Atoms within <code>rcut</code> of the central atom are included as vertices of the local graph, while <code>rnei</code> determines the connections between those vertices.</p>
+<p>The value of <code>rcut</code> controls how much structural context is contained in an environment ID.</p>
+<p>If <code>rcut</code> is too small, two physically different environments may appear identical because the structural feature distinguishing them lies outside the selected region.</p>
+<p>Increasing <code>rcut</code> includes more structural information and can distinguish environments over a larger length scale. However, it also creates larger graphs and increases the work required for graph construction and certificate computation. A larger <code>rcut</code> may also distinguish local topologies that share the same possible events. Because pyKMC treats distinct environment IDs as separately encountered environments, this can increase the number of event searches without necessarily introducing new event types.</p>
+<p>The goal is therefore not to make <code>rcut</code> as large as possible. It should be large enough to capture the local structural differences relevant to the events being modeled while avoiding unnecessary distant atoms.</p>
+<p>A practical procedure is to test representative configurations and check that:</p>
+<ul>
+<li>environments that should be treated as equivalent receive the same ID;</li>
+<li>physically different defect environments receive different IDs;</li>
+<li>small thermal or elastic distortions do not produce unnecessary changes in topology.</li>
+</ul>
+<p>For graph-based styles, <code>rcut</code> should always be chosen together with <code>rnei</code>, since <code>rcut</code> determines which atoms belong to the graph while <code>rnei</code> determines how those atoms are connected.</p>
+<blockquote>
+<p><strong>Current implementation note:</strong> although <code>rcut</code> is currently declared as optional in the configuration model, the Atomic Environment initialization expects an <code>rcut</code> neighbor list. Therefore, <code>rcut</code> should currently be provided in the <code>[AtomicEnvironment]</code> section.</p>
+</blockquote>
+<h3 id="neighbors_add"><code>neighbors_add</code></h3>
+<p><code>neighbors_add</code> is used with the hybrid <code>cna/graph</code> and <code>diamond/graph</code> styles.</p>
+<p>In these styles, atoms belonging to the regular crystal normally retain the generic <code>crystal</code> ID, while atoms identified as non-crystalline receive detailed graph-based IDs.</p>
+<p>This distinction becomes important when reference events are created.</p>
+<p>The central atom of a reference event is the atom that moves the most during the transition, and the stored event ID for that atom is graph-based.</p>
+<p>Consider an event discovered near a defect. The atom that moves the most may not be the atom initially identified as non-crystalline. It may instead be one of its neighboring atoms.</p>
+<p>That neighboring atom may originally have been classified as <code>crystal</code>. If it continues to carry only the generic <code>crystal</code> ID, its environment cannot be matched directly to the detailed graph-based <code>event_id</code> stored for the reference event.</p>
+<p><code>neighbors_add</code> addresses this situation by extending graph-based identification beyond atoms initially classified as <code>noncrystal</code>.</p>
+<p>With:</p>
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="na">neighbors_add</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0</span>
+</span></code></pre></div>
+<p>graph IDs are assigned only to atoms classified as <code>noncrystal</code>.</p>
+<p>With:</p>
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="na">neighbors_add</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1</span>
+</span></code></pre></div>
+<p>graph IDs are also assigned to the first neighbors of those non-crystalline atoms.</p>
+<p>More generally, setting <code>neighbors_add = N</code> extends graph-based identification to the N-th neighbor shell of the initially non-crystalline atoms.</p>
+<p>This is particularly useful around defects such as vacancies, where atoms neighboring the defect may participate directly in migration events.</p>
+<div style="text-align: center;">
+<img src="images/atomic_env_radd.png" width="400" />
+</div>
+
+<hr />
+<h2 id="example">Example</h2>
+<p>Consider a predominantly crystalline material containing localized defects such as vacancies. A possible configuration is:</p>
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">[AtomicEnvironment]</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">cna/graph</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="na">rnei</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">3.0</span>
+</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="na">rcut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">6.5</span>
+</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="na">neighbors_add</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1</span>
+</span></code></pre></div>
+<p>In this example:</p>
+<ul>
+<li><code>style = cna/graph</code> is used because most atoms belong to the regular crystal while detailed topology is needed around defects.</li>
+<li><code>rnei = 3.0</code> Å defines which atoms are considered first neighbors and therefore determines CNA signatures and graph connectivity.</li>
+<li><code>rcut = 6.5</code> Å determines the spatial extent of each detailed graph-based environment.</li>
+<li><code>neighbors_add = 1</code> extends graph-based identification to atoms immediately surrounding non-crystalline sites, allowing neighboring atoms involved in defect migration events to carry detailed graph IDs.</li>
+</ul>
+<p>The numerical values of <code>rnei</code> and <code>rcut</code> are material-dependent. They should be determined from the structure being simulated and should not be copied directly to a different material without verification.</p>
+<h2 id="references">References</h2>
+<ul>
+<li>E. Maras et al., <em>Global transition path search for dislocation formation in Ge on Si(001)</em>, Computer Physics Communications (2016). <a href="https://doi.org/10.1016/j.cpc.2016.04.001">https://doi.org/10.1016/j.cpc.2016.04.001</a></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": ".", "features": ["content.code.copy", "content.code.annotate", "content.code.highlight"], "search": "assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
