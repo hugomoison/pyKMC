@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pandas as pd
-from .rate_constant import compute_rate_Eyring
+from .rate_constant import RateConstant
 from .config import Config
 import numpy as np
 from .environments.graph_nauty import graph
@@ -536,6 +536,9 @@ class ReferenceEventTable:
             - saddle_positions[neighbor_list_backward][move_atom_idx_backward]
         )
 
+        rate_constant = RateConstant.create(
+            self.config.rateconstant.style, config=self.config.rateconstant
+        )
         dfevent_forward = pd.Series(
             {
                 "idx_ref": -1,  # unknown yet
@@ -545,7 +548,7 @@ class ReferenceEventTable:
                 "final_positions": min2_positions[neighbor_list_forward],
                 "types": local_types_forward,
                 "energy_barrier": dE_forward,
-                "k": compute_rate_Eyring(dE_forward, self.config),
+                "k": rate_constant.compute_rate(dE_forward),
                 "id_saddle": id_saddle,
                 "id_final": id_min2,
                 "move_atom_idx": np.where(neighbor_list_forward == index_move)[0][0],
@@ -571,7 +574,7 @@ class ReferenceEventTable:
                 "final_positions": min1_positions[neighbor_list_backward],
                 "types": local_types_backward,
                 "energy_barrier": dE_backward,
-                "k": compute_rate_Eyring(dE_backward, self.config),
+                "k": rate_constant.compute_rate(dE_backward),
                 "id_saddle": id_saddle,
                 "id_final": id_min1,
                 "move_atom_idx": np.where(neighbor_list_backward == index_move)[0][0],
@@ -808,9 +811,9 @@ class ActiveEventTable:
                 "saddle_positions": event_refinement_output.saddle_positions,
                 "final_positions": event_refinement_output.min2_positions,
                 "energy_barrier": event_refinement_output.dE_forward,
-                "k": compute_rate_Eyring(
-                    event_refinement_output.dE_forward, self.config
-                ),
+                "k": RateConstant.create(
+                    self.config.rateconstant.style, config=self.config.rateconstant
+                ).compute_rate(event_refinement_output.dE_forward),
                 "num_reference_event": event_refinement_output.num_reference_event,
                 "refined": event_refinement_output.refined,
             }

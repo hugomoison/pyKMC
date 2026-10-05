@@ -16,7 +16,7 @@ from pykmc import (
 )
 from typing import Optional
 from ..utils import geometry
-from ..rate_constant import compute_rate_Eyring
+from ..rate_constant import RateConstant
 import pandas as pd
 import copy
 import numpy as np
@@ -519,6 +519,9 @@ class BasinsGenericEvents:
                 # RELEASE MEMORY :
                 self.states[row["state"]].release_heavy_objects()
 
+        # Basin rates always use the constant prefactor k0, whatever [RateConstant] style is set.
+        rate_constant = RateConstant.create("constant", config=self.config.rateconstant)
+
         # modify connectivity table entry future1 hold min energy, future2 holds E_saddle
         for idx, ctx in futures_context.items():
             E_min = ctx["min"].result()
@@ -530,7 +533,7 @@ class BasinsGenericEvents:
                 dE = E_sad
             else:
                 dE = E_sad - E_min
-            k = compute_rate_Eyring(dE, self.config)
+            k = rate_constant.compute_rate(dE)
 
             # also save saddle positions refined
             idx_state = self.connectivity_table.df.loc[idx].at["state_connexion"]
