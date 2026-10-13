@@ -2,10 +2,14 @@
 
 import ira_mod
 import numpy as np
+from .system import Configuration
 
 
 def unique_symmetries(
-    initial_positions: np.ndarray, final_positions: np.ndarray, sym_thr: float
+    initial_configuration: Configuration,
+    final_configuration: Configuration,
+    sym_thr: float,
+    full: bool = False,
 ) -> tuple[list[np.ndarray], list[np.ndarray]]:
     """Identify the unique symmetry operations of an event based on atomic displacements.
 
@@ -14,12 +18,16 @@ def unique_symmetries(
 
     Parameters
     ----------
-    initial_positions : np.ndarray
-        Initial atomic positions (N, 3).
-    final_positions : np.ndarray
-        Final atomic positions (N, 3).
+    initial_configuration : Configuration
+        Initial atomic types/positions/cell.
+    final_configuration : Configuration
+        Final atomic types/positions/cell.
     sym_thr : float
         Symmetry tolerance threshold for the `ira_mod` symmetry detection.
+    full : bool, optional
+        When True, symmetry detection respects `initial_configuration.types`
+        (fewer symmetries for multi-element systems); by default False (grey,
+        species-blind detection).
 
     Returns
     -------
@@ -30,9 +38,12 @@ def unique_symmetries(
         where M is the number of unique symmetries and N the number of atoms.
 
     """
+    initial_positions = initial_configuration.positions
+    final_positions = final_configuration.positions
+
     # Find all symmetries of initial_positions
-    nat = len(initial_positions)
-    typ = nat * [1]
+    nat = len(initial_configuration)
+    typ = list(initial_configuration.types) if full else nat * [1]
 
     sofi = ira_mod.SOFI()
     sym = sofi.compute(nat, typ, initial_positions, sym_thr)  # sym data ira object

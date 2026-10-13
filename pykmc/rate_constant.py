@@ -1,13 +1,13 @@
 """Module defining function used to compute the rate constant."""
 
-from .config import PhysicalConstants, Config
+from .parameters import PhysicalConstants, Parameters
 import math as m
 
 
-def compute_rate_Eyring(dE: float, config: Config) -> float:
+def compute_rate_Eyring(dE: float, params: Parameters) -> float:
     r"""Compute the rate constant based on the energy barrier and parameters in the configuration.
 
-    It uses the following equation : 
+    It uses the following equation :
     $$
     k0*e^{-\frac{dE}{k_{b}T}}
     $$
@@ -16,7 +16,7 @@ def compute_rate_Eyring(dE: float, config: Config) -> float:
     ----------
     dE : float
         The energy barrier.
-    config : Config
+    params : Parameters
         The configuration of the simulation.
 
     Returns
@@ -26,8 +26,8 @@ def compute_rate_Eyring(dE: float, config: Config) -> float:
 
     """
     p = PhysicalConstants()
-    T = config.rateconstant.T
-    k0 = config.rateconstant.k0
+    T = params.rateconstant.T
+    k0 = params.rateconstant.k0
     return k0 * m.exp(-dE / (p.kb * T))
 
 
