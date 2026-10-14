@@ -36,12 +36,16 @@ class NeighborsList:
 
     def _build_neighbors_list(self) -> None:
         """Build and populates the `neighbors_list`."""
+        print('Building neighbor list')
         # Construct the kdTree
         positions = self.system.positions
         box = [self.system.cell[0][0], self.system.cell[1][1], self.system.cell[2][2]]
+        print('Making cDKTree')
         tree = cKDTree(positions, boxsize=box)
+        print('cDKTree made', tree)
 
         # Find first neighbors and atoms in environments
+        print('Positions',len(positions))
         for i in range(len(positions)):
             neighbors = tree.query_ball_point(positions[i], self.rnei)
             neighbors.remove(i)  # don't have self as neighbor
@@ -49,6 +53,7 @@ class NeighborsList:
             if self.rcut is not None : 
                 neighbors = tree.query_ball_point(positions[i], self.rcut)
                 self.neighbors_list["rcut"].append(neighbors)
+        print('Neighbors fully made')
 
     def get_neighbors(self, cutoff_type: float, idx: int) -> list[int]:
         """Retrieve the neighbor list for a specific atom and cutoff.

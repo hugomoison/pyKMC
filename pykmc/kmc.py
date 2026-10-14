@@ -96,7 +96,9 @@ class KMC:
         """Run the simulation."""
         # Initialize the simulation, KMC attributes and minimize the system
         #self._initialize()
+        print('Initializing')
         self.manager.initialize_sessions(self.config, self.system)
+        print('minimize')
         self.minimize_system()
         self.neighbors_list = NeighborsList(
                 self.system,
@@ -301,9 +303,11 @@ class KMC:
                 step,
                 delta_t * 10**-12,
                 total_time,
-                active_table.table.loc[idx_selected_event].at["num_reference_event"],
-                active_table.table.loc[idx_selected_event].at["energy_barrier"],
-                active_table.table.loc[idx_selected_event].at["k"],
+                # Liam Smyth change: read from the pre-prune snapshot captured above instead of
+                # re-indexing active_table.table (which prune_for_recycling has since replaced).
+                selected_event_row.at["num_reference_event"],
+                selected_event_row.at["energy_barrier"],
+                selected_event_row.at["k"],
                 ktot,
                 self.total_energy,
                 elapsed_cpu, 
@@ -409,7 +413,7 @@ class KMC:
             The EventSearch class containing results of the event searches.
 
         """
-        event_search = EventSearch(self.config, self.system, self.manager, self.loggers)
+        event_search = EventSearch(self.config, self.system, self.manager, self.loggers, self.neighbors_list)
         event_search.execute(central_atom_research_list)
         return event_search
 

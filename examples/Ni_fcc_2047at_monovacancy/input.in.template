@@ -3,8 +3,10 @@ initial_config = ./initial_config.xyz
 n_steps = 100
 engine = lammps
 verbosity = 2
-n_sessions = 7
+n_sessions = 1
 engine_use_rank_0 = False
+active_volume = True
+
 
 [Lammps] 
 pair_style = eam/alloy 
@@ -38,3 +40,7 @@ matching_score_thr = 0.4
 kmax_factor = 2.0
 
 [BASIN]
+
+[ActiveVolume]
+ract=10
+rmov=8

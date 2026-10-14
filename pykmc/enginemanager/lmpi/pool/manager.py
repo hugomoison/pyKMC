@@ -169,15 +169,15 @@ class Manager:
         future = self.submit_job("get_total_energy", {"positions": positions})
         return future
 
-    def partn_search(self, config, central_atom: list[int], positions=None, cell=None, type=None) -> list[Future] :
+    def partn_search(self, config, central_atom: list[int], positions=None, cell=None, types=None, neighbor_list=None) -> list[Future] :
         futures = []
         for atom in central_atom :
-            f = self.submit_job("partn_search", {"config": config, "central_atom_idx": atom, "positions": positions, "cell":cell, "type":type})
-            futures.append(f) 
+            f = self.submit_job("partn_search", {"config": config, "central_atom_idx": atom, "positions": positions, "cell":cell, "types":types, "neighbor_list": neighbor_list})
+            futures.append(f)
         return futures
 
-    def partn_refine(self, config, central_atom: int, positions=None, cell=None, type=None, saddle_idx=None, saddle_positions=None) -> list[Future] :
-        future = self.submit_job("partn_refine", {"config": config, "central_atom_idx": central_atom, "positions": positions, "cell":cell, "type":type, "saddle_idx":saddle_idx, "saddle_positions":saddle_positions})
+    def partn_refine(self, config, central_atom: int, positions=None, cell=None, types=None, saddle_idx=None, saddle_positions=None, neighbor_list=None) -> list[Future] :
+        future = self.submit_job("partn_refine", {"config": config, "central_atom_idx": central_atom, "positions": positions, "cell":cell, "types":types, "saddle_idx":saddle_idx, "saddle_positions":saddle_positions, "neighbor_list": neighbor_list})
         return future
 
     def close_all(self):

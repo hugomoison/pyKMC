@@ -225,11 +225,13 @@ class MpiApiSession :
             self._is_busy = False
 
     #@session_locked
-    def partn_search(self, config, central_atom_idx, positions=None, cell=None, type=None) :
-        self._is_busy = True 
+    def partn_search(self, config, central_atom_idx, positions=None, cell=None, types=None, neighbor_list=None) :
+        self._is_busy = True
         #print(f"[Session] Launching pARTn search")
-        try : 
-            self.send_message({"type": "partn_search", "value": {"config": config, "central_atom_idx": central_atom_idx, "positions": positions, "cell": cell, "type": type}})
+        try :
+            # Liam Smyth change: moved neighbor_list inside the "value" dict (it was a sibling
+            # key of "value" before, so the engine-side handler dropped it and always saw None).
+            self.send_message({"type": "partn_search", "value": {"config": config, "central_atom_idx": central_atom_idx, "positions": positions, "cell": cell, "types": types, "neighbor_list": neighbor_list}})
             msg = self.messenger.recv(source=self.engine_master_rank, tag=1)
             if msg.get("type") == "result" : 
                 return msg["value"]
@@ -239,11 +241,11 @@ class MpiApiSession :
             self._is_busy = False
 
     #@session_locked
-    def partn_refine(self, config, central_atom_idx, positions = None, cell=None, type=None, saddle_idx=None, saddle_positions=None) :
-        self._is_busy = True 
+    def partn_refine(self, config, central_atom_idx, positions=None, cell=None, types=None, saddle_idx=None, saddle_positions=None, neighbor_list=None) :
+        self._is_busy = True
         #print(f"[Session] Launching pARTn search")
-        try : 
-            self.send_message({"type": "partn_refine", "value": {"config": config, "central_atom_idx": central_atom_idx, "positions": positions, "cell":cell, "type":type, "saddle_idx":saddle_idx, "saddle_positions":saddle_positions}})
+        try :
+            self.send_message({"type": "partn_refine", "value": {"config": config, "central_atom_idx": central_atom_idx, "positions": positions, "cell":cell, "types":types, "saddle_idx":saddle_idx, "saddle_positions":saddle_positions, "neighbor_list": neighbor_list}})
             msg = self.messenger.recv(source=self.engine_master_rank, tag=1)
             if msg.get("type") == "result" : 
                 return msg["value"]

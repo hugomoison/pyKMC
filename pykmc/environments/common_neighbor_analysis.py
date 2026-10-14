@@ -76,7 +76,65 @@ def is_crystal(signatures:dict) :
     
     return False
 
-def is_diamond(signature:dict) : 
+def cna_order_parameter(neighbors_list: list[list[int]]) -> list[float]:
+    """Continuous crystallinity order parameter per atom, in the range [0, 1].
+
+    Unlike `cna`/`is_crystal`, which require an atom's signature histogram to
+    exactly match a reference structure, this scores how much overlap there is
+    between the atom's signatures and the closest reference, giving a smooth
+    value instead of a hard crystal/noncrystal cut.
+
+    Parameters
+    ----------
+    neighbors_list : list[list[int]]
+        List of first nearest neighbor indices for each atom.
+
+    Returns
+    -------
+    list[float]
+        Per atom, 0.0 = perfect match to a reference structure (fully
+        crystalline), 1.0 = no signature overlap with any reference (fully
+        non-crystalline). Values in between reflect partial/distorted order.
+
+    """
+
+    # Ideal (n_common, n_bonds) signature counts for each reference structure,
+    # same signatures used by `is_crystal`:
+    #  - fcc_hcp : 12 signatures of (4,2) (FCC and HCP share this pair signature)
+    #  - bcc     : 6 signatures of (4,4) and 8 signatures of (6,6)
+    #  - ico     : 12 signatures of (5,5)
+    reference_histograms = {
+        "fcc_hcp": {(4, 2): 12},
+        "bcc": {(4, 4): 6, (6, 6): 8},
+        "ico": {(5, 5): 12},
+    }
+
+    all_signatures = cna_signature(neighbors_list)
+    order_parameter = []
+    for signatures in all_signatures:
+        if not signatures:
+            # No common-neighbor signatures at all: fully disordered.
+            order_parameter.append(1.0)
+            continue
+
+        # Compare the atom's signature histogram against each reference,
+        # keeping the best (highest) overlap fraction found.
+        best_overlap = 0.0
+        for reference in reference_histograms.values():
+            total = sum(reference.values())
+            # Per-signature overlap: how many of the atom's counts for this
+            # signature are "used up" by the reference's expected count.
+            overlap = sum(
+                min(signatures.get(sig, 0), count) for sig, count in reference.items()
+            )
+            best_overlap = max(best_overlap, overlap / total)
+
+        # Invert so 0 = crystalline (full match) and 1 = non-crystalline (no match).
+        order_parameter.append(1.0 - best_overlap)
+
+    return order_parameter
+
+def is_diamond(signature:dict) :
 
     if not signature : 
         return False 

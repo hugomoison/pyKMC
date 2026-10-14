@@ -1,12 +1,12 @@
 [Control] 
-initial_config = ./test.xyz
-n_steps = 1
+initial_config = ./initial_config.xyz 
+n_steps = 20
 engine = lammps
 verbosity = 2
-n_sessions = 7
+n_sessions = 1
 engine_use_rank_0 = False
-#reference_table = ./reference_table.pickle 
-#visited_environments = ./visited_environments.pickle
+active_volume = True
+
 
 [Lammps] 
 pair_style = eam/alloy 
@@ -14,15 +14,14 @@ pair_coeff = * * ./Ni_v6_2.0_LKBeland2016.eam Ni
 min_style = cg 
 minimize = 1e-10 1e-12 10000 10000
 
-
 [AtomicEnvironment] 
 style = cna/graph
 rnei = 3.0
-rcut = 6.0
+rcut = 6.5
 
 [EventSearch] 
 style = partn
-nsearch = 10
+nsearch = 5
 emax_event = 5.0
 emin_event = 0.0
 
@@ -30,11 +29,19 @@ emin_event = 0.0
 
 [RateConstant] 
 style = constant
-k0 = 10
+k0 = 10.0
 T = 300.0
 
 [PSR] 
 style = ira 
-[IRA]
+matching_score_thr = 0.4
 
-[Basin]
+[IRA]
+kmax_factor = 2.0
+
+[BASIN]
+
+[ActiveVolume]
+ract=10
+rmov=8
+AV_debug=True

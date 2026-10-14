@@ -502,6 +502,21 @@ class ActiveVolume(BaseModel):
         description="Debug flag for active volume size checks",
     )
 
+    self_define: bool = Field(
+        default=False,
+        description="How AV should be defined"
+    )
+
+    method: str = Field(
+        default=None,
+        description="Mode of defining criteria for AV growth"
+    )
+
+    threshold : float = Field(
+        default=None,
+        description="Threshold for atoms being part of AV. Changes depending on the method being used"
+    )
+
 class LammpsConfig(BaseModel):
     """Lammps parameters."""
 

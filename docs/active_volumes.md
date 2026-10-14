@@ -18,7 +18,7 @@ ract = 21
 rmov = 15
 ```
 
-*Note: ract must be larger than or equal to rmov to work. The difference between the two is the buffer region of the AV*
+*Note: ract must be larger than or equal to rmov to work. The difference between the two is the buffer region of the AV i.e. `ract`-`rmov`=buffer*
 
 ---
 
@@ -60,5 +60,5 @@ will minimize the AV during refinement before the event is applied, and compare 
 being sent for refinement is already minimized, so there should be no difference after minimization within the AV, 
 within 10e-3 eV. If there is a difference, it means the settings for the AV need to be adjusted. This is caused by
 the buffer region being less than the cutoff of the potential being used, leading to movable atoms next to the buffer to
-experience improper forces. 
+experience improper forces. This can be fixed by either increasing `ract` or decreasing `rmov`
 

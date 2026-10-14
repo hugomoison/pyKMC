@@ -1,10 +1,12 @@
 import numpy as np
 from ase.data import atomic_numbers, atomic_masses
 from mpi4py import MPI
-import ctypes 
+import ctypes
+from pykmc import neighbors_list
 import pypARTn
 import os
-from ...activevolume.active_volume import reset, redefine_atoms, partn_search_AV, partn_refine_AV, position_results_AV
+from ...activevolume.active_volume import reset, redefine_atoms, partn_search_AV, partn_refine_AV, position_results_AV, self_define_AV_new
+from ...atomic_environment import AtomicEnvironment
 
 from ...result import  (
     Result,
@@ -15,6 +17,8 @@ from ...result import  (
     ErrorType,
     EventRefinementOutput,
 )
+
+from scipy.spatial import cKDTree
 
 
 def initialize_parameters(engine) : 
@@ -140,16 +144,63 @@ def minimize_freeze_core(engine, central_atom_positions: np.ndarray, rcut: float
     engine.command("group frozen_group delete")
     engine.command("region sphere_region delete")
 
-def partn_search(engine, config, central_atom_idx: int, positions = None, cell = None, type=None) :
-    original_stdout_fd = os.dup(1)
-    devnull = os.open(os.devnull, os.O_WRONLY)
-    # Redirect stdout (fd 1) to /dev/null, only way to deal with pARTn error write
-    os.dup2(devnull, 1)
+def _make_frozen_group(engine, config, positions, types) -> bool:
+    """Resolve frozen atoms and create g_frozen group. Returns True if any atoms are frozen."""
+    if config.frozen_atoms is None:
+        return False
+    if positions is None:
+        positions = get_positions(engine)
+    if types is None:
+        types = get_types(engine)
+    frozen_ae = AtomicEnvironment(
+        style="region",
+        region=config.frozen_atoms,
+        positions=positions,
+        atom_types=types,
+    )
+    frozen_indices = frozen_ae.get_atoms_with_id("in")
+    if not frozen_indices:
+        return False
+    lammps_ids = " ".join(str(i + 1) for i in frozen_indices)  # 1-based LAMMPS IDs
+    engine.command(f"group g_frozen id {lammps_ids}")
+    return True
 
-    print('Central Atom', central_atom_idx)
+
+def _apply_frozen_fix(engine, fix_name: str, atoms_frozen: bool) -> None:
+    """Add a setforce 0 0 0 fix on g_frozen under the given name."""
+    if atoms_frozen:
+        engine.command(f"fix {fix_name} g_frozen setforce 0.0 0.0 0.0")
+
+
+def _remove_frozen_fix(engine, fix_name: str, atoms_frozen: bool) -> None:
+    """Remove a setforce fix previously added by _apply_frozen_fix."""
+    if atoms_frozen:
+        engine.command(f"unfix {fix_name}")
+
+
+def _delete_frozen_group(engine, atoms_frozen: bool) -> None:
+    """Delete the g_frozen group after all fixes on it have been removed."""
+    if atoms_frozen:
+        engine.command("group g_frozen delete")
+
+
+
+
+
+def partn_search(engine, config, central_atom_idx: int, positions = None, cell = None, types=None, neighbor_list=None) :
+    # original_stdout_fd = os.dup(1)
+    # devnull = os.open(os.devnull, os.O_WRONLY)
+    # # Redirect stdout (fd 1) to /dev/null, only way to deal with pARTn error write
+    # os.dup2(devnull, 1)
+
+    #---------------------------------------------
+
+
     #Check to see if system is in AV mode:
+    print('Neighbor list', neighbor_list)
     if config.control.active_volume == True:
-        atom_map, central_lammps_id=partn_search_AV(engine, config, central_atom_idx, positions, cell, type)
+        # atom_map, central_lammps_id=partn_search_AV(engine, config, central_atom_idx, positions, cell, types)
+        atom_map, central_lammps_id=self_define_AV_new(engine, config, central_atom_idx, positions, cell, types, neighbor_list)
 
     else:
         #Set positions
@@ -166,7 +217,10 @@ def partn_search(engine, config, central_atom_idx: int, positions = None, cell =
 
     # LAMMPS COMMANDS
     engine.command( f"plugin load {artn.lib._name}" )
+    # atoms_frozen = _make_frozen_group(engine, config, positions, types)
+    # _apply_frozen_fix(engine, "f_frozen_pre", atoms_frozen)
     engine.command("fix 10 all artn dmax {}".format(config.partn.dmax))
+    # _apply_frozen_fix(engine, "f_frozen_post", atoms_frozen)
     engine.command("min_style fire")
 
     # SETUP ARTN
@@ -176,6 +230,7 @@ def partn_search(engine, config, central_atom_idx: int, positions = None, cell =
     artn.set("engine_units", "lammps/metal")
     artn.set("verbose", config.partn.verbosity)
     artn.set("struc_format_out", "none")
+    # artn.set("struc_format_out", "xyz")
     artn.set("delr_thr", config.partn.delr_thr)
 
     #Exploration
@@ -224,29 +279,37 @@ def partn_search(engine, config, central_atom_idx: int, positions = None, cell =
     # RUN
     engine.command(f"minimize 1e-6 1e-8 10000 {config.partn.evalf_max}")
     engine.command("unfix 10")
-    
-    # Restore original stdout (fd 1)
-    os.dup2(original_stdout_fd, 1)
-    os.close(original_stdout_fd)
-    os.close(devnull)
+    # _remove_frozen_fix(engine, "f_frozen_post", atoms_frozen)
+    # _remove_frozen_fix(engine, "f_frozen_pre", atoms_frozen)
+    # _delete_frozen_group(engine, atoms_frozen)
+
+    # # Restore original stdout (fd 1)
+    # os.dup2(original_stdout_fd, 1)
+    # os.close(original_stdout_fd)
+    # os.close(devnull)
 
 
     # EXTRACT DATA
     if engine.rank == 0 :
-
+        print('Event search complete')
         err = artn.get_error()
         if err[0]==0:
+            print('Successful event search')
             # Results
             delr1 = artn.extract("delr_min1")
             delr2 = artn.extract("delr_min2")
+            print('delr1', delr1, 'delr2', delr2)
             # Checks if one minimum is close to the original configuration
             if delr1 < delr_threshold or delr2 < delr_threshold:
+                print('Under delr limit')
                 E_sad = artn.extract("etot_sad")
                 E_min1 = artn.extract("etot_min1")
                 E_min2 = artn.extract("etot_min2")
 
                 dE_forward = E_sad - E_min1
                 dE_backward = E_sad - E_min2
+                print('Central atom', central_atom_idx)
+                print('Energy:',dE_forward, dE_backward)
 
                 if config.control.active_volume==True:
                     min1positions, min2positions, saddlepositions, index_move= position_results_AV(config, artn, atom_map, positions)
@@ -302,11 +365,11 @@ def partn_search(engine, config, central_atom_idx: int, positions = None, cell =
                 )
             )
 
-def partn_refine(engine, config, central_atom_idx:int , positions = None, cell = None, type=None, saddle_idx = None, saddle_positions = None, minimize_outter_atoms: bool = True) :
+def partn_refine(engine, config, central_atom_idx:int , positions = None, cell = None, types=None, saddle_idx = None, saddle_positions = None, neighbor_list = None, minimize_outter_atoms: bool = True) :
 
     #Set positions
     if config.control.active_volume==True:
-        E_init, atom_map, central_lammps_id = partn_refine_AV(engine, config, central_atom_idx, positions, cell, type, saddle_idx, saddle_positions)
+        E_init, atom_map, central_lammps_id = partn_refine_AV(engine, config, central_atom_idx, positions, cell, types, saddle_idx, saddle_positions, neighbors=neighbor_list)
     else:
         central_lammps_id=[central_atom_idx+1]
         E_init=0
@@ -437,3 +500,28 @@ def partn_refine(engine, config, central_atom_idx:int , positions = None, cell =
             )
         return None
 
+def make_neighbors_list(config, positions, cell):
+    """Makes and populates the `neighbors_list`."""
+    neighbors_list = {"rnei": [], "rcut": []}
+    # Construct the kdTree
+    box = [cell[0][0], cell[1][1], cell[2][2]]
+    tree = cKDTree(positions, boxsize=box)
+
+    # Find first neighbors and atoms in environments
+    for i in range(len(positions)):
+
+        neighbors = tree.query_ball_point(positions[i], config.atomicenvironment.rnei)
+        neighbors.remove(i)  # don't have self as neighbor
+        neighbors_list["rnei"].append(neighbors)
+        if config.atomicenvironment.rcut is not None : 
+            neighbors = tree.query_ball_point(positions[i], config.atomicenvironment.rcut)
+            neighbors_list["rcut"].append(neighbors)
+
+    # Ragged (variable-length) neighbor lists: use object arrays so they can be
+    # indexed with an array of atom indices, e.g. neighbors_list["rnei"][core].
+    neighbors_list["rnei"] = np.array(neighbors_list["rnei"], dtype=object)
+    if config.atomicenvironment.rcut is not None:
+        neighbors_list["rcut"] = np.array(neighbors_list["rcut"], dtype=object)
+
+    return neighbors_list
+    

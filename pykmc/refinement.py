@@ -214,7 +214,8 @@ class Refinement:
                                                       self.system.cell,
                                                       self.system.types.copy(),
                                                       neighbors.copy(),
-                                                      self.system.positions.copy()[neighbors.copy()])  # send copy not reference !
+                                                      self.system.positions.copy()[neighbors.copy()],
+                                                      neighbor_list=self.neighbors_list)  # send copy not reference !
                     else:
                     #add a job to manager queue
                         f = self.manager.partn_refine(self.config, at_idx, self.system.positions.copy()) #send copy not reference !
