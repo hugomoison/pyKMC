@@ -2842,6 +2842,45 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pykmc.RateConstant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RateConstant
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="RateConstant">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pykmc.RateConstant.compute_rate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        compute_rate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pykmc.RateConstant.create" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        create
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pykmc.RateConstantConfig" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3256,17 +3295,6 @@
     <span class="md-ellipsis">
       
         cna_signature
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pykmc.compute_rate_Eyring" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        compute_rate_Eyring
       
     </span>
   </a>
@@ -10768,6 +10796,244 @@ All other workers are idle for the duration of the call.</p>
 
 
 
+<h3 id="pykmc.RateConstant" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">RateConstant</span>
+
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Compute the rate constant of an event, using a pluggable strategy.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>strategy</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="RateConstantStrategy (pykmc.rate_constant.strategies.RateConstantStrategy)" href="api/rate_constant.html#pykmc.rate_constant.strategies.base.RateConstantStrategy">RateConstantStrategy</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The rate constant strategy to use.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pykmc.RateConstant.compute_rate" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">compute_rate</span>
+
+
+</h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">compute_rate</span><span class="p">(</span><span class="n">dE</span><span class="p">,</span> <span class="n">nu0</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the rate constant of an event using the configured strategy.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>dE</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The energy barrier (eV).</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>nu0</code>
+            </td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Attempt frequency of this event (THz, i.e. ps^-1). <code>None</code> or a
+non-finite value means the event has none.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The rate constant (ps^-1).</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pykmc.RateConstant.create" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">create</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
+  </span>
+
+</h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">create</span><span class="p">(</span><span class="n">style</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Build a RateConstant wired with the requested strategy.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>style</code>
+            </td>
+            <td>
+                  <code><span title="str">str</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Name of the registered strategy (e.g. "constant").</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>**kwargs</code>
+            </td>
+            <td>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Forwarded to the strategy's constructor (e.g. <code>config=config.rateconstant</code>).</p>
+              </div>
+            </td>
+            <td>
+                  <code>{}</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
 <h3 id="pykmc.RateConstantConfig" class="doc doc-heading">
             <span class="doc doc-object-name doc-class-name">RateConstantConfig</span>
 
@@ -13658,100 +13924,6 @@ or 'noncrystal'.</p>
             <td>
               <div class="doc-md-description">
                 <p>'crystal' or 'noncrystal' classification for each atom.</p>
-              </div>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-<h3 id="pykmc.compute_rate_Eyring" class="doc doc-heading">
-            <span class="doc doc-object-name doc-function-name">compute_rate_Eyring</span>
-
-
-</h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">compute_rate_Eyring</span><span class="p">(</span><span class="n">dE</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
-</span></code></pre></div>
-
-    <div class="doc doc-contents ">
-
-        <p>Compute the rate constant based on the energy barrier and parameters in the configuration.</p>
-<p>It uses the following equation :
-$$
-k0*e^{-\frac{dE}{k_{b}T}}
-$$</p>
-
-
-<p><span class="doc-section-title">Parameters:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Type</th>
-          <th>Description</th>
-          <th>Default</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                <code>dE</code>
-            </td>
-            <td>
-                  <code><span title="float">float</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The energy barrier.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>config</code>
-            </td>
-            <td>
-                  <code><a class="autorefs autorefs-internal" title="Config (pykmc.config.Config)" href="api/config.html#pykmc.config.Config">Config</a></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>The configuration of the simulation.</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-      </tbody>
-    </table>
-
-
-    <p><span class="doc-section-title">Returns:</span></p>
-    <table>
-      <thead>
-        <tr>
-          <th>Type</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody>
-          <tr class="doc-section-item">
-            <td>
-                  <code><span title="float">float</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>the rate constant.</p>
               </div>
             </td>
           </tr>
