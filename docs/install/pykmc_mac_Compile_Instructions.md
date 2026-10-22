@@ -110,10 +110,13 @@ mkdir pykmc && cd pykmc
 git clone -b develop https://github.com/hugomoison/pyKMC.git
 git clone -b stable_22Jul2025_update3 --depth 1 https://github.com/lammps/lammps.git
 git clone https://github.com/mammasmias/IterativeRotationsAssignments.git
-git clone https://gitlab.com/mammasmias/artn-plugin.git
+git clone -b v1.1.0 --depth 1 https://gitlab.com/mammasmias/artn-plugin.git
 ```
 
 > **Note:** pyKMC **must** use the `develop` branch.
+>
+> **Note:** pARTn is pinned to the release tag `v1.1.0`. Later pARTn versions may introduce breaking
+> changes, so do not build pyKMC against the pARTn default branch.
 
 ---
 
