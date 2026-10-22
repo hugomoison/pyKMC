@@ -1,8 +1,8 @@
 """Event recycling: carry events with unmoved, distant central atoms into the next KMC step.
 
-The module exposes an abstract :class:`Recycling` interface and one concrete
-strategy, :class:`DistanceRecycling`. Future strategies should subclass
-:class:`Recycling` and implement :meth:`select_recyclable`.
+The module exposes an abstract ``Recycling`` interface and one concrete
+strategy, ``DistanceRecycling``. Future strategies should subclass
+``Recycling`` and implement ``select_recyclable``.
 """
 
 from __future__ import annotations
