@@ -1,0 +1,79 @@
+diff --git a/src/artn_api.f90 b/src/artn_api.f90
+index 17b42411..d0fd1f68 100644
+--- a/src/artn_api.f90
++++ b/src/artn_api.f90
+@@ -54,6 +54,8 @@ module artn_api
+   public :: DISP_VOID, DISP_INIT, DISP_PERP, DISP_EIGN, DISP_LANC, &
+             DISP_RELX, DISP_OVER, DISP_SMTH, DISP_RSET
+   public :: artn_create, artn_destroy
++  ! Export the BIND(C) wrappers for shared-library clients (e.g. ctypes).
++  public :: artn_create_c, artn_cmerr
+   public :: artn_set, artn_extract
+   public :: artn_merr
+   public :: artn_dtype, artn_drank, artn_dsize
+diff --git a/src/artn_step.f90 b/src/artn_step.f90
+index 85522249..f3b0a242 100644
+--- a/src/artn_step.f90
++++ b/src/artn_step.f90
+@@ -4,6 +4,8 @@ module m_artn_step
+ 
+   private
+   public :: artn_step, artn_step_reset
++  ! Export the BIND(C) wrapper for shared-library clients (e.g. ctypes).
++  public :: artn_cstep
+ 
+ 
+   ! real(DP), parameter :: &
+diff --git a/src/d_datainfo.f90 b/src/d_datainfo.f90
+index 0ab8774f..e9661ba6 100644
+--- a/src/d_datainfo.f90
++++ b/src/d_datainfo.f90
+@@ -10,6 +10,9 @@ module d_datainfo
+   private
+   public :: artn_get_dtype, artn_get_drank, artn_get_dsize
+   public :: artn_get_dtype_val, artn_get_dtype_str
++  ! Export the BIND(C) wrappers for shared-library clients (e.g. ctypes).
++  public :: artn_get_ctype, artn_get_crank, artn_get_csize
++  public :: artn_get_dtype_cval, artn_get_dtype_cstr
+ 
+   public :: &
+        ARTN_DTYPE_UNKNOWN, &
+diff --git a/src/h_artn_info.f90 b/src/h_artn_info.f90
+index e855eb3f..e290236f 100644
+--- a/src/h_artn_info.f90
++++ b/src/h_artn_info.f90
+@@ -8,6 +8,8 @@ module h_artn_info
+   public :: artn_git_commit
+   public :: artn_version_semantic
+   public :: artn_gitinfo
++  ! Export the BIND(C) wrappers for shared-library clients (e.g. ctypes).
++  public :: artn_cversion_semantic, artn_cgitinfo
+ 
+ #include "artn_version.h"
+ #include "artn_gitinfo.h"
+diff --git a/src/h_artn_info.f90.in b/src/h_artn_info.f90.in
+index e2a5c900..3874addb 100644
+--- a/src/h_artn_info.f90.in
++++ b/src/h_artn_info.f90.in
+@@ -8,6 +8,8 @@ module h_artn_info
+   public :: artn_git_commit
+   public :: artn_version_semantic
+   public :: artn_gitinfo
++  ! Export the BIND(C) wrappers for shared-library clients (e.g. ctypes).
++  public :: artn_cversion_semantic, artn_cgitinfo
+ 
+   character(*), parameter :: artn_version = "@ARTN_VERSION@"
+   character(*), parameter :: artn_git_branch = "@ARTN_GIT_BRANCH@"
+diff --git a/src/m_artn_fire.f90 b/src/m_artn_fire.f90
+index 41f41e99..279ae5e9 100644
+--- a/src/m_artn_fire.f90
++++ b/src/m_artn_fire.f90
+@@ -7,6 +7,8 @@ module m_artn_fire
+   public :: fire_init, fire_step
+   public :: fire_get, fire_set
+   public :: fire_dtype
++  ! Export the BIND(C) wrappers for shared-library clients (e.g. ctypes).
++  public :: fire_cinit, fire_cstep, fire_cget, fire_ctype
+ 
+ 
+   logical, protected :: fire_is_ready = .false.
