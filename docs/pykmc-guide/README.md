@@ -20,7 +20,7 @@ Each chapter contains both local and Trillium instructions, followed by result c
 
 ## Before copying commands
 
-Download the [first-edition ZIP](https://github.com/yihangliu-research/pyKMC/archive/refs/heads/docs/beginner-guide.zip), extract it, and open its `docs/` directory. Copy the complete `pykmc-guide` folder from there into your home directory. This download is the contributor's guide branch while the upstream contribution is under review; it does not install or update pyKMC.
+Download the [first-edition ZIP](https://github.com/yihangliu-research/pyKMC/archive/refs/heads/docs/beginner-guide-develop.zip), extract it, and open its `docs/` directory. Copy the complete `pykmc-guide` folder from there into your home directory. This download is the contributor's guide branch while the upstream contribution is under review; it does not install or update pyKMC.
 
 For Windows computing, use your Ubuntu home directory. The resulting `~/pykmc-guide` folder should contain `README.md`, `examples/`, `installation/` and `maintenance/` directly, without another nested guide folder. Keep an existing guide folder unchanged until you have compared the new version. This layout makes the guide paths in the commands work as written; local results go separately under `~/pykmc-runs`.
 

@@ -4,7 +4,7 @@ The first edition can be submitted for review while parameter calibration contin
 
 ## Repository and folder
 
-Use `pykmc-guide` as the guide folder name. The first edition is proposed under `docs/pykmc-guide/`, on branch `docs/beginner-guide` in the [contributor fork](https://github.com/yihangliu-research/pyKMC/tree/docs/beginner-guide), targeting upstream `main`. Maintainers can review the location and website integration in the PR. Keep the installed pyKMC checkout and simulation directories outside this publishing workflow.
+Use `pykmc-guide` as the guide folder name. The first edition is proposed under `docs/pykmc-guide/`, on branch `docs/beginner-guide-develop` in the [contributor fork](https://github.com/yihangliu-research/pyKMC/tree/docs/beginner-guide-develop), targeting upstream `develop`. Maintainers can review the location and website integration in the PR. Keep the installed pyKMC checkout and simulation directories outside this publishing workflow.
 
 A repository name and its local guide-directory name can differ. The home page links to the review branch's ZIP and explains how to copy its complete `docs/pykmc-guide/` folder to `~/pykmc-guide`. After upstream merges the guide, update that link to the accepted upstream branch. Guide downloads and software installations remain separate.
 
