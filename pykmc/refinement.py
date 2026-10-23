@@ -123,6 +123,9 @@ class Refinement:
                 res.ok_value().saddle_positions = res.ok_value().saddle_positions[
                     ctx["neighbors"]
                 ]
+                # Keep the order the stored positions follow: the neighbors list is
+                # rebuilt every step, so a recycled event cannot re-derive it.
+                res.ok_value().neighbors = np.asarray(ctx["neighbors"], dtype=int)
                 # Now check if energy barrier consistent with generic one
                 # TODO partn should not return different things depending on AV or not. We get the total energy at the saddle point or dE, but not both.
                 # TODO and to be consistent, you should modify res.ok_value().E_saddle.

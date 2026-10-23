@@ -691,6 +691,7 @@ class ActiveEventTable:
                 "atom_index": pd.Series(dtype="int64"),
                 "saddle_positions": pd.Series(dtype="object"),
                 "final_positions": pd.Series(dtype="object"),
+                "neighbors": pd.Series(dtype="object"),
                 "energy_barrier": pd.Series(dtype="float64"),
                 "k": pd.Series(dtype="float64"),
                 "num_reference_event": pd.Series(dtype="int64"),
@@ -811,6 +812,7 @@ class ActiveEventTable:
                 "atom_index": event_refinement_output.central_atom_index,
                 "saddle_positions": event_refinement_output.saddle_positions,
                 "final_positions": event_refinement_output.min2_positions,
+                "neighbors": event_refinement_output.neighbors,
                 "energy_barrier": event_refinement_output.dE_forward,
                 "k": RateConstant.create(
                     self.config.rateconstant.style, config=self.config.rateconstant

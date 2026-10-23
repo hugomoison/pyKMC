@@ -806,8 +806,14 @@ class KMC:
     def _reconstruction_active_event(
         self, idx_selected_event: int, active_table: AtomicEnvironment
     ):
-        central_atom = active_table.table.loc[idx_selected_event].at["atom_index"]
-        neighbors = self.neighbors_list.get_neighbors("rcut", central_atom)
+        event = active_table.table.loc[idx_selected_event]
+        central_atom = event.at["atom_index"]
+        # The stored positions follow the neighbors order of the step the event was
+        # refined in. A recycled event must use that order: the current list holds
+        # the same atoms in another order (or other atoms) once the system has moved.
+        neighbors = event.get("neighbors")
+        if not isinstance(neighbors, np.ndarray):
+            neighbors = self.neighbors_list.get_neighbors("rcut", central_atom)
         saddle_positions = copy.deepcopy(
             active_table.table.loc[idx_selected_event].at["saddle_positions"]
         )
