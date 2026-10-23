@@ -7,6 +7,7 @@ __all__ = [
     "compute_delr",
     "per_atom_displacement",
     "minimum_image_distance",
+    "minimum_image_vector",
 ]
 import ase.geometry
 import numpy as np
@@ -173,3 +174,35 @@ def minimum_image_distance(
     for i in range(3):
         dvec[i] -= cell_lengths[i] * np.round(dvec[i] / cell_lengths[i])
     return float(np.linalg.norm(dvec))
+
+
+def minimum_image_vector(
+    position_a: np.ndarray,
+    position_b: np.ndarray,
+    cell: np.ndarray,
+) -> np.ndarray:
+    """PBC minimum-image displacement vector position_b - position_a (orthorhombic).
+
+    Vector counterpart of `minimum_image_distance`: applies the same per-axis
+    minimum-image wrap to the separation vector and returns it unreduced.
+
+    Parameters
+    ----------
+    position_a : np.ndarray
+        Shape (3,) first position.
+    position_b : np.ndarray
+        Shape (3,) second position.
+    cell : np.ndarray
+        3x3 simulation cell (orthorhombic; row-wise lattice vectors).
+
+    Returns
+    -------
+    np.ndarray
+        Shape (3,) minimum-image displacement vector in Angstroms.
+
+    """
+    dvec = np.asarray(position_b, dtype=float) - np.asarray(position_a, dtype=float)
+    cell_lengths = np.linalg.norm(cell, axis=1)
+    for i in range(3):
+        dvec[i] -= cell_lengths[i] * np.round(dvec[i] / cell_lengths[i])
+    return dvec
