@@ -1,7 +1,8 @@
 #!/bin/bash
 #
 # pyKMC Linux Installation Script
-# Tested for: Ubuntu/Debian, RHEL/CentOS/Rocky
+# Tested for: Ubuntu/Debian, RHEL/CentOS/Rocky;
+#             Alliance/DRAC clusters (validated on Trillium login + compute, 2026-08-31)
 #
 # Usage:
 #   chmod +x install_pykmc_linux.sh
@@ -10,8 +11,14 @@
 # Override Python interpreter:
 #   PYTHON_BIN=/usr/bin/python3.12 ./install_pykmc_linux.sh
 #
-# This script will create a "pykmc" directory in the current location
+# This script will create a "pykmc_install" directory in the current location
 # and install everything inside it.
+#
+# Pin pARTn / IRA to other revisions (default: the SHAs validated on 2026-07-28):
+#   ARTN_REF=main IRA_REF=main ./install_pykmc_linux.sh
+#
+# Install a different pyKMC branch (default: develop):
+#   PYKMC_BRANCH=main ./install_pykmc_linux.sh
 #
 set -euo pipefail
 
@@ -81,12 +88,40 @@ else
     echo "  gcc, g++, gfortran, cmake, openmpi, fftw3, lapack, python3-dev"
 fi
 
+# An inherited PYTHONPATH (e.g. a developer shell exporting another checkout's
+# artn-plugin / IterativeRotationsAssignments interface dirs) shadows everything this
+# script installs into its venv, so the verification steps would test the WRONG copies.
+# Alliance clusters: keep the module system's entries (they carry the EBPYTHONPREFIXES
+# site customization that makes module-provided mpi4py visible) and strip only pyKMC
+# interface dirs. Everywhere else: drop it outright for the duration of the install.
+if [ -n "${PYTHONPATH:-}" ]; then
+    if $ON_ALLIANCE; then
+        PYTHONPATH=$(printf '%s' "$PYTHONPATH" | tr ':' '\n' | grep -vE 'artn-plugin/interface|IterativeRotationsAssignments/interface' | paste -sd: -)
+        if [ -n "$PYTHONPATH" ]; then export PYTHONPATH; else unset PYTHONPATH; fi
+    else
+        echo "Dropping inherited PYTHONPATH for the duration of the install: $PYTHONPATH"
+        unset PYTHONPATH
+    fi
+fi
+
 # Verify compilers are available
 command -v gfortran >/dev/null 2>&1 || fail "gfortran not found"
 command -v mpicc    >/dev/null 2>&1 || fail "mpicc not found"
 command -v mpicxx   >/dev/null 2>&1 || fail "mpicxx not found"
 command -v mpif90   >/dev/null 2>&1 || fail "mpif90 not found"
 command -v cmake    >/dev/null 2>&1 || fail "cmake not found"
+
+# LAMMPS + pARTn initialize MPI in "singleton" mode when verified with bare `python`; on
+# OpenMPI 5 systems (seen on Ubuntu 26.04) that can crash hard enough to take the whole
+# terminal with it, while the same code under `mpirun -np 1` gets a proper PMIx
+# environment and works. Alliance login nodes: keep bare python (validated on Trillium;
+# mpirun policy on login nodes varies by cluster).
+if ! $ON_ALLIANCE && command -v mpirun >/dev/null 2>&1; then
+    PYRUN="mpirun -np 1 python"
+else
+    PYRUN="python"
+fi
+
 ok "All prerequisites found"
 
 # ------------------------------------------
@@ -94,12 +129,28 @@ ok "All prerequisites found"
 # ------------------------------------------
 step "Selecting Python interpreter"
 
+# A candidate must be able to create a WORKING venv, not just report the right version:
+# on Debian/Ubuntu every python besides the default needs its own pythonX.Y-venv package,
+# and uv-managed pythons reached through a ~/.local/bin symlink build venvs whose python
+# cannot locate its own stdlib (ModuleNotFoundError: No module named 'encodings').
+venv_works() {
+    local probe
+    probe=$(mktemp -d) || return 1
+    if "$1" -m venv --without-pip "$probe/v" >/dev/null 2>&1 \
+        && "$probe/v/bin/python" -c "import encodings, ensurepip" >/dev/null 2>&1; then
+        rm -rf "$probe"
+        return 0
+    fi
+    rm -rf "$probe"
+    return 1
+}
+
 find_supported_python() {
     for py in python3.13 python3.12 python3.11 python3.10 python3; do
         if command -v "$py" >/dev/null 2>&1; then
             local ver
             ver=$("$py" -c "import sys; print(sys.version_info.minor)")
-            if [ "$ver" -ge 10 ] && [ "$ver" -le 13 ]; then
+            if [ "$ver" -ge 10 ] && [ "$ver" -le 13 ] && venv_works "$py"; then
                 echo "$py"
                 return 0
             fi
@@ -111,15 +162,28 @@ find_supported_python() {
 PYTHON_BIN="${PYTHON_BIN:-$(find_supported_python || true)}"
 
 if [ -z "$PYTHON_BIN" ]; then
-    fail "No supported Python 3.10-3.13 found. Install one with your package manager."
+    fail "No Python 3.10-3.13 able to create a virtualenv found. Install one with its
+       pythonX.Y-venv package. Distros already shipping a newer default (Ubuntu 26.04
+       ships 3.14) need a parallel 3.13, e.g. from the deadsnakes PPA:
+         sudo add-apt-repository ppa:deadsnakes/ppa
+         sudo apt install python3.13 python3.13-venv python3.13-dev
+       — or pass PYTHON_BIN=<path> explicitly to try an untested newer version."
 fi
+
+venv_works "$PYTHON_BIN" \
+    || fail "$PYTHON_BIN cannot create a working virtualenv. On Debian/Ubuntu install its pythonX.Y-venv package; for a uv-managed python pass the real interpreter path as PYTHON_BIN, not the ~/.local/bin shim."
 
 PYTHON_VERSION=$("$PYTHON_BIN" -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')")
 PYTHON_MAJOR=$("$PYTHON_BIN" -c "import sys; print(sys.version_info.major)")
 PYTHON_MINOR=$("$PYTHON_BIN" -c "import sys; print(sys.version_info.minor)")
 
-if [ "$PYTHON_MAJOR" -ne 3 ] || [ "$PYTHON_MINOR" -lt 10 ] || [ "$PYTHON_MINOR" -gt 13 ]; then
-    fail "Supported Python range is 3.10-3.13, found $PYTHON_VERSION at $PYTHON_BIN"
+if [ "$PYTHON_MAJOR" -ne 3 ] || [ "$PYTHON_MINOR" -lt 10 ]; then
+    fail "pyKMC needs Python >= 3.10, found $PYTHON_VERSION at $PYTHON_BIN"
+elif [ "$PYTHON_MINOR" -gt 13 ]; then
+    # Only reachable via an explicit PYTHON_BIN (auto-selection stops at 3.13).
+    echo "WARNING: Python $PYTHON_VERSION is newer than the tested range (3.10-3.13)."
+    echo "Proceeding because PYTHON_BIN was set explicitly. Some pinned dependencies may"
+    echo "not ship wheels for it yet (a from-source pydantic-core build needs Rust)."
 fi
 
 ok "Using Python $PYTHON_VERSION at $(command -v "$PYTHON_BIN")"
@@ -129,7 +193,11 @@ ok "Using Python $PYTHON_VERSION at $(command -v "$PYTHON_BIN")"
 # ------------------------------------------
 step "Cloning repositories"
 
-INSTALL_DIR="$(pwd)/pykmc"
+# Deliberately NOT named "pykmc": a directory of that name makes `import pykmc` resolve to it as an
+# empty namespace package whenever python runs from this directory's PARENT. The import succeeds,
+# __file__ is None, and the real failure surfaces later and misleadingly as
+#   ImportError: cannot import name 'NeighborsList' from 'pykmc' (unknown location)
+INSTALL_DIR="$(pwd)/pykmc_install"
 
 if [ -d "$INSTALL_DIR" ]; then
     fail "Directory $INSTALL_DIR already exists. Remove it or run from a different location."
@@ -138,29 +206,40 @@ fi
 mkdir -p "$INSTALL_DIR"
 cd "$INSTALL_DIR"
 
-git clone -b develop https://github.com/hugomoison/pyKMC.git
+# pARTn and IRA are pinned by SHA to the revisions validated on 2026-07-28. Neither has a usable
+# release tag: artn-plugin's only tag (v1.0.0) predates the LAMMPS plugin, and IRA's IRA_v2.2.0 tag
+# sits behind the 2.2.0 code. Unpinned, two runs of this script weeks apart install different
+# software — between 2026-06-10 and 2026-07-28, pARTn moved 8224be16 -> edea36ac and IRA
+# 7f011ba -> 3cb0c29. Override to track upstream HEAD deliberately: ARTN_REF=main IRA_REF=main.
+IRA_REF="${IRA_REF:-3cb0c299e2e664f8131948b90f9926869d42459c}"
+ARTN_REF="${ARTN_REF:-edea36aca8215a1d484b3b8695ecb9676fe56498}"
+
+# The pyKMC branch this script installs. Keep the default in sync with the branch the
+# script itself ships on (develop here, main on main), so downloading the script from a
+# branch installs that same branch. Override with PYKMC_BRANCH=<branch>.
+PYKMC_BRANCH="${PYKMC_BRANCH:-develop}"
+echo "Installing pyKMC branch: $PYKMC_BRANCH"
+
+git clone -b "$PYKMC_BRANCH" https://github.com/hugomoison/pyKMC.git
 git clone -b stable_22Jul2025_update3 --depth 1 https://github.com/lammps/lammps.git
 git clone https://github.com/mammasmias/IterativeRotationsAssignments.git
 git clone https://gitlab.com/mammasmias/artn-plugin.git
 
+git -C IterativeRotationsAssignments checkout --quiet "$IRA_REF" \
+    || fail "Could not check out IRA revision '$IRA_REF'"
+git -C artn-plugin checkout --quiet "$ARTN_REF" \
+    || fail "Could not check out pARTn revision '$ARTN_REF'"
+
+# Record what actually landed, so a simulation result can be attributed to a stack later.
+echo "Resolved source revisions:"
+for repo in pyKMC lammps IterativeRotationsAssignments artn-plugin; do
+    printf '  %-32s %s\n' "$repo" "$(git -C "$repo" rev-parse HEAD)"
+done
+
 ok "All repositories cloned"
 
 # ------------------------------------------
-# 2. Fix Python version constraint (3.13 only)
-# ------------------------------------------
-step "Fixing Python version constraint"
-
-if [ "$PYTHON_MINOR" -eq 13 ] && grep -q '<3.13,' pyKMC/pyproject.toml; then
-    # only needed for older pyKMC checkouts whose pyproject still has an upper bound
-    sed -i 's/<3.13,/<3.14,/' pyKMC/pyproject.toml
-    grep -q '<3.14,' pyKMC/pyproject.toml || fail "Failed to bump pyproject upper Python bound (sed pattern stale?)"
-    ok "Updated pyproject.toml for Python 3.13"
-else
-    ok "Python $PYTHON_VERSION is within range, no fix needed"
-fi
-
-# ------------------------------------------
-# 3. Create virtual environment and install pyKMC
+# 2. Create virtual environment and install pyKMC
 # ------------------------------------------
 step "Creating virtual environment and installing pyKMC"
 
@@ -195,7 +274,7 @@ else
 fi
 
 # ------------------------------------------
-# 4. Build LAMMPS
+# 3. Build LAMMPS
 # ------------------------------------------
 step "Building LAMMPS (this may take a few minutes)"
 
@@ -245,20 +324,33 @@ python -c "from lammps import lammps" || fail "LAMMPS Python bindings not workin
 ok "LAMMPS built and installed"
 
 # ------------------------------------------
-# 5. Build IRA
+# 4. Build IRA
 # ------------------------------------------
 step "Building IRA"
 
 cd "$INSTALL_DIR/IterativeRotationsAssignments"
-python -m pip install . --quiet
+
+# IRA builds via scikit-build-core, which does propagate a failed cmake build as a non-zero pip
+# exit code (the full CMake/compiler output is printed even under --quiet). It is not built
+# out-of-tree in a way that leaves a log behind, so there is no log file to point at — say so.
+python -m pip install . --quiet \
+    || fail "IRA build failed — the CMake/compiler output above is the full log (no log file is written)"
 
 cd "$INSTALL_DIR"
 
-python -c "import ira_mod" || fail "IRA not working"
+# Instantiate rather than just `import ira_mod`. At the pinned revision the bare import happens to
+# dlopen the library anyway (ira_mod.py runs `version, _ = IRA().get_version()` at module level),
+# but that is an incidental side effect to lean a build check on, and a bare `import ira_mod` is a
+# silent pass whenever a directory named ira_mod shadows the package as an empty namespace package.
+# Instantiating states the intent, and prints the version into the install log as provenance.
+python -c "
+import ira_mod
+print('IRA library OK:', ira_mod.IRA().get_version())
+" || fail "IRA shared library not loadable (libira.so missing, or unresolved symbols)"
 ok "IRA built and installed"
 
 # ------------------------------------------
-# 6. Build pARTn plugin
+# 5. Build pARTn plugin
 # ------------------------------------------
 step "Building pARTn plugin"
 
@@ -277,7 +369,7 @@ cmake --install build                     > artn_install.log 2>&1 \
 
 cd "$INSTALL_DIR"
 
-python -c "
+$PYRUN -c "
 import pypARTn
 a=pypARTn.artn(engine='lmp')
 " || fail "pypARTn not working"
@@ -285,11 +377,11 @@ a=pypARTn.artn(engine='lmp')
 ok "pARTn built and installed"
 
 # ------------------------------------------
-# 7. Verify full installation
+# 6. Verify full installation
 # ------------------------------------------
 step "Verifying installation"
 
-python -c "
+$PYRUN -c "
 import ase, pykmc, ira_mod
 import lammps
 lmp=lammps.lammps()
@@ -305,12 +397,12 @@ print('All imports OK')
 ok "All components verified"
 
 # ------------------------------------------
-# 8. Create activation script
+# 7. Create activation script
 # ------------------------------------------
 cat > "$INSTALL_DIR/activate.sh" << 'ACTIVATE'
 #!/bin/bash
 # Source this file to activate the pyKMC environment:
-#   source /path/to/pykmc/activate.sh
+#   source /path/to/pykmc_install/activate.sh
 
 PYKMC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$PYKMC_DIR/pykmc_env/bin/activate"
