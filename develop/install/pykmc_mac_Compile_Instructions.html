@@ -1481,10 +1481,12 @@
 </span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>git<span class="w"> </span>clone<span class="w"> </span>-b<span class="w"> </span>develop<span class="w"> </span>https://github.com/hugomoison/pyKMC.git
 </span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>git<span class="w"> </span>clone<span class="w"> </span>-b<span class="w"> </span>stable_22Jul2025_update3<span class="w"> </span>--depth<span class="w"> </span><span class="m">1</span><span class="w"> </span>https://github.com/lammps/lammps.git
 </span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/mammasmias/IterativeRotationsAssignments.git
-</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>git<span class="w"> </span>clone<span class="w"> </span>https://gitlab.com/mammasmias/artn-plugin.git
+</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>git<span class="w"> </span>clone<span class="w"> </span>-b<span class="w"> </span>v1.1.0<span class="w"> </span>--depth<span class="w"> </span><span class="m">1</span><span class="w"> </span>https://gitlab.com/mammasmias/artn-plugin.git
 </span></code></pre></div>
 <blockquote>
 <p><strong>Note:</strong> pyKMC <strong>must</strong> use the <code>develop</code> branch.</p>
+<p><strong>Note:</strong> pARTn is pinned to the release tag <code>v1.1.0</code>. Later pARTn versions may introduce breaking
+changes, so do not build pyKMC against the pARTn default branch.</p>
 </blockquote>
 <hr />
 <h2 id="2-fix-python-version-constraint">2. Fix Python version constraint</h2>
