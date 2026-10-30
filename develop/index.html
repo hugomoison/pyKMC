@@ -249,6 +249,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="index.html" class="md-nav__link md-nav__link--active">
         
   
@@ -265,6 +283,69 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick start
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        License
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -1346,6 +1427,58 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick start
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Documentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#license" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        License
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1362,6 +1495,55 @@
 
 
 <h1 id="pykmc">pyKMC</h1>
+<p><strong>pyKMC</strong> is a Python code for <strong>adaptive kinetic Monte Carlo (aKMC)</strong> simulations.</p>
+<p>It currently relies on <a href="https://www.lammps.org">LAMMPS</a>, <a href="https://gitlab.com/mammasmias/artn-plugin">pARTn</a> and <a href="https://github.com/mammasmias/IterativeRotationsAssignments">IRA</a>.</p>
+<h2 id="requirements">Requirements</h2>
+<p>pyKMC requires Python ≥ 3.10 and three external codes:</p>
+<ul>
+<li>LAMMPS, built with the <code>PLUGIN</code>, <code>EXTRA-COMPUTE</code> and basic packages;</li>
+<li>pARTn, the LAMMPS plugin for saddle point searches;</li>
+<li>IRA, for shape matching and symmetries.</li>
+</ul>
+<p>See the <a href="install/installation.html">installation guide</a> for step-by-step instructions and install scripts.</p>
+<h2 id="quick-start">Quick start</h2>
+<ul>
+<li><a href="user_guide.html">User Guide</a>: how to write an input file and run a simulation.</li>
+<li><a href="https://github.com/hugomoison/pyKMC/tree/main/examples">Examples</a>: ready-to-run systems.</li>
+</ul>
+<h2 id="documentation">Documentation</h2>
+<table>
+<thead>
+<tr>
+<th>Section</th>
+<th>Content</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="install/installation.html">Installation</a></td>
+<td>Building LAMMPS, pARTn and IRA, and installing pyKMC</td>
+</tr>
+<tr>
+<td><a href="user_guide.html">User Guide</a></td>
+<td>Writing an input file, section by section</td>
+</tr>
+<tr>
+<td><a href="parameters.html">Parameters</a></td>
+<td>Every input parameter, its type and default value</td>
+</tr>
+<tr>
+<td><a href="dev_strategy_pattern.html">Developer Guide</a></td>
+<td>Code architecture and guidelines for contributors</td>
+</tr>
+<tr>
+<td><a href="api/kmc.html">API Reference</a></td>
+<td>Auto-generated documentation of the modules</td>
+</tr>
+</tbody>
+</table>
+<h2 id="license">License</h2>
+<p>pyKMC is distributed under the MIT license.
+Source code and issues: <a href="https://github.com/hugomoison/pyKMC">github.com/hugomoison/pyKMC</a>.</p>
 
 
 
