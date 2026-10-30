@@ -6,7 +6,7 @@ import pypARTn
 import numpy as np
 import ctypes
 from typing import Protocol, TypedDict
-from ase.geometry import find_mic
+from ..utils.geometry import av_membership
 from ..system import System
 from ..config import Config
 
@@ -20,29 +20,10 @@ def define_AV(config, central_atom_idx: int, positions, cell):
 
     # NEED TO ADD WARNING IF R_A<R_M
 
-    center = positions[central_atom_idx]
-
-    inner_movable_idx = []
-    buffer_idx = []
-    total_active_idx = []
-    non_active_idx = []
-
-    for i, pos in enumerate(positions):
-        diff = pos - center
-        diff_mic, distance = find_mic(diff, cell, pbc=True)
-        if np.abs(distance) <= r_m:
-            inner_movable_idx.append(i)
-            total_active_idx.append(i)  # Inner is also part of total active
-        elif (
-            np.abs(distance) > r_m and np.abs(distance) <= r_a
-        ):  # Can change to make it between r_m and r_a
-            buffer_idx.append(i)
-            total_active_idx.append(i)
-        else:
-            non_active_idx.append(i)
-
-    buffer_idx = np.array(sorted(buffer_idx))
-    av_idx = np.array(sorted(total_active_idx))
+    inner_movable_idx, buffer_idx = av_membership(
+        positions, central_atom_idx, r_m, r_a, cell
+    )
+    av_idx = np.union1d(inner_movable_idx, buffer_idx)
 
     av_positions = positions[av_idx]
 

@@ -216,6 +216,7 @@ class LammpsEngine(Engine):
         positions: np.ndarray,
         cell: Cell,
         pbc: list[bool] | np.ndarray[bool],
+        species: list[str] | None = None,
     ) -> None:
         # system parameters
         natoms = len(types)
@@ -246,7 +247,9 @@ class LammpsEngine(Engine):
         # map type to int alphabetic order create a dictionary with atom id and mass, eg {'H' : {'ref': 1, 'mass' : 1.00}, 'Ni': {'ref' : 2, 'mass' : 58.69} }
         map_type = {
             atom_type: {"ref": i + 1, "mass": atomic_masses[atomic_numbers[atom_type]]}
-            for i, atom_type in enumerate(sorted(set(types)))
+            for i, atom_type in enumerate(
+                species if species is not None else sorted(set(types))
+            )
         }
         int_types = [map_type[element]["ref"] for element in types]  # map to integer
 

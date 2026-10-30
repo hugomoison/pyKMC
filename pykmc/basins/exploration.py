@@ -2,6 +2,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from pykmc import Config, ReferenceEventTable
 from typing import TYPE_CHECKING
+from ..rate_constant import RateConstant
 from .connectivity import StatesConnectivity, BasinStatesConnectivity
 from .detection import DetectorThreshold
 import pandas as pd
@@ -89,6 +90,14 @@ class BasinGenericEventExplorer(Explorer):
             state.environment.atomic_environment_list
         )
 
+        # With a per-event prefactor every rate inside a basin uses the constant
+        # prefactor k0, as in basins/basin.py; otherwise the stored k are read.
+        k0_rate_constant: RateConstant | None = None
+        if self.reference_table.rate_constant.per_event_prefactor:
+            k0_rate_constant = RateConstant.create(
+                "constant", config=self.config.rateconstant
+            )
+
         # Loop over all applicable events :
         count = 0
         for (
@@ -114,6 +123,10 @@ class BasinGenericEventExplorer(Explorer):
             ]["k"].values[0]
             # k_backward = self.reference_table.table.loc[backward_idx].at["k"]
             ref_event = self.reference_table.table.loc[idx].at["idx_ref"]
+            k_forward = df_event["k"]
+            if k0_rate_constant is not None:
+                k_forward = k0_rate_constant.compute_rate(df_event["energy_barrier"])
+                k_backward = k0_rate_constant.compute_rate(dE_backward)
 
             # Loop over all atoms on which we can apply the event :
             for at in l_atoms:
@@ -128,7 +141,7 @@ class BasinGenericEventExplorer(Explorer):
                         sym=i,
                         transient=is_transient,
                         dE_forward=df_event["energy_barrier"],
-                        k_forward=df_event["k"],
+                        k_forward=k_forward,
                         dE_backward=dE_backward,
                         k_backward=k_backward,
                     )

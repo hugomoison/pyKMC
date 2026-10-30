@@ -5,6 +5,7 @@ import pandas as pd
 
 from pykmc import NeighborsList
 from pykmc.event_table import ReferenceEventTable
+from pykmc.rate_constant import RateConstant
 
 
 def _build_trivial_series(config, system):
@@ -13,7 +14,10 @@ def _build_trivial_series(config, system):
     This exercises the graph/symmetry/type-storage path without going through
     barrier validation, which is unrelated to colouring.
     """
-    table = ReferenceEventTable(config)
+    table = ReferenceEventTable(
+        config,
+        RateConstant.create(config.rateconstant.style, config=config.rateconstant),
+    )
     pos = system.positions
     return table._build_event_series(
         min1_positions=pos,
@@ -160,7 +164,10 @@ class TestGreyDedupSpeciesGating:
         types = list(system_binary_fcc.types)
         swapped = ["Fe" if t == "Ni" else "Ni" for t in types]
 
-        table = ReferenceEventTable(config)
+        table = ReferenceEventTable(
+            config,
+            RateConstant.create(config.rateconstant.style, config=config.rateconstant),
+        )
         fwd, _ = table._build_event_series(
             min1_positions=pos,
             saddle_positions=pos,
@@ -222,7 +229,10 @@ class TestGreyDedupSpeciesGating:
         types = list(system_binary_fcc.types)
         swapped = ["Fe" if t == "Ni" else "Ni" for t in types]
 
-        table = ReferenceEventTable(config)
+        table = ReferenceEventTable(
+            config,
+            RateConstant.create(config.rateconstant.style, config=config.rateconstant),
+        )
         fwd, _ = table._build_event_series(
             min1_positions=pos,
             saddle_positions=pos,

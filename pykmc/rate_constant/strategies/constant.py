@@ -15,12 +15,12 @@ class ConstantStrategy(RateConstantStrategy):
 
     name = "constant"
 
-    def prefactor(self, nu0: Optional[float] = None) -> float:
+    def prefactor(self, value: Optional[float] = None) -> float:
         """Return `[RateConstant] k0` (ps^-1).
 
         Parameters
         ----------
-        nu0 : float, optional
+        value : float, optional
             Ignored: every event uses `k0`.
 
         Returns

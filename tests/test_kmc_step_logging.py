@@ -20,6 +20,7 @@ import pytest
 
 import pykmc.kmc as kmc_module
 from pykmc.kmc import KMC
+from pykmc.rate_constant import RateConstant
 from pykmc.result import EventRefinementOutput
 
 
@@ -145,7 +146,10 @@ def test_step_log_reads_executed_row_before_prune(
     config.control.basin = False
     config.control.recycle = False
 
-    sim = KMC(config)
+    sim = KMC(
+        config,
+        RateConstant.create(config.rateconstant.style, config=config.rateconstant),
+    )
     sim.system = system_Cu
     sim.manager = _FakeManager()
     sim.loggers = _RecordingLoggers()

@@ -9,10 +9,13 @@ from .neighbors_list import NeighborsList
 from .log import LogKMC
 from .atomic_environment import AtomicEnvironment
 from .manager import Manager
+from .rate_constant import RateConstant
 import ase.geometry
 import numpy as np
 import pandas as pd
 import concurrent.futures
+import math
+from ._core.constants import PhysicalConstants
 
 
 class Refinement:
@@ -32,6 +35,8 @@ class Refinement:
         The atomic environment of the system.
     engine : Engine
         The engine to use for the refinement.
+    rate_constant : RateConstant
+        The rate constant of the run.
 
     """
 
@@ -43,8 +48,10 @@ class Refinement:
         neighbors_list: NeighborsList,
         atomic_environment: AtomicEnvironment,
         manager: Manager,
+        rate_constant: RateConstant,
     ) -> None:
         self.config = config
+        self.rate_constant = rate_constant
         self.loggers = loggers
         self.system = system
         self.neighbors_list = neighbors_list
@@ -79,6 +86,12 @@ class Refinement:
             df_reference_events
         )
         e_thr = self.get_energy_thr_refine(df_reference_events, supposed_ktot)
+        per_event = self.rate_constant.per_event_prefactor
+        k_thr = (
+            self.get_rate_thr_refine(df_reference_events, supposed_ktot)
+            if per_event
+            else None
+        )
         self.loggers.info("log", "\t :=> Refining {} events".format(total_refinements))
 
         all_futures = []
@@ -97,7 +110,7 @@ class Refinement:
                     continue
                 ###=>refine single generic
                 futures = self.refine_single(
-                    at_idx, dfevent, total_energy, future_context, e_thr
+                    at_idx, dfevent, total_energy, future_context, e_thr, k_thr
                 )
                 if isinstance(futures, list):  # If symmetries
                     all_futures.extend(futures)
@@ -118,6 +131,9 @@ class Refinement:
 
             # update result
             if res.is_ok():
+                if per_event:
+                    # full-size saddle, needed to compute the prefactor of a refined event
+                    full_saddle = res.ok_value().saddle_positions
                 res.ok_value().min2_positions = ctx["min2_positions"]
                 res.ok_value().num_reference_event = ctx["num_reference_event"]
                 res.ok_value().saddle_positions = res.ok_value().saddle_positions[
@@ -135,6 +151,14 @@ class Refinement:
                     abs(res.ok_value().dE_forward - ctx["reference_energy_barrier"]),
                     self.config.eventsearch.refined_energy_thr,
                 )
+                if per_event and isinstance(res, Ok):
+                    output = res.ok_value()
+                    if output.refined == "T":
+                        output.full_saddle = full_saddle
+                        output.prefactor_status = "pending"
+                    else:  # not refined: the prefactor of its reference event
+                        output.prefactor = ctx["prefactor"]
+                        output.prefactor_status = ctx["prefactor_status"]
 
             else:
                 err = res.err_value()
@@ -151,6 +175,7 @@ class Refinement:
         total_energy: float,
         future_context: dict,
         e_thr: float,
+        k_thr: float | None = None,
     ) -> list[Result[EventRefinementOutput, ErrorInfo]]:
         """Perform a single reference event refinement.
 
@@ -164,6 +189,9 @@ class Refinement:
             a Series of the reference event to refine.
         count : int
             number of refinements already done.
+        k_thr : float | None, optional
+            rate under which the event is not refined (rate constant with a
+            prefactor per event). When None, the energy threshold `e_thr` is used.
 
         Returns
         -------
@@ -278,6 +306,8 @@ class Refinement:
                 )
                 if (
                     dfevent.at["energy_barrier"] > e_thr
+                    if k_thr is None
+                    else dfevent.at["k"] < k_thr
                 ):  # We dont refine, we use generic date
                     # create a fake future to store the result
                     f = concurrent.futures.Future()
@@ -333,6 +363,11 @@ class Refinement:
                     "reference_energy_barrier": dfevent["energy_barrier"],
                     "neighbors": neighbors.copy(),
                 }
+                if self.rate_constant.per_event_prefactor:
+                    future_context[f]["prefactor"] = dfevent.get("prefactor")
+                    future_context[f]["prefactor_status"] = dfevent.get(
+                        "prefactor_status"
+                    )
 
                 # => Restore the system to its initial state
                 self.system.update_positions(current_positions)
@@ -412,6 +447,29 @@ class Refinement:
             e_value = 0.0
         e_value += 0.1  # to be sure want using condition
         return e_value
+
+    def get_rate_thr_refine(
+        self, df_reference_events: pd.DataFrame, supposed_ktot: float
+    ) -> float | None:
+        """Return the rate under which events are not refined (per-event prefactors).
+
+        It is the rate form of `get_energy_thr_refine`: with a prefactor per event,
+        the rate is no longer a monotone function of the energy barrier.
+
+        Returns
+        -------
+        float | None
+            The rate threshold, or None when no reference rate is under the cut:
+            the energy threshold then applies.
+
+        """
+        k_thr = supposed_ktot * self.config.control.refine_thr
+        mask = df_reference_events["k"] < k_thr
+        if not mask.any():
+            return None
+        return float(df_reference_events.loc[mask, "k"].max()) * math.exp(
+            -0.1 / (PhysicalConstants.kb * self.config.rateconstant.T)
+        )
 
     def get_successes_results(self) -> list[EventRefinementOutput]:
         """Return successful results.

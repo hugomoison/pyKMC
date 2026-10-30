@@ -52,6 +52,7 @@ from .basins.detection import DetectorThreshold
 from .basins import BasinsGenericEvents
 from .event_recycling import DistanceRecycling, Recycling
 from .bias import Bias
+from .rate_constant import PrefactorRequest, RateConstant
 
 
 # NOTE can maybe reimplment tries if empty catalog
@@ -85,11 +86,15 @@ class KMC:
         Track atomic environments already explored. Those for which event searches as been previously done.
     total_energy : float
         The total energy of the system.
+    rate_constant : RateConstant
+        The rate constant of the run, shared by the event tables and the
+        refinement.
 
     """
 
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Config, rate_constant: RateConstant) -> None:
         self.config = config
+        self.rate_constant = rate_constant
         self.loggers = None
         self.system = None
         self.manager = None
@@ -181,7 +186,9 @@ class KMC:
 
         # Build the persistent active event table once, with the recycler
         # plugin (built in __init__) attached.
-        self.active_table = ActiveEventTable(self.config, recycler=self.recycler)
+        self.active_table = ActiveEventTable(
+            self.config, recycler=self.recycler, rate_constant=self.rate_constant
+        )
 
         # KMC LOOP
         for step in range(last_step, nkmc_steps + last_step):
@@ -224,6 +231,8 @@ class KMC:
                     r for r in search_results if r.move_atom_index not in inactive_set
                 ]
             results_is_valid_events = self.add_reference_events(search_results)
+            if self.rate_constant.per_event_prefactor:
+                self.add_reference_prefactors(search_results, results_is_valid_events)
 
             ##=>Close simulation if no events in the reference table
             if len(self.reference_table.table) == 0:
@@ -264,6 +273,8 @@ class KMC:
                     len(active_table.table)
                 ),
             )
+            if self.rate_constant.per_event_prefactor:
+                self.add_active_prefactors()
 
             # == Update System ==
             (
@@ -331,7 +342,9 @@ class KMC:
                         result_basin.ok_value().from_state
                     ].neighbors_list
                     # construct new active table with only event : new_actual_state - > exit_state
-                    tmp_active_table = ActiveEventTable(self.config)
+                    tmp_active_table = ActiveEventTable(
+                        self.config, rate_constant=self.rate_constant
+                    )
                     tmp_event = EventRefinementOutput(
                         central_atom_index=result_basin.ok_value().central_atom,
                         saddle_positions=result_basin.ok_value().saddle_positions,
@@ -675,6 +688,7 @@ class KMC:
             self.neighbors_list,
             self.atomic_environment,
             self.manager,
+            self.rate_constant,
         )
         # refinement.execute(df_reference_events, self.potential_energy)
         refinement.execute(
@@ -702,7 +716,130 @@ class KMC:
         # Any rows surviving from the previous step are already present and
         # are not re-added because Refinement skipped them via existing_pairs.
         self.active_table.add_events(events)
+        if self.rate_constant.per_event_prefactor:
+            # The table keeps the only reference to each full-size saddle.
+            for event in events:
+                event.full_saddle = None
         return self.active_table
+
+    def add_reference_prefactors(
+        self,
+        search_results: list[EventSearchOutput],
+        results_is_valid_events: list[Result[pd.DataFrame, ErrorInfo]],
+    ) -> None:
+        """Ask the rate constant for the prefactor of the reference events added now.
+
+        Each new event is one request for both of its directions. A direction
+        without a prefactor uses the strategy's fallback, and the strategy logs why.
+
+        Parameters
+        ----------
+        search_results : list[EventSearchOutput]
+            The events given to `add_reference_events`.
+        results_is_valid_events : list[Result[pd.DataFrame, ErrorInfo]]
+            What `add_reference_events` returned for them: `Ok` holds the rows added
+            to the reference table (forward, then backward if any).
+
+        """
+        requests, idx_refs = [], []
+        for event, result in zip(search_results, results_is_valid_events, strict=True):
+            if not isinstance(result, Ok):
+                continue
+            rows = result.ok_value()
+            refs = [int(idx_ref) for idx_ref in rows["idx_ref"]]
+            minima = [event.min1_positions]
+            if len(rows) == 2:
+                minima.append(event.min2_positions)
+            requests.append(
+                PrefactorRequest(
+                    saddle=event.saddle_positions,
+                    minima=minima,
+                    centre=event.central_atom_index,
+                    reference=True,
+                    names=[
+                        f"reference event {idx_ref} ({direction})"
+                        for idx_ref, direction in zip(refs, ("forward", "backward"))
+                    ],
+                )
+            )
+            idx_refs.append(refs)
+
+        outcomes = self.rate_constant.compute_prefactors(
+            requests, self.system, self._frozen_ids()
+        )
+        for refs, per_direction in zip(idx_refs, outcomes, strict=True):
+            for idx_ref, outcome in zip(refs, per_direction, strict=True):
+                try:
+                    self.reference_table.set_prefactor(
+                        idx_ref, outcome, self.rate_constant.settings_record
+                    )
+                except RuntimeError as exc:
+                    self.loggers.error("log", str(exc))
+                    raise
+        n_pending = int(
+            (self.reference_table.table["prefactor_status"] == "pending").sum()
+        )
+        if n_pending > 0:
+            msg = (
+                f"internal error: {n_pending} reference rows are still pending after "
+                "the prefactor step"
+            )
+            # run.py aborts before the exception is printed: log the reason.
+            self.loggers.error("log", msg)
+            raise RuntimeError(msg)
+
+    def add_active_prefactors(self) -> None:
+        """Ask the rate constant for the prefactor of the active events refined now.
+
+        Each refined event is one request, from the current minimum to its refined
+        saddle. An event without a prefactor uses the strategy's fallback (not the
+        prefactor of its reference event), and the strategy logs why.
+        """
+        table = self.active_table.table
+        rows = [
+            row
+            for row in table.index
+            if isinstance(table.at[row, "full_saddle"], np.ndarray)
+        ]
+        requests = [
+            PrefactorRequest(
+                saddle=table.at[row, "full_saddle"],
+                minima=[self.system.positions],
+                centre=int(table.at[row, "atom_index"]),
+                reference=False,
+                names=[
+                    f"active event (atom {int(table.at[row, 'atom_index'])}, "
+                    f"reference event {int(table.at[row, 'num_reference_event'])})"
+                ],
+            )
+            for row in rows
+        ]
+
+        outcomes = self.rate_constant.compute_prefactors(
+            requests, self.system, self._frozen_ids()
+        )
+        for row, per_direction in zip(rows, outcomes, strict=True):
+            try:
+                self.active_table.set_prefactor(row, per_direction[0])
+            except RuntimeError as exc:
+                self.loggers.error("log", str(exc))
+                raise
+        n_pending = int(
+            (self.active_table.table["prefactor_status"] == "pending").sum()
+        )
+        if n_pending > 0:
+            msg = (
+                f"internal error: {n_pending} active rows are still pending after "
+                "the prefactor step"
+            )
+            self.loggers.error("log", msg)
+            raise RuntimeError(msg)
+
+    def _frozen_ids(self) -> np.ndarray:
+        """Return the indices of the frozen atoms (none without [frozen_atoms])."""
+        if self.frozen_ae is None:
+            return np.empty(0, dtype=np.int64)
+        return np.asarray(self.frozen_ae.get_atoms_with_id("in"), dtype=np.int64)
 
     def _select_event(
         self,

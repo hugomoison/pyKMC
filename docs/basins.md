@@ -19,6 +19,8 @@ energy_thr = 0.1
 *Note: currently only one basin-handling strategy is implemented.
 The `[Basin]` section is intended for future extensions when multiple algorithms (e.g., FTPA, MRT, local basins, …) will be available.*
 
+*With `[RateConstant] style = htst`, every rate inside a basin (internal hops and exits) uses the constant prefactor `k0`; steps outside basins use the per-event `nu0`. A startup warning repeats this.*
+
 ---
 
 ## General Idea

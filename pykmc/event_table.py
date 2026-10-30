@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pandas as pd
-from .rate_constant import RateConstant
+from .rate_constant import PrefactorOutcome, RateConstant
 from .config import Config
 import numpy as np
 from .environments.graph_nauty import graph
@@ -27,6 +27,58 @@ from .utils.geometry import compute_delr
 if TYPE_CHECKING:
     from .event_recycling import Recycling
 
+# Columns of the reference table when the rate constant has a prefactor per event:
+# dtype, and the value of a new row. The k of a new row uses k0 until set_prefactor
+# writes its prefactor.
+_PREFACTOR_REFERENCE_COLUMNS = {
+    "prefactor": ("float64", np.nan),
+    "prefactor_status": ("object", "pending"),
+    "prefactor_settings": ("object", ""),
+}
+# Columns of the active table when the rate constant has a prefactor per event:
+# dtype, and the value of a new row whose EventRefinementOutput field is None.
+_PREFACTOR_ACTIVE_COLUMNS = {
+    "prefactor": ("float64", np.nan),
+    "prefactor_status": ("object", None),
+    "full_saddle": ("object", None),
+}
+
+
+def _refresh_k(
+    table: pd.DataFrame, rate_constant: RateConstant, rows: pd.Index | None = None
+) -> None:
+    """Compute the rate constant of table rows from their barrier and prefactor.
+
+    Parameters
+    ----------
+    table : pd.DataFrame
+        The event table, updated in place.
+    rate_constant : RateConstant
+        The rate constant of the run.
+    rows : pd.Index | None, optional
+        Index labels of the rows to update. None replaces the whole `k` column.
+
+    Notes
+    -----
+    A row without a finite `prefactor`, or a table without the column, uses the
+    strategy's fallback.
+
+    """
+    selected = table if rows is None else table.loc[rows]
+    if "prefactor" in selected.columns:
+        prefactor = pd.to_numeric(selected["prefactor"], errors="coerce")
+    else:
+        prefactor = pd.Series(np.nan, index=selected.index)
+    k = [
+        rate_constant.compute_rate(float(dE), prefactor=float(v))
+        for dE, v in zip(selected["energy_barrier"], prefactor, strict=True)
+    ]
+    if rows is None:
+        table["k"] = k
+    else:
+        for row, value in zip(rows, k, strict=True):
+            table.at[row, "k"] = value
+
 
 class ReferenceEventTable:
     """Store reference events and manage them.
@@ -35,11 +87,18 @@ class ReferenceEventTable:
     ----------
     config : Config
         The atomic simulations configuration.
+    rate_constant : RateConstant
+        The rate constant of the run. With a per-event prefactor the table has
+        the prefactor columns.
 
     """
 
-    def __init__(self, config: Config) -> None:
+    def __init__(self, config: Config, rate_constant: RateConstant) -> None:
         self.config = config
+        self.rate_constant = rate_constant
+        self._prefactor_columns = (
+            _PREFACTOR_REFERENCE_COLUMNS if rate_constant.per_event_prefactor else {}
+        )
         self._initialize_table()
 
     def add_events(
@@ -536,9 +595,6 @@ class ReferenceEventTable:
             - saddle_positions[neighbor_list_backward][move_atom_idx_backward]
         )
 
-        rate_constant = RateConstant.create(
-            self.config.rateconstant.style, config=self.config.rateconstant
-        )
         dfevent_forward = pd.Series(
             {
                 "idx_ref": -1,  # unknown yet
@@ -548,7 +604,7 @@ class ReferenceEventTable:
                 "final_positions": min2_positions[neighbor_list_forward],
                 "types": local_types_forward,
                 "energy_barrier": dE_forward,
-                "k": rate_constant.compute_rate(dE_forward),
+                "k": self.rate_constant.compute_rate(dE_forward),
                 "id_saddle": id_saddle,
                 "id_final": id_min2,
                 "move_atom_idx": np.where(neighbor_list_forward == index_move)[0][0],
@@ -575,7 +631,7 @@ class ReferenceEventTable:
                 "final_positions": min1_positions[neighbor_list_backward],
                 "types": local_types_backward,
                 "energy_barrier": dE_backward,
-                "k": rate_constant.compute_rate(dE_backward),
+                "k": self.rate_constant.compute_rate(dE_backward),
                 "id_saddle": id_saddle,
                 "id_final": id_min1,
                 "move_atom_idx": np.where(neighbor_list_backward == index_move)[0][0],
@@ -586,6 +642,10 @@ class ReferenceEventTable:
             }
         )
 
+        for dfevent in (dfevent_forward, dfevent_backward):
+            for column, (_, value) in self._prefactor_columns.items():
+                dfevent[column] = value
+
         return dfevent_forward, dfevent_backward
 
     def max_idx_ref(self) -> int:
@@ -594,6 +654,97 @@ class ReferenceEventTable:
             return 0
         else:
             return int(self.table["idx_ref"].max()) + 1
+
+    def set_prefactor(
+        self, idx_ref: int, outcome: PrefactorOutcome, settings: str
+    ) -> None:
+        """Store the prefactor of a reference event and update its rate.
+
+        Parameters
+        ----------
+        idx_ref : int
+            Reference index of the event.
+        outcome : PrefactorOutcome
+            The prefactor (ps^-1) and its status. Without a value, the rate uses
+            the strategy's fallback.
+        settings : str
+            Settings the prefactor was computed with.
+
+        Raises
+        ------
+        RuntimeError
+            If `idx_ref` does not select exactly one row.
+
+        """
+        mask = self.table["idx_ref"] == idx_ref
+        n = int(mask.sum())
+        if n != 1:
+            raise RuntimeError(
+                f"internal error: {n} reference rows have idx_ref {idx_ref}"
+            )
+        value = outcome.value
+        self.table.loc[mask, "prefactor"] = np.nan if value is None else float(value)
+        self.table.loc[mask, "prefactor_status"] = outcome.status
+        self.table.loc[mask, "prefactor_settings"] = settings
+        _refresh_k(self.table, self.rate_constant, self.table.index[mask])
+
+    def recompute_rates(self, settings: str | None) -> dict:
+        """Recompute the rate constant of every row of a loaded table.
+
+        The rates of a loaded table were computed with the style, temperature and
+        `k0` of the run that wrote it. A stored prefactor is kept as it is: it cannot
+        be recomputed from the cropped positions a row stores.
+
+        Parameters
+        ----------
+        settings : str | None
+            Current prefactor settings when the rate constant has a prefactor per
+            event. The prefactor columns are then added if missing and a row uses its
+            stored prefactor, or the fallback if it has none. None otherwise: the
+            stored prefactor is ignored.
+
+        Returns
+        -------
+        dict
+            'rows': number of rows, 'with_prefactor' and 'no_prefactor': rows with
+            and without a finite prefactor, 'other_settings': number of rows with a
+            finite prefactor computed with other settings, by settings.
+
+        """
+        other_settings = {}
+        if settings is not None:
+            if "prefactor" not in self.table.columns:
+                self.table["prefactor"] = np.nan
+            if "prefactor_status" not in self.table.columns:
+                self.table["prefactor_status"] = None
+            if "prefactor_settings" not in self.table.columns:
+                self.table["prefactor_settings"] = pd.Series(
+                    "unknown", index=self.table.index, dtype="object"
+                )
+            self.table["prefactor"] = pd.to_numeric(
+                self.table["prefactor"], errors="coerce"
+            )
+            finite = np.isfinite(self.table["prefactor"])
+            no_status = self.table["prefactor_status"].isna()
+            self.table.loc[no_status & finite, "prefactor_status"] = "ok"
+            self.table.loc[no_status & ~finite, "prefactor_status"] = "none"
+            self.table.loc[
+                self.table["prefactor_settings"].isna(), "prefactor_settings"
+            ] = "unknown"
+            other = self.table.loc[
+                finite & (self.table["prefactor_settings"] != settings),
+                "prefactor_settings",
+            ]
+            other_settings = {str(r): int(c) for r, c in other.value_counts().items()}
+        _refresh_k(self.table, self.rate_constant)
+        prefactor = pd.to_numeric(self.table["prefactor"], errors="coerce")
+        with_prefactor = int(np.isfinite(prefactor).sum())
+        return {
+            "rows": len(self.table),
+            "with_prefactor": with_prefactor,
+            "no_prefactor": len(self.table) - with_prefactor,
+            "other_settings": other_settings,
+        }
 
     def _initialize_table(self) -> None:
         """Initialize the reference event table.
@@ -622,6 +773,8 @@ class ReferenceEventTable:
                     "dra": pd.Series(dtype="float64"),
                 }
             )
+            for column, (dtype, _) in self._prefactor_columns.items():
+                self.table[column] = pd.Series(dtype=dtype)
 
     def remove(self, idx_refs: list[int]) -> None:
         """Remove events with ind == idx_ref as well as its backward event
@@ -667,6 +820,9 @@ class ActiveEventTable:
         The atomic simulations configuration.
     event_dataframe : pd.DataFrame, optional
         An table with active event use to initialize the table. by default 'None'.
+    rate_constant : RateConstant
+        The rate constant of the run (keyword only). With a per-event prefactor
+        the table has the prefactor columns.
 
     """
 
@@ -675,12 +831,18 @@ class ActiveEventTable:
         config: Config,
         event_dataframe: pd.DataFrame = None,
         recycler: "Recycling | None" = None,
+        *,
+        rate_constant: RateConstant,
     ):
         self.config = config
         # Optional recycling plugin. If attached, `prune_for_recycling` keeps
         # the rows the recycler selects between KMC steps. If None, the table
         # is cleared at the end of each step (matching prior behavior).
         self.recycler = recycler
+        self.rate_constant = rate_constant
+        self._prefactor_columns = (
+            _PREFACTOR_ACTIVE_COLUMNS if rate_constant.per_event_prefactor else {}
+        )
 
         if event_dataframe is not None:
             if not isinstance(event_dataframe, pd.DataFrame):
@@ -696,6 +858,8 @@ class ActiveEventTable:
                 "num_reference_event": pd.Series(dtype="int64"),
                 "refined": pd.Series(dtype="str"),
             }
+            for column, (dtype, _) in self._prefactor_columns.items():
+                columns[column] = pd.Series(dtype=dtype)
             self.table = pd.DataFrame(columns)
 
     def prune_for_recycling(
@@ -806,20 +970,46 @@ class ActiveEventTable:
 
         """
 
-        dfactive = pd.Series(
-            {
-                "atom_index": event_refinement_output.central_atom_index,
-                "saddle_positions": event_refinement_output.saddle_positions,
-                "final_positions": event_refinement_output.min2_positions,
-                "energy_barrier": event_refinement_output.dE_forward,
-                "k": RateConstant.create(
-                    self.config.rateconstant.style, config=self.config.rateconstant
-                ).compute_rate(event_refinement_output.dE_forward),
-                "num_reference_event": event_refinement_output.num_reference_event,
-                "refined": event_refinement_output.refined,
-            }
-        )
+        row = {
+            "atom_index": event_refinement_output.central_atom_index,
+            "saddle_positions": event_refinement_output.saddle_positions,
+            "final_positions": event_refinement_output.min2_positions,
+            "energy_barrier": event_refinement_output.dE_forward,
+            "k": self.rate_constant.compute_rate(
+                event_refinement_output.dE_forward,
+                prefactor=event_refinement_output.prefactor,
+            ),
+            "num_reference_event": event_refinement_output.num_reference_event,
+            "refined": event_refinement_output.refined,
+        }
+        for column, (_, missing) in self._prefactor_columns.items():
+            value = getattr(event_refinement_output, column)
+            row[column] = missing if value is None else value
+        dfactive = pd.Series(row)
         return dfactive
+
+    def set_prefactor(self, row: int, outcome: PrefactorOutcome) -> None:
+        """Store the prefactor of an active event and update its rate.
+
+        Parameters
+        ----------
+        row : int
+            Index label of the event in the table.
+        outcome : PrefactorOutcome
+            The prefactor (ps^-1) and its status. Without a value, the rate uses
+            the strategy's fallback.
+
+        Notes
+        -----
+        The full-size saddle of the event is dropped: it is only kept to compute
+        the prefactor.
+
+        """
+        value = outcome.value
+        self.table.at[row, "prefactor"] = np.nan if value is None else float(value)
+        self.table.at[row, "prefactor_status"] = outcome.status
+        _refresh_k(self.table, self.rate_constant, pd.Index([row]))
+        self.table.at[row, "full_saddle"] = None
 
     def remove(self, ind: int | list[int]) -> None:
         """Remove event at row = ind

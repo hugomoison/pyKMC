@@ -35,6 +35,7 @@ class Initializer:
         self.initialize_loggers()
         self.initialize_system()
         self.initialize_engine()
+        self.initialize_rate_constant()
         self.initialize_neighbors_list()
         self.initialize_atomic_environments()
         self.initialize_reference_table()
@@ -100,6 +101,12 @@ class Initializer:
         )
         self.kmc.manager.submit_group("initialize_potential")
 
+    def initialize_rate_constant(self) -> None:
+        """Let the rate constant check that it can run, once the engines exist."""
+        self.kmc.rate_constant.setup(
+            self.kmc.config, self.kmc.manager, self.kmc.system, self.kmc.loggers
+        )
+
     def initialize_neighbors_list(self) -> None:
         """Construct a new Neighbors List."""
         self.kmc.loggers.info("log", ":=> Constructing Neighbors Lists")
@@ -133,7 +140,50 @@ class Initializer:
             )
         else:
             self.kmc.loggers.info("log", ":=> Generate a empty reference table")
-        self.kmc.reference_table = ReferenceEventTable(self.kmc.config)
+        self.kmc.reference_table = ReferenceEventTable(
+            self.kmc.config, self.kmc.rate_constant
+        )
+
+        # A loaded table keeps the rates, and maybe the prefactors, of the run that
+        # wrote it.
+        path = self.kmc.config.control.reference_table
+        rate_constant = self.kmc.rate_constant
+        per_event = rate_constant.per_event_prefactor
+        if path is not None and (
+            per_event or "prefactor" in self.kmc.reference_table.table.columns
+        ):
+            settings = rate_constant.settings_record
+            counts = self.kmc.reference_table.recompute_rates(
+                settings if per_event else None
+            )
+            rows = counts["rows"]
+            if not per_event:
+                self.kmc.loggers.info(
+                    "log",
+                    f"reference table {path} carries a per-event prefactor for "
+                    f"{counts['with_prefactor']} of {rows} rows; style = "
+                    f"{self.kmc.config.rateconstant.style} ignores it and recomputes "
+                    "k from k0 and T.",
+                )
+            if per_event and counts["no_prefactor"] > 0:
+                self.kmc.loggers.warning(
+                    "log",
+                    f"{counts['no_prefactor']} of {rows} rows in reference table {path} "
+                    "have no per-event prefactor and use k0.",
+                )
+            if per_event and counts["other_settings"]:
+                other = sorted(
+                    counts["other_settings"].items(),
+                    key=lambda item: (-item[1], item[0]),
+                )
+                stored = "; ".join(f"{record} ({n} rows)" for record, n in other)
+                self.kmc.loggers.warning(
+                    "log",
+                    f"{sum(counts['other_settings'].values())} of {rows} rows in "
+                    f"reference table {path} were computed with other prefactor "
+                    "settings and keep their stored prefactor. Current: "
+                    f"{settings}. Stored: {stored}.",
+                )
 
     def initialize_bias(self) -> None:
         """Instantiate the bias object from the config, or set it to None."""
