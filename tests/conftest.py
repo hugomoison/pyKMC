@@ -1,5 +1,6 @@
 import pytest
 from pykmc import System, Config, AtomicEnvironment, NeighborsList
+from pykmc.rate_constant import RateConstant
 import numpy as np
 from pykmc.basins import (
     StatesConnectivity,
@@ -243,7 +244,10 @@ def reference_table_Ni_4000at_monovacancy_sia() -> System:
         data_dir, "reference_table_Ni_fcc_4000at_monovacancy+sia.pickle"
     )
     config.control.reference_table = filepath
-    reference_table = ReferenceEventTable(config)
+    reference_table = ReferenceEventTable(
+        config,
+        RateConstant.create(config.rateconstant.style, config=config.rateconstant),
+    )
     return reference_table
 
 
@@ -255,7 +259,10 @@ def reference_table_Cu_fake() -> System:
     data_dir = os.path.join(os.path.dirname(__file__), "data")
     filepath = os.path.join(data_dir, "reference_table_Cu_fake.pickle")
     config.control.reference_table = filepath
-    reference_table = ReferenceEventTable(config)
+    reference_table = ReferenceEventTable(
+        config,
+        RateConstant.create(config.rateconstant.style, config=config.rateconstant),
+    )
     return reference_table
 
 

@@ -31,6 +31,7 @@ nav:
       - Installation: install/installation.md
       - User Guide: user_guide.md
       - Event Recycling: recycling.md
+      - HTST prefactors: htst.md
   - Troubleshooting: troubleshooting.md
   - KMC Parameters: parameters.md
   - Developer Guide: 

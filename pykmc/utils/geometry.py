@@ -8,6 +8,7 @@ __all__ = [
     "per_atom_displacement",
     "minimum_image_distance",
     "unwrap_relative_to",
+    "av_membership",
 ]
 import ase.geometry
 import numpy as np
@@ -208,3 +209,70 @@ def minimum_image_distance(
     for i in range(3):
         dvec[i] -= cell_lengths[i] * np.round(dvec[i] / cell_lengths[i])
     return float(np.linalg.norm(dvec))
+
+
+def av_membership(
+    positions: np.ndarray,
+    centre: int,
+    r_inner: float,
+    r_outer: float,
+    cell: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Split the atoms around one atom into an inner sphere and a buffer shell.
+
+    This is the active-volume membership rule: distances to atom `centre` are
+    minimum-image distances from `ase.geometry.find_mic`, periodic on every axis.
+
+    Parameters
+    ----------
+    positions : np.ndarray
+        Shape (N, 3) atomic positions.
+    centre : int
+        Index of the atom distances are measured from.
+    r_inner : float
+        Atoms within this distance are in the inner sphere.
+    r_outer : float
+        Atoms farther than `r_inner` and within this distance are in the buffer.
+    cell : np.ndarray
+        3x3 simulation cell (row-wise lattice vectors).
+
+    Returns
+    -------
+    tuple[np.ndarray, np.ndarray]
+        Sorted indices of the inner atoms, and of the buffer atoms.
+
+    Notes
+    -----
+    Each distance is the one `find_mic` gives for that atom alone, as the active
+    volume always measured it. On a non-orthorhombic cell `find_mic` picks its
+    algorithm from all the vectors it is given, so a call on all atoms at once
+    can give a different, shorter image: there each atom is measured alone. On
+    an orthorhombic cell both algorithms give the minimum image, so all atoms
+    are measured at once and only the atoms within 1e-6 A of a radius, where
+    rounding could move them across it, are measured again one at a time.
+
+    """
+    positions = np.asarray(positions, dtype=float)
+    center = positions[centre]
+    if not ase.geometry.is_orthorhombic(cell):
+        distances = np.array(
+            [
+                np.abs(ase.geometry.find_mic(pos - center, cell, pbc=True)[1])
+                for pos in positions
+            ]
+        )
+    else:
+        _, distances = ase.geometry.find_mic(positions - center, cell, pbc=True)
+        distances = np.abs(distances)
+        at_radius = (np.abs(distances - r_inner) < 1e-6) | (
+            np.abs(distances - r_outer) < 1e-6
+        )
+        for i in np.flatnonzero(at_radius):
+            distances[i] = np.abs(
+                ase.geometry.find_mic(positions[i] - center, cell, pbc=True)[1]
+            )
+    inner = np.flatnonzero(distances <= r_inner).astype(np.int64)
+    buffer = np.flatnonzero((distances > r_inner) & (distances <= r_outer)).astype(
+        np.int64
+    )
+    return inner, buffer

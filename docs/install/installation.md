@@ -46,7 +46,7 @@ You can use a LAMMPS you already have (a recent release; tested with
 - with **`PKG_PLUGIN`** (loads pARTn) and **`PKG_EXTRA-COMPUTE`** (CNA),
 - with the pair-style packages your potentials need (e.g. `MANYBODY` for EAM),
 - optionally **`PKG_PHONON`** — only needed for HTST rate prefactors
-  (`dynamical_matrix`).
+  (`dynamical_matrix`); an HTST run stops at startup without it.
 
 If so, the only step needed is installing its Python bindings into the active
 venv:

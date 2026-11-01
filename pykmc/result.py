@@ -110,6 +110,15 @@ class EventRefinementOutput:
         Index of the corresponding reference event (if matched).
     refined: Optional[str]
         If the event has been refined (T: True, F: False, B: In basin)
+    prefactor : Optional[float]
+        Prefactor of the event (ps^-1), or None if it has none. Only set when the
+        rate constant has a prefactor per event.
+    prefactor_status : Optional[str]
+        Where `prefactor` stands: 'pending' until it is computed, then 'ok' or the
+        reason there is none.
+    full_saddle : Optional[np.ndarray]
+        Refined saddle positions of the whole system, kept until `prefactor` is
+        computed.
     """
 
     central_atom_index: int
@@ -119,6 +128,9 @@ class EventRefinementOutput:
     dE_forward: Optional[float] = None
     num_reference_event: Optional[int] = None
     refined: Optional[str] = None
+    prefactor: Optional[float] = None
+    prefactor_status: Optional[str] = None
+    full_saddle: Optional[np.ndarray] = None
 
 
 @dataclass

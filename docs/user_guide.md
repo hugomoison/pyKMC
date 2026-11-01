@@ -196,7 +196,7 @@ For a detailed explanation of the pARTn algorithm and its parameters, please ref
 
 Each time an event is added to either the reference or the active event table, a rate constant is computed. The method used to compute this rate is defined in the [RateConstant] section of the INI configuration file.
 
-Currently, the only implemented style is : `style = constant`. This method computes the rate constant using the following equation. 
+Two styles are implemented. `style = htst` computes a harmonic prefactor $\nu_{0}$ per event from LAMMPS Hessians, with $k = \nu_{0} e^{-\frac{dE_{forward}}{{k_{b}T}}}$; it is described on the [HTST prefactors](htst.md) page. `style = constant` computes the rate constant using the following equation. 
 
 $$
 k = k_{0} e^{-\frac{dE_{forward}}{{k_{b}T}}}

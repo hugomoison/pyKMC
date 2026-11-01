@@ -181,18 +181,39 @@
   Rate constant computation parameters.
 </details>
 
-- **`style`** : `Literal['constant']`, mandatory
+- **`style`** : `Literal['constant', 'htst']`, mandatory
   <details><summary>Description</summary>
-  Method used to compute the prefactor of the rate constant. 
+  Method used to compute the prefactor of the rate constant. 'constant': k = k0 exp(-dE/(kb T)). 'htst': k = nu0 exp(-dE/(kb T)) with a harmonic (Vineyard) nu0 per event from LAMMPS dynamical_matrix (needs the PHONON package); events without a nu0 use k0. See the HTST prefactors page.
   </details>
 - **`k0`** : `float`, default = `1.0`
   <details><summary>Description</summary>
   When `style` is set to **'constant'**, this value is used directly as the pre-exponential factor ($k_0$) 
   $$ k = k_{0} \exp\left(-\frac{\Delta E}{k_{b}T}\right) $$
+  Under 'htst', k0 (ps^-1) is the prefactor of every event without a nu0 (failed Hessians, rates inside basins, rows loaded without nu0); values above 1000 ps^-1 are refused.
   </details>
 - **`T`** : `float`, default = `300`
   <details><summary>Description</summary>
   Temperature (in Kelvin) used for computing rate constants.
+  </details>
+- **`free_radius`** : `float or Literal['full']`, default = `8.0`
+  <details><summary>Description</summary>
+  'htst' with active_volume = False: radius (Angstrom) of the sphere of displaced atoms around the moving atom's saddle position, or 'full' for a whole-system Hessian. Ignored when active_volume = True (the active volume is the Hessian region).
+  </details>
+- **`shell_width`** : `float`, optional
+  <details><summary>Description</summary>
+  'htst', numeric free_radius: thickness (Angstrom) of the frozen shell kept around the displaced sphere; atoms beyond are left out. Default: two force cutoffs read from LAMMPS at startup.
+  </details>
+- **`hessian_dir`** : `str`, optional
+  <details><summary>Description</summary>
+  'htst': directory for the Hessian scratch files (pykmc_htst_*, each deleted after its event). Default: the system temp directory (honours $TMPDIR). A relative path is taken from the run directory. Created if missing.
+  </details>
+- **`fd_step`** : `float`, default = `0.01`
+  <details><summary>Description</summary>
+  'htst': finite-difference displacement (Angstrom) for dynamical_matrix. Do not go below 0.01 with tabulated EAM potentials.
+  </details>
+- **`max_full_hessian_mb`** : `float`, default = `1000.0`
+  <details><summary>Description</summary>
+  'htst', free_radius = full: largest Hessian allowed at startup, in MB (one 3N x 3N matrix of doubles is 8 (3N)^2 / 1e6 MB; 2047 atoms = 302 MB). Up to n_sessions Hessians are built at once.
   </details>
 
 ---
