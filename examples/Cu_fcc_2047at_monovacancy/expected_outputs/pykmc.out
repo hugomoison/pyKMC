@@ -1,0 +1,27 @@
+# Simulation Progress Tracking File
+
+# Column Details:
+#   Step        : Simulation step number.
+#   dT(s)       : Time elapsed for this specific step.
+#   T(s)        : Total time since simulation start.
+#   E(eV)       : Energy of the system.
+#   Ea(eV)      : Activation energy barrier of the selected event.
+#   Ref         : Index in the reference table of the selected event.
+#   k_evt(ps-1) : Rate constant of the selected event.
+#   k_tot(ps-1) : Total rate constant of all possible events at this step.
+#   drmax(A)    : Maximum atomic displacement since the previous step.
+#   drtot(A)    : Sum of displacements of atoms displaced by more than 0.05 A since the previous step.
+#   Nmoved      : Number of atoms displaced by more than 0.05 A since the previous step.
+#   dWall(s)    : Wall time of this step.
+#   Wall(s)     : Total wall time since simulation start.
+#   CPU(s)      : Total CPU time (Wall(s) x 8 CPUs).
+
+Step     dT(s)         T(s)          E(eV)             Ea(eV)      Ref   k_evt(ps-1)   k_tot(ps-1)   drmax(A)  drtot(A)  Nmoved  dWall(s)   Wall(s)      CPU(s)
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+0        0.000000e+00  0.000000e+00                                                                                                         0.68         5.42
+1        8.003613e-04  8.003613e-04  -7243.3734964     0.6751224   0     4.554485e-11  5.465394e-10  2.51      2.51      1       9.57       11.15        89.22
+2        2.061422e-03  2.861783e-03  -7243.3734964     0.6751222   0     4.554519e-11  5.465427e-10  2.51      2.51      1       2.23       13.58        108.65
+
+...
+
+100      9.316381e-05  2.046002e-01  -7243.3734964     0.6751221   0     4.554535e-11  5.465428e-10  2.51      2.51      1       2.20       274.25       2194.01

@@ -13,11 +13,6 @@ build/
 tests/**/__pycache__/
 tests/**/*.py[cod]
 
-# Examples — ignore everything except source files
-examples/**
-!examples/**/*.in
-!examples/**/initial_config.xyz
-
 # Benchmarks — keep only scripts
 benchmarks/**
 !benchmarks/*/
@@ -43,3 +38,18 @@ pykmc.*
 
 # OS
 .DS_Store
+
+# Examples — ignore everything except inputs, potentials and expected_outputs/
+# (kept last so it overrides global patterns such as pykmc.*)
+examples/**
+!examples/**/
+!examples/README.md
+!examples/*/input.in.template
+!examples/*/initial_config.xyz
+!examples/*/*.eam
+!examples/*/*.eam.alloy
+!examples/*/*.eam.fs
+!examples/*/*.sw
+!examples/*/*.tersoff
+!examples/*/*.almtp
+!examples/*/expected_outputs/**
