@@ -11,6 +11,10 @@
         <link rel="canonical" href="https://hugomoison.github.io/pyKMC/develop/active_volumes.html">
       
       
+        <link rel="prev" href="recycling.html">
+      
+      
+        <link rel="next" href="troubleshooting.html">
       
       
         
@@ -262,18 +266,20 @@
       
   
   
+    
   
   
+  
     
     
     
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
         
           
           <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
@@ -294,7 +300,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
             
@@ -384,6 +390,103 @@
   
 
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Active Volumes
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="active_volumes.html" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Active Volumes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#general-idea" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General Idea
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#algorithm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Algorithm
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1394,7 +1497,7 @@ You must also enable AV mode in the <code>[Control]</code> section.</p>
 </span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="na">ract</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">21</span>
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="na">rmov</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">15</span>
 </span></code></pre></div>
-<p><em>Note: ract must be larger than or equal to rmov to work. The difference between the two is the buffer region of the AV</em></p>
+<p><em>Note: ract must be larger than or equal to rmov to work. The difference between the two is the buffer region of the AV i.e. <code>ract</code>-<code>rmov</code>=buffer</em></p>
 <hr />
 <h2 id="general-idea">General Idea</h2>
 <p>In very large systems with many defects, it can become memory intensive and slow to run event searches on the entire system. 
@@ -1403,7 +1506,10 @@ The AV has two parameters, the active radius <code>ract</code> and the movable r
 that are included in the AV, and captures the state of the overall system. The movable radius is where atoms are allowed to 
 be moved during event searches and refinement. A frozen buffer region is made on the exterior of the AV in order to accurately model
 the forces between atoms near the boundary.</p>
-<p>FIGURE of AV</p>
+<p align="center">
+  <img src="images/activevolume.png" width="400"/>
+</p>
+
 <h2 id="algorithm">Algorithm</h2>
 <ol>
 <li><strong>Reset LAMMPS Instance</strong>: LAMMPS is cleared to prevent carry over of previous AV conditions</li>
@@ -1427,7 +1533,7 @@ will minimize the AV during refinement before the event is applied, and compare 
 being sent for refinement is already minimized, so there should be no difference after minimization within the AV, 
 within 10e-3 eV. If there is a difference, it means the settings for the AV need to be adjusted. This is caused by
 the buffer region being less than the cutoff of the potential being used, leading to movable atoms next to the buffer to
-experience improper forces. </p>
+experience improper forces. This can be fixed by either increasing <code>ract</code> or decreasing <code>rmov</code></p>
 
 
 
