@@ -1,0 +1,28 @@
+# Simulation Progress Tracking File
+
+# Column Details:
+#   Step        : Simulation step number.
+#   dT(s)       : Time elapsed for this specific step.
+#   T(s)        : Total time since simulation start.
+#   E(eV)       : Energy of the system.
+#   Ea(eV)      : Activation energy barrier of the selected event.
+#   Ref         : Index in the reference table of the selected event.
+#   k_evt(ps-1) : Rate constant of the selected event.
+#   k_tot(ps-1) : Total rate constant of all possible events at this step.
+#   drmax(A)    : Maximum atomic displacement since the previous step.
+#   drtot(A)    : Sum of displacements of atoms displaced by more than 0.05 A since the previous step.
+#   Nmoved      : Number of atoms displaced by more than 0.05 A since the previous step.
+#   dWall(s)    : Wall time of this step.
+#   Wall(s)     : Total wall time since simulation start.
+#   CPU(s)      : Total CPU time (Wall(s) x 8 CPUs).
+
+Step     dT(s)         T(s)          E(eV)             Ea(eV)      Ref   k_evt(ps-1)   k_tot(ps-1)   drmax(A)  drtot(A)  Nmoved  dWall(s)   Wall(s)      CPU(s)
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+0        0.000000e+00  0.000000e+00                                                                                                         0.31         2.44
+1        1.311626e-06  1.311626e-06  -2213.3483598     0.5095792   0     2.750696e-08  1.100282e-07  1.22      6.57      37      1.23       1.60         12.84
+2        1.599560e-05  1.730723e-05  -2213.3483598     0.5095792   0     2.750703e-08  1.100285e-07  1.22      6.57      37      0.35       1.99         15.89
+
+...
+
+99       2.022417e-06  8.848241e-04  -2213.3483598     0.5095792   0     2.750703e-08  1.100285e-07  1.22      6.57      37      0.19       38.64        309.13
+100      8.834399e-06  8.936585e-04  -2213.3483598     0.5095792   0     2.750703e-08  1.100285e-07  1.22      6.57      37      0.25       38.93        311.47
