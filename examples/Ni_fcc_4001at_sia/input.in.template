@@ -1,0 +1,37 @@
+[Control] 
+initial_config = ./initial_config.xyz
+n_steps = 100
+engine = lammps
+verbosity = 1
+n_sessions = 7
+
+[Lammps] 
+pair_style = eam/alloy 
+pair_coeff = * * ./Ni_v6_2.0_LKBeland2016.eam Ni
+min_style = cg 
+minimize = 1e-10 1e-12 10000 10000
+
+
+[AtomicEnvironment] 
+style = cna/graph
+rnei = 3.0
+rcut = 9.35
+
+[EventSearch] 
+style = partn
+nsearch = 20
+
+[pARTn] 
+
+[RateConstant] 
+style = constant
+k0 = 10
+T = 300.0
+
+[PSR] 
+style = ira 
+matching_score_thr = 0.3
+
+[IRA]
+
+

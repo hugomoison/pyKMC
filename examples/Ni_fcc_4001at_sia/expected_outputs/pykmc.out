@@ -1,0 +1,29 @@
+# Simulation Progress Tracking File
+
+# Column Details:
+#   Step        : Simulation step number.
+#   dT(s)       : Time elapsed for this specific step.
+#   T(s)        : Total time since simulation start.
+#   E(eV)       : Energy of the system.
+#   Ea(eV)      : Activation energy barrier of the selected event.
+#   Ref         : Index in the reference table of the selected event.
+#   k_evt(ps-1) : Rate constant of the selected event.
+#   k_tot(ps-1) : Total rate constant of all possible events at this step.
+#   drmax(A)    : Maximum atomic displacement since the previous step.
+#   drtot(A)    : Sum of displacements of atoms displaced by more than 0.05 A since the previous step.
+#   Nmoved      : Number of atoms displaced by more than 0.05 A since the previous step.
+#   dWall(s)    : Wall time of this step.
+#   Wall(s)     : Total wall time since simulation start.
+#   CPU(s)      : Total CPU time (Wall(s) x 8 CPUs).
+
+Step     dT(s)         T(s)          E(eV)             Ea(eV)      Ref   k_evt(ps-1)   k_tot(ps-1)   drmax(A)  drtot(A)  Nmoved  dWall(s)   Wall(s)      CPU(s)
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+0        0.000000e+00  0.000000e+00                                                                                                         1.18         9.43
+1        1.500463e-11  1.500463e-11  -17800.4961683    0.2094390   0     3.030944e-03  2.437875e-02  1.07      7.67      43      159.56     162.13       1297.05
+2        2.998698e-11  4.499161e-11  -17800.4960292    0.2094719   0     3.027095e-03  2.439074e-02  1.08      7.59      41      9.10       172.00       1376.01
+
+...
+
+98       5.530997e-11  4.012117e-09  -17800.4961207    0.2093044   0     3.046769e-03  2.431507e-02  1.08      7.68      43      13.23      1057.23      8457.82
+99       3.875648e-11  4.050874e-09  -17800.4961268    0.2091753   0     3.062019e-03  2.442277e-02  1.08      7.58      41      11.42      1069.52      8556.15
+100      2.411393e-12  4.053285e-09  -17800.4961809    0.2093717   0     3.038852e-03  2.446031e-02  1.07      7.68      43      10.82      1081.65      8653.19
