@@ -1,0 +1,36 @@
+[Control] 
+initial_config = ./initial_config.xyz 
+n_steps = 100
+engine = lammps
+verbosity = 1
+n_sessions = 7
+
+[Lammps] 
+pair_style = eam/alloy 
+pair_coeff = * * FeC-Becquart2013.eam Fe
+min_style = cg 
+minimize = 1e-10 1e-12 1000 1000
+
+[AtomicEnvironment] 
+style = cna/graph
+rnei = 3.46
+rcut = 6.5
+
+[EventSearch] 
+style = partn
+nsearch = 10
+
+[pARTn] 
+
+[RateConstant] 
+style = constant
+k0 = 10
+T = 300.0
+
+[PSR] 
+style = ira 
+matching_score_thr = 0.3
+
+[IRA]
+kmax_factor = 2.0
+
