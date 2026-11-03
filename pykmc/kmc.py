@@ -974,7 +974,7 @@ class KMC:
 
     def _save(self) -> None:
         """Save the reference event table and the list of visited environments."""
-        self.reference_table.save("reference_table.pickle")
+        self.reference_table.save(self.config.control.reference_table_output)
         with open(self.config.control.visited_environments_output, "wb") as file:
             pickle.dump(self.visited_environments, file)
 
