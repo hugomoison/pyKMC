@@ -1,0 +1,43 @@
+# Private runs and environment/build state.
+_runs/
+run-*/
+run-versions/
+pykmc_install/
+pykmc_env/
+.venv/
+__pycache__/
+*.py[cod]
+
+# Prepared inputs and generated simulation outputs; reference XYZ assets remain tracked.
+input.in
+input.in.upstream
+initial_config.xyz
+guide-preflight.py
+trajkmc.xyz
+pykmc.log
+pykmc.out
+pykmc.info
+pykmc.events
+*.pickle
+restart_*.npz
+artn.out.*
+lammps.log.*
+run.log
+run-exit-status.txt
+slurm-*.out
+slurm-*.err
+modules.txt
+python-version.txt
+pykmc-commit.txt
+pykmc-source-status.txt
+
+# Editor/OS files and transfer backups.
+.DS_Store
+Thumbs.db
+*.previous
+*.swp
+*~
+
+# Preserve the guide's tests under upstream's broad *test* ignore rule.
+!maintenance/tests/
+!maintenance/tests/*.py
