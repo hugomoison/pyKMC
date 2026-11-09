@@ -1,8 +1,15 @@
 """Constant prefactor rate constant strategy."""
 
-from typing import Optional
+from typing import Protocol
 
 from .base import RateConstantStrategy
+
+
+class ConstantConfig(Protocol):
+    """Configuration required by `ConstantStrategy`."""
+
+    k0: float  # ps^-1
+    T: float  # K
 
 
 class ConstantStrategy(RateConstantStrategy):
@@ -15,13 +22,11 @@ class ConstantStrategy(RateConstantStrategy):
 
     name = "constant"
 
-    def prefactor(self, nu0: Optional[float] = None) -> float:
-        """Return `[RateConstant] k0` (ps^-1).
+    def __init__(self, config: ConstantConfig) -> None:
+        self.config = config
 
-        Parameters
-        ----------
-        nu0 : float, optional
-            Ignored: every event uses `k0`.
+    def prefactor(self) -> float:
+        """Return `[RateConstant] k0`.
 
         Returns
         -------
