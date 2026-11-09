@@ -6,6 +6,7 @@ import numpy as np
 import ctypes
 from typing import Protocol
 from ase.geometry import find_mic
+from ..utils.geometry import per_atom_displacement
 from ..system import System
 from ..config import Config
 
@@ -207,22 +208,16 @@ def partn_refine_AV(
 
 
 def position_results_AV(
-    config, artn, atom_map, positions
+    config, artn, atom_map, positions, cell
 ) -> [np.array, np.array, np.array, int]:
 
     min1positions = artn.extract("tau_min1")
     min2positions = artn.extract("tau_min2")
     saddlepositions = artn.extract("tau_sad")
 
-    # find atom that moves the most
-    dist = (min1positions - saddlepositions) ** 2
-    dist = dist.sum(axis=-1)
-    dist = np.sqrt(dist)
-    dist[dist > config.atomicenvironment.rcut] = (
-        0
-        # if atom moves more that rcutevent, consider that it crosses the cell (happens with lammps), so distance = 0 to not consider it as the one that moves the most
-    )
-    index_move = np.argmax(dist)
+    # find atom that moves the most; minimum image, as pARTn returns wrapped
+    # coordinates and the atom that hops may cross the cell boundary
+    index_move = np.argmax(per_atom_displacement(min1positions, saddlepositions, cell))
 
     index_move_mapped = atom_map[index_move]
 

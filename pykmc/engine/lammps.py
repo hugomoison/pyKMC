@@ -24,6 +24,7 @@ from ..activevolume.active_volume import (
     position_results_AV,
 )
 from ..atomic_environment import AtomicEnvironment
+from ..utils.geometry import per_atom_displacement
 from ..result import (
     ErrorInfo,
     EventSearchOutput,
@@ -568,7 +569,7 @@ class LammpsEngine(Engine):
 
                     if config.control.active_volume:
                         min1positions, min2positions, saddlepositions, index_move = (
-                            position_results_AV(config, artn, atom_map, positions)
+                            position_results_AV(config, artn, atom_map, positions, cell)
                         )
                     else:
                         min1positions = self._positions_from_lammps(
@@ -580,11 +581,16 @@ class LammpsEngine(Engine):
                         saddlepositions = self._positions_from_lammps(
                             artn.extract("tau_sad")
                         )
-                        dist = (min1positions - saddlepositions) ** 2
-                        dist = dist.sum(axis=-1)
-                        dist = np.sqrt(dist)
-                        dist[dist > config.atomicenvironment.rcut] = 0
-                        index_move = np.argmax(dist)
+                        # minimum image: pARTn returns wrapped coordinates and
+                        # the atom that hops may cross the cell boundary
+                        boxlo, boxhi = self.lmp.extract_box()[:2]
+                        index_move = np.argmax(
+                            per_atom_displacement(
+                                min1positions,
+                                saddlepositions,
+                                np.diag(np.subtract(boxhi, boxlo)),
+                            )
+                        )
 
                     if delr1 < delr2:
                         return Ok(
