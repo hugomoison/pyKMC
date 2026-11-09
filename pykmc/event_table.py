@@ -8,6 +8,7 @@ import pandas as pd
 from .rate_constant import RateConstant
 from .config import Config
 import numpy as np
+from scipy.spatial import cKDTree
 from .environments.graph_nauty import graph
 from .system import System
 from .neighbors_list import NeighborsList
@@ -444,62 +445,40 @@ class ReferenceEventTable:
         graph_types = types if full else None
 
         # compute neighbors list for initial, saddle and final positions -> to compute graphs
-        min1system = System()
-        min1system.positions = min1_positions
-        min1system.cell = cell
-        min1neighbors_list = NeighborsList(
-            min1system,
-            self.config.atomicenvironment.rnei,
-            self.config.atomicenvironment.rcut,
-        )
-
-        saddlesystem = System()
-        saddlesystem.positions = saddle_positions
-        saddlesystem.cell = cell
-        saddleneighbors_list = NeighborsList(
-            saddlesystem,
-            self.config.atomicenvironment.rnei,
-            self.config.atomicenvironment.rcut,
-        )
-
-        min2system = System()
-        min2system.positions = min2_positions
-        min2system.cell = cell
-        min2neighbors_list = NeighborsList(
-            min2system,
-            self.config.atomicenvironment.rnei,
-            self.config.atomicenvironment.rcut,
-        )
+        # Only the moving atom's rcut list and the rnei lists of the atoms in it are
+        # needed, so only these are queried, on the same periodic cKDTree as in
+        # NeighborsList: the lists, and the atom order of the crops, are the same.
+        rnei = self.config.atomicenvironment.rnei
+        rcut = self.config.atomicenvironment.rcut
+        box = [cell[0][0], cell[1][1], cell[2][2]]
 
         # TODO need to see how to deal with different style for atomic environment ID
         # Compute all needed topology ID :
-        id_min1 = graph(
-            min1neighbors_list.neighbors_list["rnei"],
-            min1neighbors_list.neighbors_list["rcut"],
-            atom_idx=[index_move],
-            types=graph_types,
-        )[0]
-        id_saddle = graph(
-            saddleneighbors_list.neighbors_list["rnei"],
-            saddleneighbors_list.neighbors_list["rcut"],
-            atom_idx=[index_move],
-            types=graph_types,
-        )[0]
-        id_min2 = graph(
-            min2neighbors_list.neighbors_list["rnei"],
-            min2neighbors_list.neighbors_list["rcut"],
-            atom_idx=[index_move],
-            types=graph_types,
-        )[0]
+        environments = []
+        topology_ids = []
+        for positions in (min1_positions, saddle_positions, min2_positions):
+            tree = cKDTree(positions, boxsize=box)
+            environment = tree.query_ball_point(positions[index_move], rcut)
+            first_neighbors = {}
+            for atom in environment:
+                neighbors = tree.query_ball_point(positions[atom], rnei)
+                neighbors.remove(atom)  # don't have self as neighbor
+                first_neighbors[atom] = neighbors
+            topology_ids.append(
+                graph(
+                    first_neighbors,
+                    {index_move: environment},
+                    atom_idx=[index_move],
+                    types=graph_types,
+                )[0]
+            )
+            environments.append(environment)
+        id_min1, id_saddle, id_min2 = topology_ids
 
         # query_ball_point can hand back Python lists; coerce to arrays so the
         # element-wise comparisons (np.where) and type indexing below behave.
-        neighbor_list_forward = np.asarray(
-            min1neighbors_list.neighbors_list["rcut"][index_move]
-        )
-        neighbor_list_backward = np.asarray(
-            min2neighbors_list.neighbors_list["rcut"][index_move]
-        )
+        neighbor_list_forward = np.asarray(environments[0])
+        neighbor_list_backward = np.asarray(environments[2])
 
         # Element types of each neighbor. These are ALWAYS stored (both modes) so
         # the reference-table schema is mode-independent; colouring is only *applied*

@@ -3,7 +3,8 @@
 import numpy as np
 import pandas as pd
 
-from pykmc import NeighborsList
+from pykmc import NeighborsList, System
+from pykmc.environments.graph_nauty import graph
 from pykmc.event_table import ReferenceEventTable
 
 
@@ -252,3 +253,61 @@ class TestGreyDedupSpeciesGating:
 
         # Sanity control: the byte-identical event IS recognised as a duplicate.
         assert table.is_new_event(fwd) is False
+
+
+def test_event_series_matches_full_system_neighbors_list(
+    system_binary_fcc: object, config_system_single_type: object
+) -> None:
+    """Ids and crops, atom order included, are those of full-system neighbor lists.
+
+    Atom 0, at the box corner, moves in the saddle and in min2 and every other atom
+    is jittered, so the three environments differ and wrap across the box. The
+    reference builds a ``NeighborsList`` of the whole system per configuration.
+
+    Parameters
+    ----------
+    system_binary_fcc : object
+        Binary Ni/Fe FCC ``System`` fixture (alternating species).
+    config_system_single_type : object
+        Loaded ``Config`` fixture; its coloring mode is set to ``full`` here.
+
+    """
+    config = config_system_single_type
+    config.atomicenvironment.atom_coloring_mode = "full"
+    rnei = config.atomicenvironment.rnei
+    rcut = config.atomicenvironment.rcut
+    cell = system_binary_fcc.cell
+    types = list(system_binary_fcc.types)
+    rng = np.random.default_rng(0)
+    min1 = system_binary_fcc.positions
+    saddle, min2 = (
+        np.mod(min1 + rng.normal(0.0, 0.05, min1.shape), np.diag(cell))
+        for _ in range(2)
+    )
+    saddle[0] = min1[0] + 0.4
+    min2[0] = min1[0] + 0.8
+
+    lists = [
+        NeighborsList(System(positions=p, cell=cell), rnei, rcut).neighbors_list
+        for p in (min1, saddle, min2)
+    ]
+    ids = [graph(nl["rnei"], nl["rcut"], atom_idx=[0], types=types)[0] for nl in lists]
+    forward, backward = lists[0]["rcut"][0], lists[2]["rcut"][0]
+    assert len(set(ids)) == 3
+    assert sorted(forward) != sorted(backward)
+
+    fwd, bwd = ReferenceEventTable(config)._build_event_series(
+        min1_positions=min1,
+        saddle_positions=saddle,
+        min2_positions=min2,
+        index_move=0,
+        dE_forward=0.5,
+        dE_backward=0.3,
+        cell=cell,
+        types=types,
+    )
+
+    assert [fwd["event_id"], fwd["id_saddle"], fwd["id_final"]] == ids
+    assert [bwd["event_id"], bwd["id_saddle"], bwd["id_final"]] == ids[::-1]
+    assert np.array_equal(fwd["initial_positions"], min1[forward])
+    assert np.array_equal(bwd["initial_positions"], min2[backward])
