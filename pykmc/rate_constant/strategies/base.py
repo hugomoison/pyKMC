@@ -81,6 +81,4 @@ class RateConstantStrategy(Registrable, root=True):
         to `[RateConstant] k0`.
 
         """
-        return self.prefactor(nu0) * math.exp(
-            -dE / (constants.KB * self.config.T)
-        )
+        return self.prefactor(nu0) * math.exp(-dE / (constants.KB * self.config.T))
