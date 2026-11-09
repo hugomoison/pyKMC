@@ -876,6 +876,21 @@ class ActiveEventTable:
             self.table = self.table[~orphan_mask].reset_index(drop=True)
         return n_orphans
 
+    def _saddle_atom_ids(self, label: int, neighbors_list: NeighborsList) -> np.ndarray:
+        """Atom ids, in order, that the row's `saddle_positions` follow.
+
+        A row stores the rcut neighbors order of the step it was refined in. A
+        recycled row must be compared in that order: the neighbors list is rebuilt
+        every step, and once the system has moved it holds the same atoms in
+        another order. A row without a stored order uses the current list.
+        """
+        if "neighbors" in self.table.columns:
+            ids = self.table.at[label, "neighbors"]
+            if isinstance(ids, np.ndarray):
+                return ids
+        atom = self.table.at[label, "atom_index"]
+        return np.asarray(neighbors_list.get_neighbors("rcut", atom), dtype=int)
+
     def remove_duplicates(self, cell, neighbors_list: NeighborsList = None) -> None:
         """Loop over all active events in the DataFrame, check if there are duplicates by computing delr."""
 
@@ -899,10 +914,22 @@ class ActiveEventTable:
 
         for idx, subset in grouped:
             pos_ref = np.array(self.table.loc[idx, "saddle_positions"])
+            ids_ref = (
+                None
+                if neighbors_list is None
+                else self._saddle_atom_ids(idx, neighbors_list)
+            )
             for jdx in subset.index:
                 if jdx <= idx:
                     continue  # dont compute twice
                 pos_comp = np.array(self.table.loc[jdx, "saddle_positions"])
+                if ids_ref is not None:
+                    ids_comp = self._saddle_atom_ids(jdx, neighbors_list)
+                    if not np.array_equal(ids_ref, ids_comp):
+                        # a recycled row: compare atom by atom, not by position
+                        if set(ids_ref.tolist()) != set(ids_comp.tolist()):
+                            continue  # another environment, not a duplicate
+                        pos_comp = pos_comp[pd.Index(ids_comp).get_indexer(ids_ref)]
                 delr = compute_delr(pos_ref, pos_comp, cell)
                 if delr < self.config.psr.matching_score_thr:
                     # print('Removing event with delr',delr)
@@ -923,16 +950,15 @@ class ActiveEventTable:
 
                 for i, idx in enumerate(indices):  # Loop over indice of subset
                     central_atom1 = subset.loc[idx, "atom_index"]
-                    env1 = neighbors_list.get_neighbors(
-                        "rcut", central_atom1
-                    )  # list of atom in env1
+                    # atoms of env1, in the order of the row's saddle positions
+                    env1 = self._saddle_atom_ids(idx, neighbors_list)
 
                     for jdx in indices[i + 1 :]:  # to not compare two times
                         central_atom2 = subset.loc[jdx, "atom_index"]
                         if (
                             central_atom1 != central_atom2
                         ):  # if yes already done in part 1.
-                            env2 = neighbors_list.get_neighbors("rcut", central_atom2)
+                            env2 = self._saddle_atom_ids(jdx, neighbors_list)
                             # intersection of atoms in atomic environments
                             common = set(env1) & set(env2)
 
