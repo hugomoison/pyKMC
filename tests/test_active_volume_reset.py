@@ -31,6 +31,7 @@ pytest.importorskip("lammps")
 pytest.importorskip("pypARTn")
 
 from pykmc.activevolume import active_volume as av  # noqa: E402
+from pykmc.engine.lammps import LammpsEngine  # noqa: E402
 
 _CELL = np.diag([20.0, 20.0, 50.0])
 _EAM_FILE = (
@@ -73,18 +74,37 @@ def _index_of(commands: list[str], prefix: str) -> int:
 
 
 def test_map_types_matches_engine_rule() -> None:
-    """``map_types`` follows the engine's alphabetical ``sorted(set(types))`` rule."""
-    int_types, map_type = av.map_types(["Ni", "Cr", "Ni", "Fe"])
+    """``LammpsEngine.map_types`` follows the engine's alphabetical ``sorted(set(types))`` rule."""
+    int_types, map_type = LammpsEngine.map_types(["Ni", "Cr", "Ni", "Fe"])
     assert list(map_type) == ["Cr", "Fe", "Ni"]
     assert [map_type[k]["ref"] for k in map_type] == [1, 2, 3]
     assert map_type["Ni"]["mass"] == atomic_masses[atomic_numbers["Ni"]]
     assert int_types.tolist() == [3, 1, 3, 2]
 
 
+def test_map_types_species_keeps_full_numbering() -> None:
+    """A crop missing a species keeps the numbering of the full system."""
+    int_types, map_type = LammpsEngine.map_types(["Ni", "Ni"], ["Fe", "Ni"])
+    assert list(map_type) == ["Fe", "Ni"]
+    assert int_types.tolist() == [2, 2]
+
+
+def test_map_types_sorts_and_deduplicates_species() -> None:
+    """``species`` is sorted and deduplicated before numbering."""
+    _, map_type = LammpsEngine.map_types(["Ni"], ["Ni", "Fe", "Ni"])
+    assert {k: v["ref"] for k, v in map_type.items()} == {"Fe": 1, "Ni": 2}
+
+
+def test_map_types_rejects_type_missing_from_species() -> None:
+    """A type absent from ``species`` raises instead of a bare ``KeyError``."""
+    with pytest.raises(ValueError, match="Cr"):
+        LammpsEngine.map_types(["Ni", "Cr"], ["Fe", "Ni"])
+
+
 def test_reset_sets_one_mass_per_species() -> None:
     """``reset()`` emits one ``mass`` per species with the main engine's values."""
     engine = _FakeEngine()
-    _, map_type = av.map_types(["Ni", "Cr", "Ni"])
+    _, map_type = LammpsEngine.map_types(["Ni", "Cr", "Ni"])
     av.reset(engine, _ResetCfg(), _CELL, map_type)
     masses = [c for c in engine.commands if c.startswith("mass ")]
     assert masses == [
@@ -96,7 +116,7 @@ def test_reset_sets_one_mass_per_species() -> None:
 def test_reset_orders_box_and_masses_before_potential() -> None:
     """``create_box N`` and ``mass`` precede ``pair_coeff`` (eam/alloy needs the box)."""
     engine = _FakeEngine()
-    _, map_type = av.map_types(["Ni", "Cr", "Ni"])
+    _, map_type = LammpsEngine.map_types(["Ni", "Cr", "Ni"])
     av.reset(engine, _ResetCfg(), _CELL, map_type)
     i_box = engine.commands.index("create_box 2 box")
     i_mass = _index_of(engine.commands, "mass ")
@@ -167,9 +187,8 @@ def _fcc_ni_cell(cr_stride: int) -> tuple[list[str], np.ndarray, np.ndarray]:
 
 
 def test_map_types_matches_lammps_engine_types() -> None:
-    """``map_types`` reproduces the integer types the main engine assigns."""
+    """``LammpsEngine.map_types`` reproduces the integer types the main engine assigns."""
     _require_serial()
-    from pykmc.engine.lammps import LammpsEngine
 
     types, positions, cell = _fcc_ni_cell(5)
     engine = LammpsEngine(config=_EngineCfg(), comm=None)
@@ -180,7 +199,7 @@ def test_map_types_matches_lammps_engine_types() -> None:
             types=types, positions=positions, cell=Cell(cell), pbc=[True] * 3
         )
         engine.initialize_potential()
-        int_types, map_type = av.map_types(types)
+        int_types, map_type = LammpsEngine.map_types(types)
         assert engine.lmp.extract_global("ntypes") == len(map_type)
         got = np.ctypeslib.as_array(engine.lmp.gather_atoms("type", 0, 1)).copy()
         np.testing.assert_array_equal(got, int_types)
@@ -202,7 +221,6 @@ def test_partn_search_AV_crop_holds_every_species(
     pARTn search, so no plugin load or MPI launch is needed.
     """
     _require_serial()
-    from pykmc.engine.lammps import LammpsEngine
 
     types, positions, cell = _fcc_ni_cell(cr_stride)
     config = _SearchCfg(lammps=_engine_cfg(potential))
@@ -213,7 +231,7 @@ def test_partn_search_AV_crop_holds_every_species(
             engine, config, 0, positions, cell, types
         )
         lmp = engine.lmp
-        int_types, _ = av.map_types(types)
+        int_types, _ = LammpsEngine.map_types(types)
         expected = int_types[atom_map]
         assert set(expected.tolist()) == set(range(1, n_species + 1))
 

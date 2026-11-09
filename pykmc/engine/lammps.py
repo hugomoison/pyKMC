@@ -209,6 +209,52 @@ class LammpsEngine(Engine):
         self.lmp.command("atom_modify map array")  #! necessary for scatter atoms
         self.lmp.command("atom_modify sort 0 0.0")  #! necessary for partn
 
+    @staticmethod
+    def map_types(
+        types: list[str] | np.ndarray,
+        species: list[str] | None = None,
+    ) -> tuple[np.ndarray, dict[str, dict]]:
+        """Map element symbols to LAMMPS integer types.
+
+        Types are numbered in alphabetical order of ``species``, the order
+        ``pair_coeff`` is written against. ``species`` is the full-system
+        species list, it defaults to the species present in ``types``, which
+        is only correct for the full system: a cropped region can miss a
+        species and shift the numbering.
+
+        Parameters
+        ----------
+        types : list[str] | np.ndarray
+            Element symbol of each atom.
+        species : list[str] | None
+            Every species of the simulation. Sorted and deduplicated here.
+
+        Returns
+        -------
+        tuple[np.ndarray, dict[str, dict]]
+            The per-atom integer types and the
+            ``{symbol: {"ref": int, "mass": float}}`` map,
+            e.g. ``{"Fe": {"ref": 1, ...}, "Ni": {"ref": 2, ...}}``.
+
+        Raises
+        ------
+        ValueError
+            If ``types`` holds a symbol absent from ``species``.
+        """
+        map_type = {
+            atom_type: {"ref": i + 1, "mass": atomic_masses[atomic_numbers[atom_type]]}
+            for i, atom_type in enumerate(
+                sorted(set(species if species is not None else types))
+            )
+        }
+        missing = set(types) - map_type.keys()
+        if missing:
+            raise ValueError(
+                f"types {sorted(missing)} are not in species {list(map_type)}"
+            )
+        int_types = np.array([map_type[element]["ref"] for element in types])
+        return int_types, map_type
+
     @lammps_error_handler
     def initialize_system(
         self,
@@ -216,6 +262,7 @@ class LammpsEngine(Engine):
         positions: np.ndarray,
         cell: Cell,
         pbc: list[bool] | np.ndarray[bool],
+        species: list[str] | None = None,
     ) -> None:
         # system parameters
         natoms = len(types)
@@ -243,12 +290,7 @@ class LammpsEngine(Engine):
         self.lmp.command(f"boundary {boundary}")
 
         ind = np.arange(1, natoms + 1)  # Lammps ids start at 1
-        # map type to int alphabetic order create a dictionary with atom id and mass, eg {'H' : {'ref': 1, 'mass' : 1.00}, 'Ni': {'ref' : 2, 'mass' : 58.69} }
-        map_type = {
-            atom_type: {"ref": i + 1, "mass": atomic_masses[atomic_numbers[atom_type]]}
-            for i, atom_type in enumerate(sorted(set(types)))
-        }
-        int_types = [map_type[element]["ref"] for element in types]  # map to integer
+        int_types, map_type = self.map_types(types, species)
 
         # lammps create system
         # ortho
