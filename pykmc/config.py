@@ -9,15 +9,6 @@ from typing import Optional
 from pydantic import BaseModel, Field, model_validator, ValidationError, field_validator
 import configparser
 from typing import Any, Literal
-from dataclasses import dataclass
-
-
-@dataclass
-class PhysicalConstants:
-    """Store physical constants."""
-
-    kb = 8.6173303e-05  # eV.K^-1
-    h = 4.135667e-3  # eV.ps
 
 
 class ControlConfig(BaseModel):
