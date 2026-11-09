@@ -4,9 +4,8 @@ import math
 from abc import abstractmethod
 from typing import Optional, Protocol
 
+from pykmc import constants
 from pykmc._core import Registrable
-
-from ...config import PhysicalConstants
 
 
 class RateConstantConfigLike(Protocol):
@@ -83,5 +82,5 @@ class RateConstantStrategy(Registrable, root=True):
 
         """
         return self.prefactor(nu0) * math.exp(
-            -dE / (PhysicalConstants.kb * self.config.T)
+            -dE / (constants.KB * self.config.T)
         )

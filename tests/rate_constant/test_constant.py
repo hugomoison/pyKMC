@@ -5,7 +5,8 @@ from typing import Optional
 
 import pytest
 
-from pykmc.config import PhysicalConstants, RateConstantConfig
+from pykmc import constants
+from pykmc.config import RateConstantConfig
 from pykmc.rate_constant import RateConstant, RateConstantStrategy
 
 
@@ -24,7 +25,7 @@ def test_constant_strategy_returns_k0_boltzmann_rate() -> None:
     rate_constant = RateConstant.create("constant", config=config)
 
     for dE in (0.0, 0.5, 1.2):
-        expected = config.k0 * math.exp(-dE / (PhysicalConstants.kb * config.T))
+        expected = config.k0 * math.exp(-dE / (constants.KB * config.T))
         assert rate_constant.compute_rate(dE) == expected
         assert rate_constant.compute_rate(dE, nu0=22.0) == expected
 
@@ -42,7 +43,7 @@ def test_base_compute_rate_uses_the_strategy_prefactor() -> None:
     rate_constant = RateConstant.create("doubling_test_strategy", config=config)
 
     for dE in (0.0, 0.5, 1.2):
-        expected = 2.0 * config.k0 * math.exp(-dE / (PhysicalConstants.kb * config.T))
+        expected = 2.0 * config.k0 * math.exp(-dE / (constants.KB * config.T))
         assert rate_constant.compute_rate(dE) == expected
 
 
