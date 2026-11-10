@@ -325,6 +325,8 @@ class KMC:
                     self.reference_table,
                     self.visited_environments,
                     self.manager,
+                    rate_constant=self.rate_constant,
+                    loggers=self.loggers,
                 )
                 self.system.update_positions(
                     result_reconstruction.ok_value().min1_positions
