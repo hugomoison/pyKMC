@@ -134,6 +134,7 @@ class ReferenceEventTable:
                         f"use backup value k0 = {output.prefactor:g} ps^-1",
                     )
             self.table.at[row, "k"] = output.k
+            self.table.at[row, "k_pref"] = output.prefactor
         # df_valid_events = self.get_valid_events(results_is_valid_events)
 
         # Check if events in results are not the same :
@@ -596,7 +597,7 @@ class ReferenceEventTable:
             - saddle_positions[neighbor_list_backward][move_atom_idx_backward]
         )
 
-        # k is computed by add_events, for all new events at once
+        # k and k_pref are computed by add_events, for all new events at once
         dfevent_forward = pd.Series(
             {
                 "idx_ref": -1,  # unknown yet
@@ -607,6 +608,7 @@ class ReferenceEventTable:
                 "types": local_types_forward,
                 "energy_barrier": dE_forward,
                 "k": np.nan,
+                "k_pref": np.nan,
                 "id_saddle": id_saddle,
                 "id_final": id_min2,
                 "move_atom_idx": np.where(neighbor_list_forward == index_move)[0][0],
@@ -634,6 +636,7 @@ class ReferenceEventTable:
                 "types": local_types_backward,
                 "energy_barrier": dE_backward,
                 "k": np.nan,
+                "k_pref": np.nan,
                 "id_saddle": id_saddle,
                 "id_final": id_min1,
                 "move_atom_idx": np.where(neighbor_list_backward == index_move)[0][0],
@@ -671,6 +674,7 @@ class ReferenceEventTable:
                     "types": pd.Series(dtype="object"),
                     "energy_barrier": pd.Series(dtype="float64"),
                     "k": pd.Series(dtype="float64"),
+                    "k_pref": pd.Series(dtype="float64"),
                     "id_saddle": pd.Series(dtype="str"),
                     "id_final": pd.Series(dtype="str"),
                     "move_atom_idx": pd.Series(dtype="int64"),

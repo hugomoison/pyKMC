@@ -354,6 +354,7 @@ class TestAddEventsRateConstant:
         assert all(r.central_atom == 1 for r in requests)
 
         assert list(table.table["k"]) == pytest.approx([1.0, 2.0, 5.0])
+        assert list(table.table["k_pref"]) == pytest.approx([10.0, 10.0, 10.0])
 
     def test_failed_rate_uses_the_backup(
         self, config_system_single_type: object, monkeypatch: pytest.MonkeyPatch
@@ -364,6 +365,7 @@ class TestAddEventsRateConstant:
         table, _ = self._add(config_system_single_type, monkeypatch, spy, loggers)
 
         assert list(table.table["k"]) == pytest.approx([1.0, -0.2, 5.0])
+        assert list(table.table["k_pref"]) == pytest.approx([10.0, 1.0, 10.0])
         # the backward row of event A (idx_ref 1) is the one that failed
         loggers.warning.assert_called_once_with(
             "log",
