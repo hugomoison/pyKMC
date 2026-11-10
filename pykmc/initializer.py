@@ -13,6 +13,7 @@ from .system import System
 from .neighbors_list import NeighborsList
 from .atomic_environment import AtomicEnvironment
 from .event_table import ReferenceEventTable
+from .rate_constant import RateConstant
 from .bias import DirectionBias, PointBias, TopoBias
 import pickle
 
@@ -37,6 +38,7 @@ class Initializer:
         self.initialize_engine()
         self.initialize_neighbors_list()
         self.initialize_atomic_environments()
+        self.initialize_rate_constant()
         self.initialize_reference_table()
         self._initialize_visited_environments()
         self.initialize_bias()
@@ -124,6 +126,12 @@ class Initializer:
             coloring_mode=self.kmc.config.atomicenvironment.atom_coloring_mode,
         )
 
+    def initialize_rate_constant(self) -> None:
+        """Initialize the rate constant shared by the event tables."""
+        self.kmc.rate_constant = RateConstant.create(
+            self.kmc.config.rateconstant.style, config=self.kmc.config.rateconstant
+        )
+
     def initialize_reference_table(self) -> None:
         """Initialize the Reference Event Table."""
         if self.kmc.config.control.reference_table is not None:
@@ -136,7 +144,9 @@ class Initializer:
         else:
             self.kmc.loggers.info("log", ":=> Generate a empty reference table")
         self.kmc.reference_table = ReferenceEventTable(
-            self.kmc.config, loggers=self.kmc.loggers
+            self.kmc.config,
+            rate_constant=self.kmc.rate_constant,
+            loggers=self.kmc.loggers,
         )
 
     def initialize_bias(self) -> None:

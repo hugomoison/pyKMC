@@ -6,10 +6,17 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from pykmc import NeighborsList
-from pykmc.event_table import ReferenceEventTable
+from pykmc import NeighborsList, constants
+from pykmc.event_table import ActiveEventTable, ReferenceEventTable
 from pykmc.rate_constant import RateConstantError, RateConstantOutput, RateRequest
-from pykmc.result import Err, ErrorInfo, ErrorType, EventSearchOutput, Ok
+from pykmc.result import (
+    Err,
+    ErrorInfo,
+    ErrorType,
+    EventRefinementOutput,
+    EventSearchOutput,
+    Ok,
+)
 
 
 def _build_trivial_series(config, system):
@@ -371,4 +378,36 @@ class TestAddEventsRateConstant:
             "log",
             "Rate constant compute failed on reference event 1 (spy failure), "
             "use backup value k0 = 1 ps^-1",
+        )
+
+
+class TestActiveAddEventsRateConstant:
+    """``ActiveEventTable.add_events`` and the rate constant of its events."""
+
+    def test_reference_prefactor_with_active_barrier(
+        self, config_system_single_type: object
+    ) -> None:
+        """k = k_pref of the reference event x Boltzmann factor of the active barrier."""
+        config = config_system_single_type
+        reference_table = ReferenceEventTable(config)
+        reference_table.table = pd.DataFrame({"idx_ref": [0, 1], "k_pref": [2.0, 4.0]})
+        events = [
+            EventRefinementOutput(
+                central_atom_index=3,
+                saddle_positions=np.zeros((2, 3)),
+                E_saddle=0.0,
+                dE_forward=dE,
+                num_reference_event=num_reference_event,
+                refined="T",
+            )
+            for dE, num_reference_event in ((0.5, 1), (0.3, 0))
+        ]
+
+        active_table = ActiveEventTable(config)
+        active_table.add_events(events, reference_table)
+
+        kT = constants.KB * config.rateconstant.T
+        assert list(active_table.table["k_pref"]) == pytest.approx([4.0, 2.0])
+        assert list(active_table.table["k"]) == pytest.approx(
+            [4.0 * np.exp(-0.5 / kT), 2.0 * np.exp(-0.3 / kT)]
         )

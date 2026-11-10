@@ -28,7 +28,10 @@ class RateRequest:
     saddle_positions : np.ndarray, optional
         Positions of the whole system at the saddle, shape (N, 3).
     central_atom : int, optional
-        Index of the atom the that moves the most during the event. 
+        Index of the atom the that moves the most during the event.
+    prefactor : float, optional
+        A known prefactor (ps^-1). When given, it overwrites the one of the
+        strategy, and only the Boltzmann factor of `dE` is computed using the constant strategy.
 
     """
 
@@ -36,6 +39,7 @@ class RateRequest:
     initial_positions: Optional[np.ndarray] = None
     saddle_positions: Optional[np.ndarray] = None
     central_atom: Optional[int] = None
+    prefactor: Optional[float] = None
 
 
 class RateConstant:

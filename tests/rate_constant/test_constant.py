@@ -65,6 +65,20 @@ def test_compute_returns_one_ok_per_request_in_order() -> None:
         assert output.prefactor == config.k0
 
 
+def test_compute_given_prefactor_overwrites_k0() -> None:
+    """A prefactor given in the request replaces `k0`, with the same barrier."""
+    config = RateConstantConfig(style="constant", k0=10.0, T=300.0)
+    rate_constant = RateConstant.create("constant", config=config)
+    dE = 0.5
+
+    (result,) = rate_constant.compute([RateRequest(dE=dE, prefactor=3.0)])
+
+    assert isinstance(result, Ok)
+    output = result.ok_value()
+    assert output.prefactor == 3.0
+    assert output.k == pytest.approx(3.0 / config.k0 * rate_constant.compute_rate(dE))
+
+
 def test_compute_of_no_request_is_empty() -> None:
     """`compute` of an empty list is an empty list."""
     config = RateConstantConfig(style="constant", k0=10.0, T=300.0)

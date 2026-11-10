@@ -96,6 +96,7 @@ class KMC:
         self.engine = None
         self.neighbors_list = None
         self.atomic_environment = None
+        self.rate_constant = None
         self.reference_table = None
         self.visited_environments = None
         self.total_energy = None
@@ -183,7 +184,9 @@ class KMC:
 
         # Build the persistent active event table once, with the recycler
         # plugin (built in __init__) attached.
-        self.active_table = ActiveEventTable(self.config, recycler=self.recycler)
+        self.active_table = ActiveEventTable(
+            self.config, recycler=self.recycler, rate_constant=self.rate_constant
+        )
 
         # KMC LOOP
         for step in range(last_step, nkmc_steps + last_step):
@@ -336,7 +339,9 @@ class KMC:
                         result_basin.ok_value().from_state
                     ].neighbors_list
                     # construct new active table with only event : new_actual_state - > exit_state
-                    tmp_active_table = ActiveEventTable(self.config)
+                    tmp_active_table = ActiveEventTable(
+                        self.config, rate_constant=self.rate_constant
+                    )
                     tmp_event = EventRefinementOutput(
                         central_atom_index=result_basin.ok_value().central_atom,
                         saddle_positions=result_basin.ok_value().saddle_positions,
@@ -346,7 +351,7 @@ class KMC:
                         num_reference_event=result_basin.ok_value().num_reference_event,
                     )
                     neighbors = result_basin.ok_value().neighbors
-                    tmp_active_table.add_events(tmp_event)
+                    tmp_active_table.add_events(tmp_event, self.reference_table)
                     # reconstruct event
                     result_basin_reconstruction = self._reconstruction_active_event(
                         0, tmp_active_table
@@ -715,7 +720,7 @@ class KMC:
         # Extend the persistent active table (initialised once in `run()`).
         # Any rows surviving from the previous step are already present and
         # are not re-added because Refinement skipped them via existing_pairs.
-        self.active_table.add_events(events)
+        self.active_table.add_events(events, self.reference_table)
         return self.active_table
 
     def _select_event(
