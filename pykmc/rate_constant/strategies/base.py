@@ -1,10 +1,19 @@
 """Base class for rate constant strategies."""
 
+from __future__ import annotations
+
 import math
 from abc import abstractmethod
+from typing import TYPE_CHECKING
 
 from pykmc import constants
 from pykmc._core import Registrable
+from pykmc._core.result import ErrorInfo, Ok, Result
+
+from ..result import RateConstantOutput
+
+if TYPE_CHECKING:
+    from ..rate_constant import RateRequest
 
 
 class RateConstantStrategy(Registrable, root=True):
@@ -52,3 +61,36 @@ class RateConstantStrategy(Registrable, root=True):
 
         """
         return self.prefactor() * math.exp(-dE / (constants.KB * self.config.T))
+
+    def compute(
+        self, requests: list[RateRequest]
+    ) -> list[Result[RateConstantOutput, ErrorInfo]]:
+        """Compute the rate constants of several events in one call.
+
+        Parameters
+        ----------
+        requests : list[RateRequest]
+            The required data.
+
+        Returns
+        -------
+        list[Result[RateConstantOutput, ErrorInfo]]
+            One result per request, in the same order: `Ok` with the rate
+            constant and its prefactor, or `Err` with the reason it could not be
+            computed and a backup computed with `k0`.
+
+        Notes
+        -----
+        Default: `compute_rate` on the barrier of each request, which cannot
+        fail. A strategy that needs the geometry, or sends work to the engines,
+        overrides it.
+
+        """
+        return [
+            Ok(
+                RateConstantOutput(
+                    k=self.compute_rate(request.dE), prefactor=self.prefactor()
+                )
+            )
+            for request in requests
+        ]

@@ -6,7 +6,8 @@ import pytest
 
 from pykmc import constants
 from pykmc.config import RateConstantConfig
-from pykmc.rate_constant import RateConstant, RateConstantStrategy
+from pykmc._core.result import Ok
+from pykmc.rate_constant import RateConstant, RateConstantStrategy, RateRequest
 from pykmc.rate_constant.strategies.constant import ConstantConfig
 
 
@@ -46,6 +47,30 @@ def test_base_compute_rate_uses_the_strategy_prefactor() -> None:
     for dE in (0.0, 0.5, 1.2):
         expected = 2.0 * config.k0 * math.exp(-dE / (constants.KB * config.T))
         assert rate_constant.compute_rate(dE) == expected
+
+
+def test_compute_returns_one_ok_per_request_in_order() -> None:
+    """`compute` returns one `Ok(k, prefactor)` per request, in the same order."""
+    config = RateConstantConfig(style="constant", k0=10.0, T=300.0)
+    rate_constant = RateConstant.create("constant", config=config)
+    barriers = (1.2, 0.0, 0.5)
+
+    results = rate_constant.compute([RateRequest(dE=dE) for dE in barriers])
+
+    assert len(results) == len(barriers)
+    for dE, result in zip(barriers, results, strict=True):
+        assert isinstance(result, Ok)
+        output = result.ok_value()
+        assert output.k == rate_constant.compute_rate(dE)
+        assert output.prefactor == config.k0
+
+
+def test_compute_of_no_request_is_empty() -> None:
+    """`compute` of an empty list is an empty list."""
+    config = RateConstantConfig(style="constant", k0=10.0, T=300.0)
+    rate_constant = RateConstant.create("constant", config=config)
+
+    assert rate_constant.compute([]) == []
 
 
 def test_strategy_without_prefactor_is_abstract() -> None:
