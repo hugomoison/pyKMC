@@ -1,8 +1,8 @@
-"""Tests for the RT/RF recycled-event markers in the ``refined`` column.
+"""Tests for the RT recycled-event marker in the ``refined`` column.
 
 Rows carried over between KMC steps by a recycler are prefixed with 'R'
-('T' -> 'RT', 'F' -> 'RF') so the events log distinguishes recycled events
-from freshly refined ones. The marker is applied in
+('T' -> 'RT') so the events log distinguishes recycled events from freshly
+refined ones; unrefined rows are not carried. The marker is applied in
 ``ActiveEventTable.prune_for_recycling`` -- strategy-agnostic -- and is
 idempotent for rows recycled over multiple steps.
 """
@@ -24,7 +24,7 @@ def _table_with_rows(rows: list[dict], recycler: Mock) -> ActiveEventTable:
 
 
 def test_recycled_rows_get_r_prefix() -> None:
-    """Rows surviving the recycler's filter are marked RT/RF."""
+    """A refined row surviving the recycler's filter is marked RT; an unrefined one is dropped."""
     rows = [row(0), row(1)]
     rows[1]["refined"] = "F"
     survivors = pd.DataFrame(rows)
@@ -35,7 +35,8 @@ def test_recycled_rows_get_r_prefix() -> None:
     table = _table_with_rows(rows, recycler)
     table.prune_for_recycling(0, Mock(), np.zeros((2, 3)))
 
-    assert list(table.table["refined"]) == ["RT", "RF"]
+    assert list(table.table["refined"]) == ["RT"]
+    assert list(table.table["atom_index"]) == [0]
 
 
 def test_marker_is_idempotent_across_steps() -> None:

@@ -57,7 +57,8 @@ At the end of each KMC step, once the selected event has been applied:
 2. Drop the executed event itself.
 3. For every other row of the active table, compute the displacement of its central atom between the snapshot and the current positions. Drop the row if the displacement is `movement_thr` or more.
 4. Compute the distance between the row's central atom and the executed event's central atom, both at their current positions. Drop the row if the distance is `distance_thr` or less.
-5. The surviving rows stay in the active table. The log reports `N events flagged for recycling`.
+5. Drop every row that was not refined. `refine_thr` leaves an event unrefined while much faster events carry the total rate, and that choice is made again at every step, so an unrefined row is rebuilt each time (a registration match, no saddle search) and is refined as soon as it matters.
+6. The surviving rows stay in the active table. The log reports `N events flagged for recycling`.
 
 At the next step:
 

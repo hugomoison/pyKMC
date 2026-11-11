@@ -734,9 +734,17 @@ class ActiveEventTable:
                 system,
                 positions_pre,
             )
+            # An unrefined row is never carried: whether an event is refined is
+            # decided every step from the events that apply in that step
+            # (`Control.refine_thr`), and a carried pair is skipped by
+            # `Refinement.execute`. Dropping the row lets the next step build it
+            # again and refine it once it matters.
+            if len(self.table) > 0:
+                refined = self.table["refined"].isin(["T", "RT"])
+                self.table = self.table.loc[refined].reset_index(drop=True)
             # Mark carried-over rows in the events log: a recycled row shows as
-            # 'RT'/'RF' (recycled; originally refined/unrefined) instead of
-            # 'T'/'F'. Idempotent for rows recycled over multiple steps.
+            # 'RT' instead of 'T'. Idempotent for rows recycled over multiple
+            # steps.
             if len(self.table) > 0:
                 self.table["refined"] = [
                     "R" + r if isinstance(r, str) and not r.startswith("R") else r
