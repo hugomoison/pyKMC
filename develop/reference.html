@@ -2263,6 +2263,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pykmc.Initializer.initialize_rate_constant" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        initialize_rate_constant
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pykmc.Initializer.initialize_reference_table" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3022,6 +3033,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#pykmc.RateConstant.compute" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        compute
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pykmc.RateConstant.compute_rate" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3053,6 +3075,17 @@
     <span class="md-ellipsis">
       
         RateConstantConfig
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pykmc.RateRequest" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RateRequest
       
     </span>
   </a>
@@ -3754,6 +3787,23 @@
                   <code>None</code>
             </td>
           </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>rate_constant</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="RateConstant (pykmc.rate_constant.RateConstant)" href="#pykmc.RateConstant">RateConstant</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Computes the rate constant of new events. Default: built from
+<code>[RateConstant]</code> of the configuration.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
       </tbody>
     </table>
 
@@ -3860,7 +3910,7 @@
 
 
 </h4>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_events</span><span class="p">(</span><span class="n">events</span><span class="p">)</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">add_events</span><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">reference_table</span><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -3899,6 +3949,22 @@
             <td>
               <div class="doc-md-description">
                 <p>An EventRefinementOuput dataclass, or a list of it, with active event to be added to the table.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>reference_table</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="ReferenceEventTable (pykmc.event_table.ReferenceEventTable)" href="api/event_table.html#pykmc.event_table.ReferenceEventTable">ReferenceEventTable</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The reference event table of the simulation.</p>
               </div>
             </td>
             <td>
@@ -5740,7 +5806,7 @@ missing or invalid entries.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                  <code><span title="Self">Self</span></code>
+                  <code>Self</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -6700,7 +6766,7 @@ Both thresholds are in Angstroms.</p>
                 <code>engine</code>
             </td>
             <td>
-                  <code><span title="Engine">Engine</span></code>
+                  <code>Engine</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -7375,6 +7441,26 @@ Both thresholds are in Angstroms.</p>
 <div class="doc doc-object doc-function">
 
 
+<h4 id="pykmc.Initializer.initialize_rate_constant" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">initialize_rate_constant</span>
+
+
+</h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">initialize_rate_constant</span><span class="p">()</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Initialize the rate constant shared by the event tables.</p>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="pykmc.Initializer.initialize_reference_table" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">initialize_reference_table</span>
 
@@ -7535,7 +7621,7 @@ minimization, logging, and termination.</p>
           <tr class="doc-section-item">
             <td><code><span title="pykmc.KMC.engine">engine</span></code></td>
             <td>
-                  <code><span title="Engine">Engine</span></code>
+                  <code>Engine</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -11701,7 +11787,7 @@ If None, the strategy picks its own reference point.</p>
           <tr class="doc-section-item">
             <td><code><span title="pykmc.ProgressHandler.stream">stream</span></code></td>
             <td>
-                  <code>(<span title="sys.stdout">stdout</span>, <span title="optional">optional</span>)</code>
+                  <code>(<span title="sys.stdout">stdout</span>, optional)</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -11860,6 +11946,97 @@ If None, the strategy picks its own reference point.</p>
 
 
 
+
+<div class="doc doc-object doc-function">
+
+
+<h4 id="pykmc.RateConstant.compute" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">compute</span>
+
+
+</h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">compute</span><span class="p">(</span><span class="n">requests</span><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Compute the rate constants of several events in one call.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>requests</code>
+            </td>
+            <td>
+                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="RateRequest
+
+
+  
+      dataclass
+   (pykmc.rate_constant.rate_constant.RateRequest)" href="api/rate_constant.html#pykmc.rate_constant.rate_constant.RateRequest">RateRequest</a>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The required data.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="list">list</span>[<a class="autorefs autorefs-internal" title="Result
+
+
+  
+      module-attribute
+   (pykmc._core.result.Result)" href="#pykmc.Result">Result</a>[<span title="pykmc.rate_constant.result.RateConstantOutput">RateConstantOutput</span>, <a class="autorefs autorefs-internal" title="ErrorInfo
+
+
+  
+      dataclass
+   (pykmc._core.result.ErrorInfo)" href="#pykmc.ErrorInfo">ErrorInfo</a>]]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>One result per request, in the same order: <code>Ok</code> with the rate
+constant and its prefactor, or <code>Err</code> with the reason it could not be
+computed and a backup computed with <code>k0</code>.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
 
 <div class="doc doc-object doc-function">
 
@@ -12065,6 +12242,129 @@ If None, the strategy picks its own reference point.</p>
 
 
 
+<h3 id="pykmc.RateRequest" class="doc doc-heading">
+            <span class="doc doc-object-name doc-class-name">RateRequest</span>
+
+
+  <span class="doc doc-labels">
+      <small class="doc doc-label doc-label-dataclass"><code>dataclass</code></small>
+  </span>
+
+</h3>
+
+
+    <div class="doc doc-contents ">
+
+
+
+        <p>Data required to compute the rate constant.</p>
+<p>Only <code>dE</code> is always needed, the configuration is read by the strategies that use it.
+Requests sharing the same <code>saddle_positions</code> array object have that saddle
+computed once by such strategies.</p>
+
+
+<p><span class="doc-section-title">Attributes:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td><code><span title="pykmc.RateRequest.dE">dE</span></code></td>
+            <td>
+                  <code><span title="float">float</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The energy barrier from the initial minimum to the saddle (eV).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="pykmc.RateRequest.initial_positions">initial_positions</span></code></td>
+            <td>
+                  <code>(<span title="numpy.ndarray">ndarray</span>, optional)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Positions of the whole system at the initial minimum, shape (N, 3).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="pykmc.RateRequest.saddle_positions">saddle_positions</span></code></td>
+            <td>
+                  <code>(<span title="numpy.ndarray">ndarray</span>, optional)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Positions of the whole system at the saddle, shape (N, 3).</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="pykmc.RateRequest.central_atom">central_atom</span></code></td>
+            <td>
+                  <code>(<span title="int">int</span>, optional)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Index of the atom the that moves the most during the event.</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="pykmc.RateRequest.prefactor">prefactor</span></code></td>
+            <td>
+                  <code>(<span title="float">float</span>, optional)</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>A known prefactor (ps^-1). When given, it overwrites the one of the
+strategy, and only the Boltzmann factor of <code>dE</code> is computed using the constant strategy.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-class">
+
+
+
 <h3 id="pykmc.Reconstruction" class="doc doc-heading">
             <span class="doc doc-object-name doc-class-name">Reconstruction</span>
 
@@ -12145,7 +12445,7 @@ same for min2</p>
                 <code>supposed_min1_positions</code>
             </td>
             <td>
-                  <code><span title="_type_">_type_</span></code>
+                  <code>_type_</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -12161,7 +12461,7 @@ same for min2</p>
                 <code>supposed_min2_positions</code>
             </td>
             <td>
-                  <code><span title="_type_">_type_</span></code>
+                  <code>_type_</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -12177,7 +12477,7 @@ same for min2</p>
                 <code>saddle_positions</code>
             </td>
             <td>
-                  <code><span title="_type_">_type_</span></code>
+                  <code>_type_</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -12193,7 +12493,7 @@ same for min2</p>
                 <code>central_atom</code>
             </td>
             <td>
-                  <code><span title="_type_">_type_</span></code>
+                  <code>_type_</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -12224,7 +12524,7 @@ same for min2</p>
                 <code>neighbors</code>
             </td>
             <td>
-                  <code><span title="_type_">_type_</span></code>
+                  <code>_type_</code>
             </td>
             <td>
               <div class="doc-md-description">
@@ -12672,6 +12972,39 @@ DataFrame if nothing is recyclable.</p>
             </td>
             <td>
                 <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>rate_constant</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="RateConstant (pykmc.rate_constant.RateConstant)" href="#pykmc.RateConstant">RateConstant</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Computes the rate constant of new events. Default: built from
+<code>[RateConstant]</code> of the configuration.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>loggers</code>
+            </td>
+            <td>
+                  <code><a class="autorefs autorefs-internal" title="LogKMC (pykmc.log.LogKMC)" href="api/log.html#pykmc.log.LogKMC">LogKMC</a></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The simulation loggers. Default: nothing is logged.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
             </td>
           </tr>
       </tbody>
@@ -13605,7 +13938,7 @@ DataFrame if nothing is recyclable.</p>
                 <code>engine</code>
             </td>
             <td>
-                  <code><span title="Engine">Engine</span></code>
+                  <code>Engine</code>
             </td>
             <td>
               <div class="doc-md-description">
