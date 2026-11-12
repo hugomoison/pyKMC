@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Optional
 from pydantic import BaseModel, Field, model_validator, ValidationError, field_validator
 import configparser
-from typing import Any, Literal
+from typing import Any, Literal, Union
 
 
 class ControlConfig(BaseModel):
@@ -556,11 +556,13 @@ class ActiveVolume(BaseModel):
 class LammpsConfig(BaseModel):
     """Lammps parameters."""
 
-    pair_style: str = Field(default=..., description="Lammps pair_style command.")
-    pair_coeff: str = Field(default=..., description="Lammps pair_coeff command.")
-    setup_commands: Optional[list[str]] = Field(
-        default=None,
-        description="Extra LAMMPS commands run after pair_style and pair_coeff, e.g. the second pair_coeff of a hybrid/overlay pair_style. One full command per line; commas are kept as part of the command.",
+    pair_style: Union[str, list[str]] = Field(
+        default=...,
+        description="Lammps pair_style command. A list such as [eam/alloy, zbl 1.0 2.0] defines a hybrid/overlay potential: pyKMC sends pair_style hybrid/overlay eam/alloy zbl 1.0 2.0.",
+    )
+    pair_coeff: Union[str, list[str]] = Field(
+        default=...,
+        description="Lammps pair_coeff command. A list sends one pair_coeff command per element, in order. With a hybrid pair_style, each element names its sub-style, e.g. [* * eam/alloy ./Cu01.eam.alloy Cu, 1 1 zbl 29.0 29.0].",
     )
     min_style: Optional[str] = Field(
         default="cg", description="Lammps min_style command."
@@ -578,18 +580,41 @@ class LammpsConfig(BaseModel):
         description="LAMMPS log verbosity. None inherits control.verbosity. 0 disables log file.",
     )
 
-    # One command per line; a command is never split on commas.
-    @field_validator("setup_commands", mode="before")
+    # A value in square brackets is a comma-separated list, as for
+    # nperp_limitation. Any other string is kept as a single value.
+    @field_validator("pair_style", "pair_coeff", mode="before")
     @classmethod
-    def parse_command_lines(cls, v):
-        if v is None or (isinstance(v, str) and v.strip().lower() == "none"):
-            return None
+    def parse_optional_list(cls, v):
         if isinstance(v, str):
-            v = v.splitlines()
+            s = v.strip()
+            if not (s.startswith("[") and s.endswith("]")):
+                return v
+            v = s[1:-1].split(",")
         if isinstance(v, (list, tuple)):
-            commands = [c.strip() if isinstance(c, str) else c for c in v]
-            return [c for c in commands if c != ""] or None
+            items = [x.strip() if isinstance(x, str) else x for x in v]
+            items = [x for x in items if x != ""]
+            if not items:
+                raise ValueError("the list is empty")
+            return items
         return v
+
+
+def lammps_potential_commands(lammps_config) -> list[str]:
+    """Return the LAMMPS commands that load the potential.
+
+    Shared by ``LammpsEngine.initialize_potential`` and the active-volume
+    ``initialize_potential``. A single ``pair_style`` or ``pair_coeff`` value is
+    sent as it is. A ``pair_style`` list becomes ``pair_style hybrid/overlay``
+    followed by its elements. A ``pair_coeff`` list gives one ``pair_coeff``
+    command per element, in order.
+    """
+    style = lammps_config.pair_style
+    if isinstance(style, (list, tuple)):
+        style = "hybrid/overlay " + " ".join(style)
+    coeffs = lammps_config.pair_coeff
+    if isinstance(coeffs, str):
+        coeffs = [coeffs]
+    return [f"pair_style {style}"] + [f"pair_coeff {c}" for c in coeffs]
 
 
 class IraConfig(BaseModel):

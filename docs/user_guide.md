@@ -63,16 +63,21 @@ pair_style = eam/alloy
 pair_coeff = * * my_file.eam Ni 
 ``` 
 
-`pair_coeff` is sent to LAMMPS as a single command. If the potential needs more commands after it, for example
-one `pair_coeff` per sub-style of a `hybrid/overlay` pair style, list them in `setup_commands`.
-pyKMC sends them right after `pair_style` and `pair_coeff`, in order. Write one full command per line;
-commands are not split on commas.
+For a `hybrid/overlay` potential, `pair_style` and `pair_coeff` can each be a list in square brackets,
+with elements separated by commas. pyKMC joins the `pair_style` list into one `pair_style hybrid/overlay`
+command and sends one `pair_coeff` command per element of the `pair_coeff` list, in order. As usual in
+LAMMPS, each `pair_coeff` names its sub-style. The two lists need not have the same length, since a
+sub-style can need several `pair_coeff` lines.
 ```INI
 [Lammps]
-pair_style = hybrid/overlay eam/alloy zbl 1.0 2.0
-pair_coeff = * * eam/alloy my_file.eam Ni
-setup_commands =
-    pair_coeff 1 1 zbl 28.0 28.0
+pair_style = [eam/alloy, zbl 1.0 2.0]
+pair_coeff = [* * eam/alloy my_file.eam Ni, 1 1 zbl 28.0 28.0]
+```
+sends
+```
+pair_style hybrid/overlay eam/alloy zbl 1.0 2.0
+pair_coeff * * eam/alloy my_file.eam Ni
+pair_coeff 1 1 zbl 28.0 28.0
 ```
 
 ## Atomic Environment 

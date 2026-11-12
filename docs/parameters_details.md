@@ -203,17 +203,13 @@
   Lammps parameters.
 </details>
 
-- **`pair_style`** : `str`, mandatory
+- **`pair_style`** : `str or list[str]`, mandatory
   <details><summary>Description</summary>
-  Lammps pair_style command.
+  Lammps pair_style command. A list such as [eam/alloy, zbl 1.0 2.0] defines a hybrid/overlay potential: pyKMC sends pair_style hybrid/overlay eam/alloy zbl 1.0 2.0.
   </details>
-- **`pair_coeff`** : `str`, mandatory
+- **`pair_coeff`** : `str or list[str]`, mandatory
   <details><summary>Description</summary>
-  Lammps pair_coeff command.
-  </details>
-- **`setup_commands`** : `list[str]`, optional
-  <details><summary>Description</summary>
-  Extra LAMMPS commands run after pair_style and pair_coeff, e.g. the second pair_coeff of a hybrid/overlay pair_style. One full command per line; commas are kept as part of the command.
+  Lammps pair_coeff command. A list sends one pair_coeff command per element, in order. With a hybrid pair_style, each element names its sub-style, e.g. [* * eam/alloy ./Cu01.eam.alloy Cu, 1 1 zbl 29.0 29.0].
   </details>
 - **`min_style`** : `str`, default = `'cg'`
   <details><summary>Description</summary>

@@ -24,6 +24,7 @@ from ..activevolume.active_volume import (
     position_results_AV,
 )
 from ..atomic_environment import AtomicEnvironment
+from ..config import lammps_potential_commands
 from ..result import (
     ErrorInfo,
     EventSearchOutput,
@@ -67,14 +68,12 @@ class LammpsConfigProtocol(Protocol):
 
     Attributes
     ----------
-    pair_style : str
-        LAMMPS pair_style command string (e.g. "eam/alloy").
-    pair_coeff : str
-        LAMMPS pair_coeff command string (e.g. "* * potential.eam Ni").
-    setup_commands : list[str] or None, optional
-        Extra LAMMPS commands run after pair_style and pair_coeff, e.g. the
-        second pair_coeff of a hybrid/overlay pair_style. A config object
-        without this attribute behaves as if it were None.
+    pair_style : str or list[str]
+        LAMMPS pair_style command string (e.g. "eam/alloy"). A list defines a
+        hybrid/overlay potential, one sub-style per element.
+    pair_coeff : str or list[str]
+        LAMMPS pair_coeff command string (e.g. "* * potential.eam Ni"). A list
+        gives one pair_coeff command per element.
     min_style : str
         Minimization algorithm (e.g. "cg", "fire").
     minimize : str
@@ -85,9 +84,8 @@ class LammpsConfigProtocol(Protocol):
         Log verbosity. 0 disables log file, any other value enables it.
     """
 
-    pair_style: str
-    pair_coeff: str
-    setup_commands: list[str] | None
+    pair_style: str | list[str]
+    pair_coeff: str | list[str]
     min_style: str
     minimize: str
     frz_min: str
@@ -321,9 +319,7 @@ class LammpsEngine(Engine):
 
     @lammps_error_handler
     def initialize_potential(self) -> None:
-        self.lmp.command("pair_style {}".format(self.config.pair_style))
-        self.lmp.command("pair_coeff {}".format(self.config.pair_coeff))
-        for cmd in getattr(self.config, "setup_commands", None) or []:
+        for cmd in lammps_potential_commands(self.config):
             self.lmp.command(cmd)
 
     @lammps_error_handler

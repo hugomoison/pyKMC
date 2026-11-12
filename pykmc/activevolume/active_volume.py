@@ -7,7 +7,7 @@ import ctypes
 from typing import Protocol
 from ase.geometry import find_mic
 from ..system import System
-from ..config import Config
+from ..config import Config, lammps_potential_commands
 
 
 def define_AV(config, central_atom_idx: int, positions, cell):
@@ -288,11 +288,7 @@ def initialize_system(engine, system):
 
 
 def initialize_potential(engine, config):
-    pair_style = config.lammps.pair_style
-    pair_coeff = config.lammps.pair_coeff
-    engine.command("pair_style {}".format(pair_style))
-    engine.command("pair_coeff {}".format(pair_coeff))
-    for cmd in getattr(config.lammps, "setup_commands", None) or []:
+    for cmd in lammps_potential_commands(config.lammps):
         engine.command(cmd)
 
 
