@@ -211,6 +211,10 @@
   <details><summary>Description</summary>
   Lammps pair_coeff command.
   </details>
+- **`setup_commands`** : `list[str]`, optional
+  <details><summary>Description</summary>
+  Extra LAMMPS commands run after pair_style and pair_coeff, e.g. the second pair_coeff of a hybrid/overlay pair_style. One full command per line; commas are kept as part of the command.
+  </details>
 - **`min_style`** : `str`, default = `'cg'`
   <details><summary>Description</summary>
   Lammps min_style command.

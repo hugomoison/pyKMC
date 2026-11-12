@@ -63,6 +63,18 @@ pair_style = eam/alloy
 pair_coeff = * * my_file.eam Ni 
 ``` 
 
+`pair_coeff` is sent to LAMMPS as a single command. If the potential needs more commands after it, for example
+one `pair_coeff` per sub-style of a `hybrid/overlay` pair style, list them in `setup_commands`.
+pyKMC sends them right after `pair_style` and `pair_coeff`, in order. Write one full command per line;
+commands are not split on commas.
+```INI
+[Lammps]
+pair_style = hybrid/overlay eam/alloy zbl 1.0 2.0
+pair_coeff = * * eam/alloy my_file.eam Ni
+setup_commands =
+    pair_coeff 1 1 zbl 28.0 28.0
+```
+
 ## Atomic Environment 
 
 During the simulation, at each step, pyKMC assigns an atomic environment ID to every atom in the system.

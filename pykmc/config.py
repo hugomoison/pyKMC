@@ -558,6 +558,10 @@ class LammpsConfig(BaseModel):
 
     pair_style: str = Field(default=..., description="Lammps pair_style command.")
     pair_coeff: str = Field(default=..., description="Lammps pair_coeff command.")
+    setup_commands: Optional[list[str]] = Field(
+        default=None,
+        description="Extra LAMMPS commands run after pair_style and pair_coeff, e.g. the second pair_coeff of a hybrid/overlay pair_style. One full command per line; commas are kept as part of the command.",
+    )
     min_style: Optional[str] = Field(
         default="cg", description="Lammps min_style command."
     )
@@ -573,6 +577,19 @@ class LammpsConfig(BaseModel):
         default=None,
         description="LAMMPS log verbosity. None inherits control.verbosity. 0 disables log file.",
     )
+
+    # One command per line; a command is never split on commas.
+    @field_validator("setup_commands", mode="before")
+    @classmethod
+    def parse_command_lines(cls, v):
+        if v is None or (isinstance(v, str) and v.strip().lower() == "none"):
+            return None
+        if isinstance(v, str):
+            v = v.splitlines()
+        if isinstance(v, (list, tuple)):
+            commands = [c.strip() if isinstance(c, str) else c for c in v]
+            return [c for c in commands if c != ""] or None
+        return v
 
 
 class IraConfig(BaseModel):
