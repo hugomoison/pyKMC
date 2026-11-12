@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pandas as pd
-from .rate_constant import RateConstant
+from .rate_constant import RateConstant, RateRequest
 from .config import Config
 import numpy as np
 from .environments.graph_nauty import graph
@@ -26,6 +26,47 @@ from .utils.geometry import compute_delr
 
 if TYPE_CHECKING:
     from .event_recycling import Recycling
+    from .log import LogKMC
+
+
+def _set_rate_constants(
+    table: pd.DataFrame,
+    rows: list,
+    rate_requests: list[RateRequest],
+    rate_constant: RateConstant,
+) -> list[tuple[int, ErrorInfo]]:
+    """Compute the rate constants of `rows` in one call and write `k` and `k_pref`.
+
+    A row whose rate fails gets the backup of the error.
+
+    Parameters
+    ----------
+    table : pd.DataFrame
+        The event table, updated in place.
+    rows : list
+        Index labels of the rows, one per request.
+    rate_requests : list[RateRequest]
+        The data required to compute the rate constant of each row.
+    rate_constant : RateConstant
+        The rate constant of the run.
+
+    Returns
+    -------
+    list[tuple[int, ErrorInfo]]
+        The rows that use the backup, with their error.
+
+    """
+    failures = []
+    results = rate_constant.compute(rate_requests)
+    for row, result in zip(rows, results, strict=True):
+        if isinstance(result, Ok):
+            output = result.ok_value()
+        else:  # the strategy failed: use its backup computed with k0
+            output = result.err_value().variables["backup"]
+            failures.append((row, result.err_value()))
+        table.at[row, "k"] = output.k
+        table.at[row, "k_pref"] = output.prefactor
+    return failures
 
 
 class ReferenceEventTable:
@@ -35,11 +76,27 @@ class ReferenceEventTable:
     ----------
     config : Config
         The atomic simulations configuration.
+    rate_constant : RateConstant, optional
+        Computes the rate constant of new events. Default: built from
+        `[RateConstant]` of the configuration.
+    loggers : LogKMC, optional
+        The simulation loggers. Default: nothing is logged.
 
     """
 
-    def __init__(self, config: Config) -> None:
+    def __init__(
+        self,
+        config: Config,
+        rate_constant: RateConstant = None,
+        loggers: LogKMC = None,
+    ) -> None:
         self.config = config
+        if rate_constant is None:
+            rate_constant = RateConstant.create(
+                config.rateconstant.style, config=config.rateconstant
+            )
+        self.rate_constant = rate_constant
+        self.loggers = loggers
         self._initialize_table()
 
     def add_events(
@@ -59,6 +116,7 @@ class ReferenceEventTable:
 
         """
         results_is_valid_events = []
+        rate_requests, rows = [], []
         # Check if the event is valid based on is_valid_new_event conditions
         for ev in events:
             res = self.is_valid_new_event(
@@ -73,7 +131,45 @@ class ReferenceEventTable:
             )
             results_is_valid_events.append(res)
             if res.is_ok():
+                start = len(self.table)
                 self.add(res.ok_value())
+                added_rows = self.table.index[start:]
+
+                # forward event, always added
+                rate_requests.append(
+                    RateRequest(
+                        dE=ev.dE_forward,
+                        initial_positions=ev.min1_positions,
+                        saddle_positions=ev.saddle_positions,
+                        central_atom=ev.move_atom_index,
+                    )
+                )
+                rows.append(added_rows[0])
+
+                # backward event, only if added too
+                if len(added_rows) == 2:
+                    rate_requests.append(
+                        RateRequest(
+                            dE=ev.dE_backward,
+                            initial_positions=ev.min2_positions,
+                            saddle_positions=ev.saddle_positions,
+                            central_atom=ev.move_atom_index,
+                        )
+                    )
+                    rows.append(added_rows[1])
+
+        # rate constants of all new events in one call
+        failures = _set_rate_constants(
+            self.table, rows, rate_requests, self.rate_constant
+        )
+        if self.loggers is not None:
+            for row, error in failures:
+                self.loggers.warning(
+                    "log",
+                    "Rate constant compute failed on reference event "
+                    f"{int(self.table.at[row, 'idx_ref'])} ({error.message}), "
+                    f"use backup value k0 = {self.table.at[row, 'k_pref']:g} ps^-1",
+                )
         # df_valid_events = self.get_valid_events(results_is_valid_events)
 
         # Check if events in results are not the same :
@@ -536,9 +632,7 @@ class ReferenceEventTable:
             - saddle_positions[neighbor_list_backward][move_atom_idx_backward]
         )
 
-        rate_constant = RateConstant.create(
-            self.config.rateconstant.style, config=self.config.rateconstant
-        )
+        # k and k_pref are computed by add_events, for all new events at once
         dfevent_forward = pd.Series(
             {
                 "idx_ref": -1,  # unknown yet
@@ -548,7 +642,8 @@ class ReferenceEventTable:
                 "final_positions": min2_positions[neighbor_list_forward],
                 "types": local_types_forward,
                 "energy_barrier": dE_forward,
-                "k": rate_constant.compute_rate(dE_forward),
+                "k": np.nan,
+                "k_pref": np.nan,
                 "id_saddle": id_saddle,
                 "id_final": id_min2,
                 "move_atom_idx": np.where(neighbor_list_forward == index_move)[0][0],
@@ -575,7 +670,8 @@ class ReferenceEventTable:
                 "final_positions": min1_positions[neighbor_list_backward],
                 "types": local_types_backward,
                 "energy_barrier": dE_backward,
-                "k": rate_constant.compute_rate(dE_backward),
+                "k": np.nan,
+                "k_pref": np.nan,
                 "id_saddle": id_saddle,
                 "id_final": id_min1,
                 "move_atom_idx": np.where(neighbor_list_backward == index_move)[0][0],
@@ -613,6 +709,7 @@ class ReferenceEventTable:
                     "types": pd.Series(dtype="object"),
                     "energy_barrier": pd.Series(dtype="float64"),
                     "k": pd.Series(dtype="float64"),
+                    "k_pref": pd.Series(dtype="float64"),
                     "id_saddle": pd.Series(dtype="str"),
                     "id_final": pd.Series(dtype="str"),
                     "move_atom_idx": pd.Series(dtype="int64"),
@@ -667,6 +764,9 @@ class ActiveEventTable:
         The atomic simulations configuration.
     event_dataframe : pd.DataFrame, optional
         An table with active event use to initialize the table. by default 'None'.
+    rate_constant : RateConstant, optional
+        Computes the rate constant of new events. Default: built from
+        `[RateConstant]` of the configuration.
 
     """
 
@@ -675,8 +775,14 @@ class ActiveEventTable:
         config: Config,
         event_dataframe: pd.DataFrame = None,
         recycler: "Recycling | None" = None,
+        rate_constant: RateConstant = None,
     ):
         self.config = config
+        if rate_constant is None:
+            rate_constant = RateConstant.create(
+                config.rateconstant.style, config=config.rateconstant
+            )
+        self.rate_constant = rate_constant
         # Optional recycling plugin. If attached, `prune_for_recycling` keeps
         # the rows the recycler selects between KMC steps. If None, the table
         # is cleared at the end of each step (matching prior behavior).
@@ -693,6 +799,7 @@ class ActiveEventTable:
                 "final_positions": pd.Series(dtype="object"),
                 "energy_barrier": pd.Series(dtype="float64"),
                 "k": pd.Series(dtype="float64"),
+                "k_pref": pd.Series(dtype="float64"),
                 "num_reference_event": pd.Series(dtype="int64"),
                 "refined": pd.Series(dtype="str"),
             }
@@ -735,7 +842,9 @@ class ActiveEventTable:
         )
 
     def add_events(
-        self, events: EventRefinementOutput | list[EventRefinementOutput]
+        self,
+        events: EventRefinementOutput | list[EventRefinementOutput],
+        reference_table: ReferenceEventTable,
     ) -> None:
         """Add active events to the table.
 
@@ -743,6 +852,8 @@ class ActiveEventTable:
         ----------
         events : EventRefinementOutput | list[EventRefinementOutput]
             An EventRefinementOuput dataclass, or a list of it, with active event to be added to the table.
+        reference_table : ReferenceEventTable
+            The reference event table of the simulation.
 
         Raises
         ------
@@ -760,7 +871,26 @@ class ActiveEventTable:
             raise TypeError(
                 "Input 'events' must be an EventRefinementOutput dataclass or a list of it."
             )
+        start = len(self.table)
         self.add(dfactive)
+        rows = self.table.index[start:]
+
+        # prefactor of the reference event, with the barrier of the active event
+        reference_prefactors = reference_table.table.set_index("idx_ref")["k_pref"]
+        rate_requests = [
+            RateRequest(
+                dE=float(self.table.at[row, "energy_barrier"]),
+                prefactor=float(
+                    reference_prefactors.loc[
+                        int(self.table.at[row, "num_reference_event"])
+                    ]
+                ),
+            )
+            for row in rows
+        ]
+
+        # rate constants of all new events in one call
+        _set_rate_constants(self.table, rows, rate_requests, self.rate_constant)
 
     def add(self, dfevents: pd.Series | list[pd.Series]) -> None:
         """Add a pd.Series of the active events.
@@ -806,15 +936,15 @@ class ActiveEventTable:
 
         """
 
+        # k and k_pref are computed by add_events, for all new events at once
         dfactive = pd.Series(
             {
                 "atom_index": event_refinement_output.central_atom_index,
                 "saddle_positions": event_refinement_output.saddle_positions,
                 "final_positions": event_refinement_output.min2_positions,
                 "energy_barrier": event_refinement_output.dE_forward,
-                "k": RateConstant.create(
-                    self.config.rateconstant.style, config=self.config.rateconstant
-                ).compute_rate(event_refinement_output.dE_forward),
+                "k": np.nan,
+                "k_pref": np.nan,
                 "num_reference_event": event_refinement_output.num_reference_event,
                 "refined": event_refinement_output.refined,
             }
