@@ -49,6 +49,10 @@
   <details><summary>Description</summary>
   Number of Sessions
   </details>
+- **`group_size`** : `int`, default = `-1`
+  <details><summary>Description</summary>
+  Number of MPI worker ranks in the group communicator (replaces old global mode). -1 means all worker ranks.
+  </details>
 - **`engine_use_rank_0`** : `bool`, default = `False`
   <details><summary>Description</summary>
   Deprecated : If use mpi rank 0 or not.
@@ -76,6 +80,10 @@
 - **`bias`** : `bool`, default = `False`
   <details><summary>Description</summary>
   Enable event selection bias. Requires a [Bias] section.
+  </details>
+- **`max_physical_time`** : `float`, optional
+  <details><summary>Description</summary>
+  Maximum physical (simulated) time in ps. If set, the simulation stops once this value is reached. Defaults to None (no time limit).
   </details>
 
 ---
@@ -222,6 +230,10 @@
 - **`frz_min`** : `str`, default = `'1.0e-6 1.0e-8 10 10'`
   <details><summary>Description</summary>
   Lammps minimize command with frozen core
+  </details>
+- **`verbosity`** : `int`, optional
+  <details><summary>Description</summary>
+  LAMMPS log verbosity. None inherits control.verbosity. 0 disables log file.
   </details>
 
 ---
