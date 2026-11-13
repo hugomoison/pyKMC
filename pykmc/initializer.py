@@ -131,6 +131,9 @@ class Initializer:
         self.kmc.rate_constant = RateConstant.create(
             self.kmc.config.rateconstant.style, config=self.kmc.config.rateconstant
         )
+        self.kmc.rate_constant.setup(
+            self.kmc.config, self.kmc.manager, self.kmc.system, self.kmc.loggers
+        )
 
     def initialize_reference_table(self) -> None:
         """Initialize the Reference Event Table."""

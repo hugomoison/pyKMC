@@ -1,7 +1,9 @@
 """Manages rate constant computation methods."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import numpy as np
 
@@ -9,6 +11,13 @@ from pykmc._core.result import ErrorInfo, Result
 
 from .result import RateConstantOutput
 from .strategies import RateConstantStrategy
+
+if TYPE_CHECKING:
+    from pykmc.config import Config
+    from pykmc.engine.base import EngineExtension
+    from pykmc.log import LogKMC
+    from pykmc.manager import Manager
+    from pykmc.system import System
 
 
 @dataclass(frozen=True, eq=False)
@@ -54,6 +63,30 @@ class RateConstant:
 
     def __init__(self, strategy: RateConstantStrategy) -> None:
         self._strategy = strategy
+
+    @property
+    def engine_extensions(self) -> tuple[type[EngineExtension], ...]:
+        """Engine extensions every session must load for the strategy."""
+        return self._strategy.engine_extensions
+
+    def setup(
+        self, config: Config, manager: Manager, system: System, loggers: LogKMC
+    ) -> None:
+        """Give the strategy what it needs beyond its own config, once the engines exist.
+
+        Parameters
+        ----------
+        config : Config
+            The full simulation configuration.
+        manager : Manager
+            The engine session pool.
+        system : System
+            The simulated system.
+        loggers : LogKMC
+            The simulation loggers.
+
+        """
+        self._strategy.setup(config, manager, system, loggers)
 
     def compute_rate(self, dE: float) -> float:
         """Compute the rate constant of an event using the configured strategy.
