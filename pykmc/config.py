@@ -5,9 +5,10 @@ all input parameters required for running PyKMC simulations
 """
 
 from __future__ import annotations
-from typing import Optional
+from typing import Optional, Union
 from pydantic import BaseModel, Field, model_validator, ValidationError, field_validator
 import configparser
+import math
 from typing import Any, Literal
 
 
@@ -515,24 +516,129 @@ class PartnConfig(BaseModel):
         return v
 
 
+# [RateConstant] keys of earlier HTST branches, refused by name (unknown keys are
+# otherwise ignored).
+_REMOVED_RATECONSTANT_KEYS = {
+    "premin": "HTST: [RateConstant] premin is no longer supported: "
+    "pre-minimisation was removed and Hessians use the geometries the search "
+    "returns; delete the key.",
+    "nu0_zone_radius": "HTST: [RateConstant] nu0_zone_radius is no longer supported: "
+    "the frozen shell around free_radius is two force cutoffs read from LAMMPS "
+    "(shell_width overrides it); delete the key.",
+    "require_one_negative_mode": "HTST: [RateConstant] require_one_negative_mode is "
+    "no longer supported: exactly one negative saddle mode is always required; "
+    "delete the key.",
+    "nu0_min_THz": "HTST: [RateConstant] nu0_min_THz is no longer supported: "
+    "there is no nu0 acceptance window; a nu0 outside 0.1-1000 THz is used and "
+    "logged; delete the key.",
+    "nu0_max_THz": "HTST: [RateConstant] nu0_max_THz is no longer supported: "
+    "there is no nu0 acceptance window; a nu0 outside 0.1-1000 THz is used and "
+    "logged; delete the key.",
+}
+
+
 class RateConstantConfig(BaseModel):
     """Rate constant computation parameters."""
 
-    style: Literal["constant"] = Field(
+    style: Literal["constant", "htst"] = Field(
         default=...,
-        description="Method used to compute the prefactor of the rate constant. ",
+        description="Method used to compute the prefactor of the rate constant. "
+        "'constant': k = k0 exp(-dE/(kb T)). "
+        "'htst': k = nu0 exp(-dE/(kb T)) with a harmonic (Vineyard) nu0 per "
+        "reference event from LAMMPS dynamical_matrix (needs the PHONON package); "
+        "a reference event without a nu0 uses k0. See the HTST prefactors page.",
     )
     k0: float = Field(
         default=1.0,
         description="When `style` is set to **'constant'**, this value is used directly as the pre-exponential factor ($k_0$) "
         "\n"
         "$$ k = k_{0} \\exp\\left(-\\frac{\\Delta E}{k_{b}T}\\right) $$"
-        "\n",
+        "\n"
+        "Under 'htst', k0 (ps^-1) is the prefactor of every reference event whose "
+        "nu0 could not be computed; values above 1000 ps^-1 are refused.",
     )
     T: float = Field(
         default=300,
         description="Temperature (in Kelvin) used for computing rate constants.",
     )
+    free_radius: Union[float, Literal["full"]] = Field(
+        default=8.0,
+        description="'htst' with active_volume = False: radius (Angstrom) of the sphere "
+        "of displaced atoms around the moving atom's saddle position, or 'full' for a "
+        "whole-system Hessian. Ignored when active_volume = True (the Hessian region "
+        "then has the radii of the active volume).",
+    )
+    shell_width: Optional[float] = Field(
+        default=None,
+        gt=0.0,
+        description="'htst', numeric free_radius: thickness (Angstrom) of the frozen "
+        "shell kept around the displaced sphere; atoms beyond are left out. Default: "
+        "two force cutoffs read from LAMMPS at startup.",
+    )
+    hessian_dir: Optional[str] = Field(
+        default=None,
+        description="'htst': directory for the Hessian scratch files (pykmc_htst_*, "
+        "each deleted after its event). Default: the system temp directory (honours "
+        "$TMPDIR). A relative path is taken from the run directory. Created if missing.",
+    )
+    fd_step: float = Field(
+        default=0.01,
+        gt=0.0,
+        description="'htst': finite-difference displacement (Angstrom) for "
+        "dynamical_matrix. Do not go below 0.01 with tabulated EAM potentials.",
+    )
+    max_full_hessian_mb: float = Field(
+        default=1000.0,
+        gt=0.0,
+        description="'htst', free_radius = full: largest Hessian allowed at startup, "
+        "in MB (one 3N x 3N matrix of doubles is 8 (3N)^2 / 1e6 MB; 2047 atoms = "
+        "302 MB). Up to n_sessions Hessians are built at once.",
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_removed_keys(cls, data: Any) -> Any:
+        """Refuse the keys and the style removed with the earlier HTST branches."""
+        if not isinstance(data, dict):
+            return data
+        for key, text in _REMOVED_RATECONSTANT_KEYS.items():
+            if key in data:
+                raise ValueError(text)
+        if str(data.get("style", "")).strip() == "rpa":
+            raise ValueError(
+                "HTST: [RateConstant] style = rpa is no longer supported: use "
+                "style = htst (rpa computed the same Vineyard prefactor)."
+            )
+        return data
+
+    @field_validator("free_radius", mode="before")
+    @classmethod
+    def parse_free_radius(cls, v: Any) -> Any:
+        """Accept a positive radius (Angstrom) or 'full'."""
+        value = v.strip().lower() if isinstance(v, str) else v
+        if value == "full":
+            return "full"
+        try:
+            radius = float(value)
+        except (TypeError, ValueError):
+            radius = math.nan
+        if not (math.isfinite(radius) and radius > 0.0):
+            raise ValueError(
+                "HTST: [RateConstant] free_radius must be a positive number of "
+                f"Angstrom or 'full', got '{v}'."
+            )
+        return radius
+
+    @model_validator(mode="after")
+    def check_htst_k0(self) -> "RateConstantConfig":
+        """Refuse a k0 given in Hz under 'htst' (rates are in ps^-1)."""
+        if self.style == "htst" and self.k0 > 1000.0:
+            raise ValueError(
+                f"HTST: k0 = {self.k0:g} ps^-1 is above 1000 ps^-1. Under style = "
+                "htst, k0 is in ps^-1 (not Hz) and is the prefactor of every event "
+                "without a nu0; a typical value is 10 ps^-1 (1e13 Hz)."
+            )
+        return self
 
 
 class PSRConfig(BaseModel):
@@ -564,6 +670,17 @@ class ActiveVolume(BaseModel):
         default=False,
         description="Debug flag for active volume size checks",
     )
+
+    @model_validator(mode="after")
+    def check_rmov_within_ract(self) -> "ActiveVolume":
+        """Refuse a movable radius larger than the active volume."""
+        if self.rmov > self.ract:
+            raise ValueError(
+                f"[ActiveVolume] rmov = {self.rmov:g} A must not be larger than "
+                f"ract = {self.ract:g} A: the movable atoms are inside the active "
+                "volume, and ract - rmov is its frozen buffer."
+            )
+        return self
 
 
 class LammpsConfig(BaseModel):
@@ -1069,6 +1186,21 @@ class Config(BaseModel):
                                 field_path, condition_value, missing_fields
                             )
                         )
+        return self
+
+    @model_validator(mode="after")
+    def validate_htst(self) -> Config:
+        """Validate the combinations that 'htst' cannot run with."""
+        if (
+            self.rateconstant.style == "htst"
+            and self.rateconstant.free_radius == "full"
+            and self.frozen_atoms is not None
+        ):
+            raise ValueError(
+                "HTST: [RateConstant] free_radius = full cannot be used with a "
+                "[frozen_atoms] section: a whole-system Hessian would displace frozen "
+                "atoms. Use a numeric free_radius or remove [frozen_atoms]."
+            )
         return self
 
     @model_validator(mode="after")
