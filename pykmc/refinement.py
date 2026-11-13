@@ -9,7 +9,9 @@ from .neighbors_list import NeighborsList
 from .log import LogKMC
 from .atomic_environment import AtomicEnvironment
 from .manager import Manager
+from . import constants
 import ase.geometry
+import math
 import numpy as np
 import pandas as pd
 import concurrent.futures
@@ -78,7 +80,7 @@ class Refinement:
         total_refinements, supposed_ktot = self.get_total_refinements_todo(
             df_reference_events
         )
-        e_thr = self.get_energy_thr_refine(df_reference_events, supposed_ktot)
+        k_thr = self.get_rate_thr_refine(df_reference_events, supposed_ktot)
         self.loggers.info("log", "\t :=> Refining {} events".format(total_refinements))
 
         all_futures = []
@@ -97,7 +99,7 @@ class Refinement:
                     continue
                 ###=>refine single generic
                 futures = self.refine_single(
-                    at_idx, dfevent, total_energy, future_context, e_thr
+                    at_idx, dfevent, total_energy, future_context, k_thr
                 )
                 if isinstance(futures, list):  # If symmetries
                     all_futures.extend(futures)
@@ -150,7 +152,7 @@ class Refinement:
         dfevent: pd.Series,
         total_energy: float,
         future_context: dict,
-        e_thr: float,
+        k_thr: float,
     ) -> list[Result[EventRefinementOutput, ErrorInfo]]:
         """Perform a single reference event refinement.
 
@@ -164,6 +166,8 @@ class Refinement:
             a Series of the reference event to refine.
         count : int
             number of refinements already done.
+        k_thr : float
+            rate (ps^-1) under which the reference event is not refined.
 
         Returns
         -------
@@ -276,9 +280,7 @@ class Refinement:
                 self.system.update_positions(
                     new_positions=new_positions_saddle, atom_idx=neighbors
                 )
-                if (
-                    dfevent.at["energy_barrier"] > e_thr
-                ):  # We dont refine, we use generic date
+                if dfevent.at["k"] < k_thr:  # We dont refine, we use generic date
                     # create a fake future to store the result
                     f = concurrent.futures.Future()
                     # TODO I don't like that we don't gibe the same information to E_saddle depending on AV or not
@@ -396,22 +398,35 @@ class Refinement:
             supposed_ktot += dfevent.at["k"] * n_atoms
         return total, supposed_ktot
 
-    def get_energy_thr_refine(self, df_reference_events, supposed_ktot):
-        tol = self.config.control.refine_thr
-        k_thr = supposed_ktot * tol
+    def get_rate_thr_refine(
+        self, df_reference_events: pd.DataFrame, supposed_ktot: float
+    ) -> float:
+        """Return the rate under which reference events are not refined.
 
-        # get energy corresponding to the first k value just under k_thr
-        mask = df_reference_events["k"] < k_thr
+        The cut is `refine_thr` times the supposed total rate. The threshold is
+        the largest reference rate under the cut, lowered by the Boltzmann factor
+        of 0.1 eV as a margin. When no reference rate is under the cut, it is the
+        rate of a 0.1 eV barrier with the prefactor `k0`.
+
+        Parameters
+        ----------
+        df_reference_events : pd.DataFrame
+            dataframe with reference events to refine.
+        supposed_ktot : float
+            Total rate if every reference event is applied on every atom it fits.
+
+        Returns
+        -------
+        float
+            The rate threshold (ps^-1).
+
+        """
+        margin = math.exp(-0.1 / (constants.KB * self.config.rateconstant.T))
+        k_cut = supposed_ktot * self.config.control.refine_thr
+        mask = df_reference_events["k"] < k_cut
         if mask.any():
-            e_value = (
-                df_reference_events.loc[mask]
-                .sort_values("k")
-                .iloc[-1]["energy_barrier"]
-            )
-        else:  # refine no event
-            e_value = 0.0
-        e_value += 0.1  # to be sure want using condition
-        return e_value
+            return float(df_reference_events.loc[mask, "k"].max()) * margin
+        return self.config.rateconstant.k0 * margin
 
     def get_successes_results(self) -> list[EventRefinementOutput]:
         """Return successful results.
