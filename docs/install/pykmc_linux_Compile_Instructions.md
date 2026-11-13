@@ -222,7 +222,8 @@ cd ../..
 ```
 
 > `PKG_PHONON` provides the `dynamical_matrix` command required by the HTST rate-constant
-> prefactor — without it HTST silently falls back to the constant `k0`.
+> prefactor (`[RateConstant] style = htst`). Without it, an HTST run stops at startup with a
+> message naming the missing package; constant-prefactor runs do not need it.
 
 > `pip install -e ./pyKMC` (step 3) pulls a generic `lammps` wheel from PyPI to satisfy the
 > `lammps>=…` dependency. That wheel has no PLUGIN/PHONON support — the `pip uninstall` above
