@@ -3602,6 +3602,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pykmc.parse_list" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        parse_list
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pykmc.per_atom_displacement" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -15925,6 +15936,31 @@ or 'noncrystal'.</p>
           </tr>
       </tbody>
     </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
+<h3 id="pykmc.parse_list" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">parse_list</span>
+
+
+</h3>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">parse_list</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Shared <code>mode="before"</code> step of the list-valued fields.</p>
+<p><code>"[a, b, c]"</code> becomes <code>["a", "b", "c"]</code> (items stripped, empty items
+dropped) and <code>"none"</code> (any case) becomes <code>None</code>. Pydantic then converts
+the items to the field's item type, e.g. <code>"4"</code> to <code>4</code> in a
+<code>list[int]</code>. Any other value is returned unchanged, so each field decides
+what a string without brackets means.</p>
 
 
     </div>

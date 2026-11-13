@@ -1832,6 +1832,19 @@ Currently, only pair potentials are supported. You must provide the <code>pair_s
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="na">pair_style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">eam/alloy</span><span class="w"> </span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="na">pair_coeff</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">* * my_file.eam Ni</span><span class="w"> </span>
 </span></code></pre></div></p>
+<p><code>pair_coeff</code> can also be a list in square brackets, with elements separated by commas: pyKMC sends one
+<code>pair_coeff</code> command per element, in order. Hybrid styles need this, since LAMMPS loads them with several
+<code>pair_coeff</code> lines, each naming its sub-style. <code>pair_style</code> is written as in a LAMMPS input.
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">[Lammps]</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="na">pair_style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">hybrid/overlay eam/alloy zbl 1.0 2.0</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="na">pair_coeff</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">[* * eam/alloy my_file.eam Ni, 1 1 zbl 28.0 28.0]</span>
+</span></code></pre></div>
+sends
+<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pair_style hybrid/overlay eam/alloy zbl 1.0 2.0
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>pair_coeff * * eam/alloy my_file.eam Ni
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>pair_coeff 1 1 zbl 28.0 28.0
+</span></code></pre></div>
+A value without brackets is one <code>pair_coeff</code> command, sent as written.</p>
 <h2 id="atomic-environment">Atomic Environment</h2>
 <p>During the simulation, at each step, pyKMC assigns an atomic environment ID to every atom in the system.
 This ID serves as a unique fingerprint of the atom’s local environment, allowing pyKMC to identify recurring configurations.</p>
@@ -1894,11 +1907,11 @@ If this ID corresponds to a "crystal" atom in the current system, that event wil
 </div>
 
 <p>Finally, the <code>[AtomicEnvironment]</code> section of the INI configuration file will look like this : 
-<div class="language-INI highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">[AtomicEnvironment]</span><span class="w"> </span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">cna/graph</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="na">rnei</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">3.0</span><span class="w"> </span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="na">rcut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">6.5</span><span class="w"> </span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="na">neighbors_add</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1</span><span class="w"> </span>
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">[AtomicEnvironment]</span><span class="w"> </span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">cna/graph</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="na">rnei</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">3.0</span><span class="w"> </span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="na">rcut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">6.5</span><span class="w"> </span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="na">neighbors_add</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1</span><span class="w"> </span>
 </span></code></pre></div></p>
 <h2 id="event-search">Event Search</h2>
 <p>The <code>[EventSearch]</code> section lets you define:
@@ -1909,9 +1922,9 @@ If this ID corresponds to a "crystal" atom in the current system, that event wil
 - <code>style</code> : the algorithm used to perform event searches. <em>Currently, only partn is supported.</em>
 - <code>nsearch</code> : number of event searches to perform per atomic environment.</p>
 <p>A minimal <code>[EventSearch]</code> section looks like:
-<div class="language-INI highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">[EventSearch]</span><span class="w"> </span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">partn</span><span class="w"> </span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="na">nsearch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">50</span><span class="w"> </span>
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">[EventSearch]</span><span class="w"> </span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">partn</span><span class="w"> </span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="na">nsearch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">50</span><span class="w"> </span>
 </span></code></pre></div></p>
 <p>When an event is found, it is characterized by two energy barriers, a forward energy barrier <span class="arithmatex"><span class="MathJax_Preview">dE_{forward}</span><script type="math/tex">dE_{forward}</script></span> and an inverse energy barrier <span class="arithmatex"><span class="MathJax_Preview">dE_{backward}</span><script type="math/tex">dE_{backward}</script></span> : </p>
 <div style="text-align: center;">
@@ -1937,9 +1950,9 @@ These thresholds ensure that the refined event remains consistent with the origi
 <p>All other parameters have default values (see the full parameter documentation), but depending on your system, you may need to adjust some of them for optimal performance.
 Parameters related to refinements are prefixed with r_</p>
 <p>A minimal <code>[pARTn]</code> section will look like this : 
-<div class="language-INI highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">[pARTn]</span><span class="w"> </span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="na">delr_thr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.1</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="na">r_eigval_thr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-0.02</span>
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">[pARTn]</span><span class="w"> </span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="na">delr_thr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.1</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="na">r_eigval_thr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-0.02</span>
 </span></code></pre></div></p>
 <p>For a detailed explanation of the pARTn algorithm and its parameters, please refer to the official pARTn documentation.</p>
 <h2 id="rate-constant">Rate Constant</h2>
@@ -1956,10 +1969,10 @@ Where:
 - <span class="arithmatex"><span class="MathJax_Preview">k_{b}</span><script type="math/tex">k_{b}</script></span>​ is the Boltzmann constant.</p>
 <p>All parameters must be provided in LAMMPS metal units (<span class="arithmatex"><span class="MathJax_Preview">k_{0}</span><script type="math/tex">k_{0}</script></span> in <span class="arithmatex"><span class="MathJax_Preview">ps^{-1}</span><script type="math/tex">ps^{-1}</script></span>, <span class="arithmatex"><span class="MathJax_Preview">T</span><script type="math/tex">T</script></span> in K).</p>
 <p>Typically, it gives:</p>
-<div class="language-INI highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="k">[RateConstant]</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">constant</span><span class="w"> </span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="na">k0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">10</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="na">T</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">300</span><span class="w"> </span>
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">[RateConstant]</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">constant</span><span class="w"> </span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="na">k0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">10</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="na">T</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">300</span><span class="w"> </span>
 </span></code></pre></div>
 <h2 id="psr">PSR</h2>
 <p>When applying a reference event to a system for refinement, pyKMC performs a point set registration (also known as shape matching) to align the atomic positions from the reference event with the local atomic environment of the atom currently targeted for refinement.</p>
@@ -1967,9 +1980,9 @@ Where:
 <p>You may also want to adjust the default value of matching_score_thr, which sets the maximum allowed matching score for a successful registration.
 For <code>style = ira</code>, the matching score corresponds to the Hausdorff distance between the two point sets.</p>
 <p>This gives:
-<div class="language-INI highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">[PSR]</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">ira</span><span class="w"> </span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="na">matching_score_thr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.3</span><span class="w"> </span>
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">[PSR]</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">ira</span><span class="w"> </span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="na">matching_score_thr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.3</span><span class="w"> </span>
 </span></code></pre></div></p>
 <p>As with the Engine and EventSearch parts, you must also include a dedicated section for the selected point set registration method.</p>
 <h3 id="ira">IRA</h3>
@@ -1977,39 +1990,39 @@ For <code>style = ira</code>, the matching score corresponds to the Hausdorff di
 To ensure access to default values, the section must be present in the configuration file, even if it's empty.</p>
 <h2 id="final-configuration-file">Final configuration file</h2>
 <p>Finally, based on the previous examples, a complete INI configuration file would look like this:</p>
-<div class="language-INI highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">[Control]</span><span class="w"> </span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="na">initial_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">myconfig.xyz</span><span class="w"> </span>
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="na">n_steps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">100</span><span class="w"> </span>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="na">engine</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">lammps</span>
-</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
-</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="k">[Lammps]</span>
-</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="na">pair_style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">eam/alloy</span><span class="w"> </span>
-</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="na">pair_coeff</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">* * my_file.eam Ni</span><span class="w"> </span>
-</span><span id="__span-9-9"><a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
-</span><span id="__span-9-10"><a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="k">[AtomicEnvironment]</span><span class="w"> </span>
-</span><span id="__span-9-11"><a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">cna/graph</span>
-</span><span id="__span-9-12"><a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="na">rnei</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">3.0</span><span class="w"> </span>
-</span><span id="__span-9-13"><a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="na">rcut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">6.5</span><span class="w"> </span>
-</span><span id="__span-9-14"><a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="na">neighbors_add</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1</span><span class="w">  </span>
-</span><span id="__span-9-15"><a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a>
-</span><span id="__span-9-16"><a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="k">[EventSearch]</span><span class="w"> </span>
-</span><span id="__span-9-17"><a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">partn</span><span class="w"> </span>
-</span><span id="__span-9-18"><a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="na">nsearch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">50</span><span class="w">  </span>
-</span><span id="__span-9-19"><a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a>
-</span><span id="__span-9-20"><a id="__codelineno-9-20" name="__codelineno-9-20" href="#__codelineno-9-20"></a><span class="k">[pARTn]</span><span class="w"> </span>
-</span><span id="__span-9-21"><a id="__codelineno-9-21" name="__codelineno-9-21" href="#__codelineno-9-21"></a><span class="na">delr_thr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.1</span>
-</span><span id="__span-9-22"><a id="__codelineno-9-22" name="__codelineno-9-22" href="#__codelineno-9-22"></a><span class="na">r_eigval_thr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-0.02</span>
-</span><span id="__span-9-23"><a id="__codelineno-9-23" name="__codelineno-9-23" href="#__codelineno-9-23"></a>
-</span><span id="__span-9-24"><a id="__codelineno-9-24" name="__codelineno-9-24" href="#__codelineno-9-24"></a><span class="k">[RateConstant]</span>
-</span><span id="__span-9-25"><a id="__codelineno-9-25" name="__codelineno-9-25" href="#__codelineno-9-25"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">constant</span><span class="w"> </span>
-</span><span id="__span-9-26"><a id="__codelineno-9-26" name="__codelineno-9-26" href="#__codelineno-9-26"></a><span class="na">k0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">10</span><span class="w"> </span>
-</span><span id="__span-9-27"><a id="__codelineno-9-27" name="__codelineno-9-27" href="#__codelineno-9-27"></a><span class="na">T</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">300</span><span class="w">  </span>
-</span><span id="__span-9-28"><a id="__codelineno-9-28" name="__codelineno-9-28" href="#__codelineno-9-28"></a>
-</span><span id="__span-9-29"><a id="__codelineno-9-29" name="__codelineno-9-29" href="#__codelineno-9-29"></a><span class="k">[PSR]</span>
-</span><span id="__span-9-30"><a id="__codelineno-9-30" name="__codelineno-9-30" href="#__codelineno-9-30"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">ira</span><span class="w"> </span>
-</span><span id="__span-9-31"><a id="__codelineno-9-31" name="__codelineno-9-31" href="#__codelineno-9-31"></a><span class="na">matching_score_thr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.3</span><span class="w">  </span>
-</span><span id="__span-9-32"><a id="__codelineno-9-32" name="__codelineno-9-32" href="#__codelineno-9-32"></a>
-</span><span id="__span-9-33"><a id="__codelineno-9-33" name="__codelineno-9-33" href="#__codelineno-9-33"></a><span class="k">[IRA]</span><span class="w"> </span>
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="k">[Control]</span><span class="w"> </span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="na">initial_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">myconfig.xyz</span><span class="w"> </span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="na">n_steps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">100</span><span class="w"> </span>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="na">engine</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">lammps</span>
+</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
+</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="k">[Lammps]</span>
+</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="na">pair_style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">eam/alloy</span><span class="w"> </span>
+</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="na">pair_coeff</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">* * my_file.eam Ni</span><span class="w"> </span>
+</span><span id="__span-11-9"><a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>
+</span><span id="__span-11-10"><a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="k">[AtomicEnvironment]</span><span class="w"> </span>
+</span><span id="__span-11-11"><a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">cna/graph</span>
+</span><span id="__span-11-12"><a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="na">rnei</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">3.0</span><span class="w"> </span>
+</span><span id="__span-11-13"><a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="na">rcut</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">6.5</span><span class="w"> </span>
+</span><span id="__span-11-14"><a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="na">neighbors_add</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">1</span><span class="w">  </span>
+</span><span id="__span-11-15"><a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>
+</span><span id="__span-11-16"><a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="k">[EventSearch]</span><span class="w"> </span>
+</span><span id="__span-11-17"><a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">partn</span><span class="w"> </span>
+</span><span id="__span-11-18"><a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="na">nsearch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">50</span><span class="w">  </span>
+</span><span id="__span-11-19"><a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a>
+</span><span id="__span-11-20"><a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a><span class="k">[pARTn]</span><span class="w"> </span>
+</span><span id="__span-11-21"><a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a><span class="na">delr_thr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.1</span>
+</span><span id="__span-11-22"><a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a><span class="na">r_eigval_thr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">-0.02</span>
+</span><span id="__span-11-23"><a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a>
+</span><span id="__span-11-24"><a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a><span class="k">[RateConstant]</span>
+</span><span id="__span-11-25"><a id="__codelineno-11-25" name="__codelineno-11-25" href="#__codelineno-11-25"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">constant</span><span class="w"> </span>
+</span><span id="__span-11-26"><a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a><span class="na">k0</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">10</span><span class="w"> </span>
+</span><span id="__span-11-27"><a id="__codelineno-11-27" name="__codelineno-11-27" href="#__codelineno-11-27"></a><span class="na">T</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">300</span><span class="w">  </span>
+</span><span id="__span-11-28"><a id="__codelineno-11-28" name="__codelineno-11-28" href="#__codelineno-11-28"></a>
+</span><span id="__span-11-29"><a id="__codelineno-11-29" name="__codelineno-11-29" href="#__codelineno-11-29"></a><span class="k">[PSR]</span>
+</span><span id="__span-11-30"><a id="__codelineno-11-30" name="__codelineno-11-30" href="#__codelineno-11-30"></a><span class="na">style</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">ira</span><span class="w"> </span>
+</span><span id="__span-11-31"><a id="__codelineno-11-31" name="__codelineno-11-31" href="#__codelineno-11-31"></a><span class="na">matching_score_thr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">0.3</span><span class="w">  </span>
+</span><span id="__span-11-32"><a id="__codelineno-11-32" name="__codelineno-11-32" href="#__codelineno-11-32"></a>
+</span><span id="__span-11-33"><a id="__codelineno-11-33" name="__codelineno-11-33" href="#__codelineno-11-33"></a><span class="k">[IRA]</span><span class="w"> </span>
 </span></code></pre></div>
 <h2 id="how-to-restart-a-simulation">How to restart a simulation</h2>
 <p>When a simulation completes its <code>n_steps</code> KMC steps, pyKMC writes a restart file named <code>restart_&lt;last_step&gt;.npz</code> (e.g. <code>restart_100.npz</code>). This file stores the last KMC step, the simulated time reached and the elapsed wall time.</p>
@@ -2020,13 +2033,13 @@ To ensure access to default values, the section must be present in the configura
 <li>the list of visited environments (<code>visited_environments.pickle</code> by default, see <code>visited_environments_output</code>).</li>
 </ul>
 <p>To restart, give the restart file with the <code>restart_file</code> key in the <code>[Control]</code> section. You can set <code>initial_config</code> directly to the trajectory file: pyKMC always reads the last configuration of the file. To reuse the events and environments that were already explored, also give the reference table and the visited environments:</p>
-<div class="language-INI highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">[Control]</span><span class="w"> </span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="na">initial_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">trajkmc.xyz</span><span class="w"> </span>
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="na">restart_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">restart_100.npz</span><span class="w"> </span>
-</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="na">reference_table</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">reference_table.pickle</span><span class="w"> </span>
-</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="na">visited_environments</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">visited_environments.pickle</span><span class="w"> </span>
-</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="na">n_steps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">100</span><span class="w"> </span>
-</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="na">engine</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">lammps</span>
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">[Control]</span><span class="w"> </span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="na">initial_config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">trajkmc.xyz</span><span class="w"> </span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="na">restart_file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">restart_100.npz</span><span class="w"> </span>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="na">reference_table</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">reference_table.pickle</span><span class="w"> </span>
+</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="na">visited_environments</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">visited_environments.pickle</span><span class="w"> </span>
+</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a><span class="na">n_steps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">100</span><span class="w"> </span>
+</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="na">engine</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">lammps</span>
 </span></code></pre></div>
 <p>On restart:</p>
 <ul>
@@ -2039,7 +2052,7 @@ To ensure access to default values, the section must be present in the configura
 <h2 id="running-a-simulation">Running a simulation</h2>
 <p>pyKMC requires MPI and must be run with at least two MPI ranks: rank 0 runs the main KMC loop, and the other ranks run the LAMMPS instance(s).</p>
 <p>Once both the input file and the initial configuration file are ready, launch the simulation by executing:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>mpirun<span class="w"> </span>-n<span class="w"> </span><span class="m">2</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pykmc<span class="w"> </span>-in<span class="w"> </span>&lt;your_input_file_name&gt;<span class="w"> </span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>mpirun<span class="w"> </span>-n<span class="w"> </span><span class="m">2</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pykmc<span class="w"> </span>-in<span class="w"> </span>&lt;your_input_file_name&gt;<span class="w"> </span>
 </span></code></pre></div>
 <h2 id="using-multiple-lammps-instances">Using multiple lammps instances</h2>
 <p>To speed up event searches and the refinement part of the KMC loop, it is possible to use multiple LAMMPS instances.
@@ -2047,13 +2060,13 @@ Each instance runs independently on a separate set of cores.</p>
 <p>The number of instances is defined by the <code>n_sessions</code> parameter in the <code>[Control]</code> section of the input file.
 The main KMC loop always runs on rank 0, and the LAMMPS instances share the remaining ranks. You therefore need at least <code>n_sessions + 1</code> MPI ranks.</p>
 <p>For example, if you have 8 cores available and want to run 4 LAMMPS instances, your input file should contain the following parameters:</p>
-<div class="language-INI highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">[Control]</span>
-</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="na">...</span>
-</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="na">n_sessions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">4</span><span class="w"> </span>
-</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="na">... </span>
+<div class="language-INI highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="k">[Control]</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="na">...</span>
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="na">n_sessions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">4</span><span class="w"> </span>
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="na">... </span>
 </span></code></pre></div>
 <p>You can then start the simulation with:
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>mpirun<span class="w"> </span>-n<span class="w"> </span><span class="m">8</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pykmc<span class="w"> </span>-in<span class="w"> </span>&lt;your_input_file&gt;<span class="w"> </span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>mpirun<span class="w"> </span>-n<span class="w"> </span><span class="m">8</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pykmc<span class="w"> </span>-in<span class="w"> </span>&lt;your_input_file&gt;<span class="w"> </span>
 </span></code></pre></div>
 The available cores will be automatically split according to your configuration.
 In this example, the LAMMPS instances will run on ranks 1–2, 3–4, 5–6, and 7, while the main KMC loop runs on rank 0.</p>
