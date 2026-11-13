@@ -15,7 +15,8 @@ from pykmc import (
 )
 from typing import Optional
 from ..utils import geometry
-from ..rate_constant import RateConstant
+from ..log import LogKMC
+from ..rate_constant import RateConstant, RateRequest
 import pandas as pd
 import copy
 import numpy as np
@@ -65,12 +66,25 @@ class StateData:
 
 class BasinsGenericEvents:
     def __init__(
-        self, config: Config, reference_table, known_environments, manager
+        self,
+        config: Config,
+        reference_table,
+        known_environments,
+        manager,
+        rate_constant: RateConstant = None,
+        loggers: LogKMC = None,
     ) -> None:
         self.config = config  # Config object with basins parameters
         self.explorer = None  # object to explore a state in the basin
         self.reference_table = reference_table  # Object with reference generic events
         self.manager = manager  # object to do external task (minimize, refine)
+        # computes the rate constant of refined events, built from the config if None
+        if rate_constant is None:
+            rate_constant = RateConstant.create(
+                config.rateconstant.style, config=config.rateconstant
+            )
+        self.rate_constant = rate_constant
+        self.loggers = loggers  # simulation loggers, nothing is logged if None
 
         self.connectivity_table = None  # Dataframe of basin connexion state
         self.selected_event = None  # The selected event after basin exploration
@@ -579,15 +593,14 @@ class BasinsGenericEvents:
                     "min": future1,
                     "saddle": future2,
                     "neighbors": neighbors,
+                    "k_pref": float(ref_event["k_pref"]),
                 }
 
                 # RELEASE MEMORY :
                 self.states[row["state"]].release_heavy_objects()
 
-        # Basin rates always use the constant prefactor k0, whatever [RateConstant] style is set.
-        rate_constant = RateConstant.create("constant", config=self.config.rateconstant)
-
         # modify connectivity table entry future1 hold min energy, future2 holds E_saddle
+        rows, rate_requests = [], []
         for idx, ctx in futures_context.items():
             E_min = ctx["min"].result()
             result_sad = ctx["saddle"].result()
@@ -598,7 +611,6 @@ class BasinsGenericEvents:
                 dE = E_sad
             else:
                 dE = E_sad - E_min
-            k = rate_constant.compute_rate(dE)
 
             # also save saddle positions refined
             idx_state = self.connectivity_table.df.loc[idx].at["state_connexion"]
@@ -606,9 +618,31 @@ class BasinsGenericEvents:
             self.absorbing_saddle_positions[(from_state_for_saddle, idx_state)] = (
                 result_sad.ok_value().saddle_positions[ctx["neighbors"]]
             )
+            # prefactor of the reference event, with the refined barrier
+            rows.append(idx)
+            rate_requests.append(RateRequest(dE=dE, prefactor=ctx["k_pref"]))
+
+        # rate constants of all refined events in one call
+        results = self.rate_constant.compute(rate_requests)
+        for idx, request, result in zip(rows, rate_requests, results, strict=True):
+            if isinstance(result, Ok):
+                output = result.ok_value()
+            else:  # the strategy failed: use its backup computed with k0
+                error = result.err_value()
+                output = error.variables["backup"]
+                if self.loggers is not None:
+                    row = self.connectivity_table.df.loc[idx]
+                    self.loggers.warning(
+                        "log",
+                        "Rate constant compute failed on basin event "
+                        f"(state {row['state']} -> {row['state_connexion']}, "
+                        f"reference event {row['event_connexion']}) "
+                        f"({error.message}), "
+                        f"use backup value k0 = {output.prefactor:g} ps^-1",
+                    )
             # update connectivity table row
-            self.connectivity_table.df.loc[idx, "dE_forward"] = dE
-            self.connectivity_table.df.loc[idx, "k_forward"] = k
+            self.connectivity_table.df.loc[idx, "dE_forward"] = request.dE
+            self.connectivity_table.df.loc[idx, "k_forward"] = output.k
         return Ok(None)
 
     def is_new_state(self, system):

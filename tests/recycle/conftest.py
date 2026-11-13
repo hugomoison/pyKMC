@@ -32,7 +32,7 @@ _C_TARGET: tuple[float, float, float] = (31.6, 31.6, 22.6)
 def make_active_table(rows: list[dict]) -> ActiveEventTable:
     """Build an ActiveEventTable directly from a list of row dicts."""
     table = pd.DataFrame(rows)
-    return ActiveEventTable(Mock(), event_dataframe=table)
+    return ActiveEventTable(Mock(), event_dataframe=table, rate_constant=Mock())
 
 
 def row(atom_index: int) -> dict:
