@@ -63,6 +63,22 @@ pair_style = eam/alloy
 pair_coeff = * * my_file.eam Ni 
 ``` 
 
+`pair_coeff` can also be a list in square brackets, with elements separated by commas: pyKMC sends one
+`pair_coeff` command per element, in order. Hybrid styles need this, since LAMMPS loads them with several
+`pair_coeff` lines, each naming its sub-style. `pair_style` is written as in a LAMMPS input.
+```INI
+[Lammps]
+pair_style = hybrid/overlay eam/alloy zbl 1.0 2.0
+pair_coeff = [* * eam/alloy my_file.eam Ni, 1 1 zbl 28.0 28.0]
+```
+sends
+```
+pair_style hybrid/overlay eam/alloy zbl 1.0 2.0
+pair_coeff * * eam/alloy my_file.eam Ni
+pair_coeff 1 1 zbl 28.0 28.0
+```
+A value without brackets is one `pair_coeff` command, sent as written.
+
 ## Atomic Environment 
 
 During the simulation, at each step, pyKMC assigns an atomic environment ID to every atom in the system.

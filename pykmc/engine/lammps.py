@@ -69,8 +69,9 @@ class LammpsConfigProtocol(Protocol):
     ----------
     pair_style : str
         LAMMPS pair_style command string (e.g. "eam/alloy").
-    pair_coeff : str
-        LAMMPS pair_coeff command string (e.g. "* * potential.eam Ni").
+    pair_coeff : list[str]
+        LAMMPS pair_coeff command strings, one pair_coeff command per element,
+        in order (e.g. ["* * potential.eam Ni"]).
     min_style : str
         Minimization algorithm (e.g. "cg", "fire").
     minimize : str
@@ -82,7 +83,7 @@ class LammpsConfigProtocol(Protocol):
     """
 
     pair_style: str
-    pair_coeff: str
+    pair_coeff: list[str]
     min_style: str
     minimize: str
     frz_min: str
@@ -317,7 +318,8 @@ class LammpsEngine(Engine):
     @lammps_error_handler
     def initialize_potential(self) -> None:
         self.lmp.command("pair_style {}".format(self.config.pair_style))
-        self.lmp.command("pair_coeff {}".format(self.config.pair_coeff))
+        for pair_coeff in self.config.pair_coeff:
+            self.lmp.command("pair_coeff {}".format(pair_coeff))
 
     @lammps_error_handler
     def get_positions(self) -> np.ndarray | None:

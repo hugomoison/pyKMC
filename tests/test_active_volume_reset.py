@@ -9,7 +9,7 @@ atoms were created into a one-type box and LAMMPS segfaulted at the next
 masses themselves (``lj/cut``, ``mlip``, ``sw``) failed at the first ``run 0``
 even for pure Ni.
 
-The fake-engine tests pin the emitted command stream. The real-LAMMPS tests
+The recording-engine tests pin the emitted command stream. The real-LAMMPS tests
 (serial, no pARTn search) check that the AV type map reproduces the main
 engine's integer types, and drive the actual ``partn_search_AV`` entry point
 on Ni and NiCr cells under ``lj/cut`` and under the shipped NiFeCr
@@ -42,8 +42,8 @@ _EAM_FILE = (
 )
 
 
-class _FakeEngine:
-    """Record every LAMMPS command string instead of executing it."""
+class _Recorder:
+    """Stand-in for the ``lammps`` object: record every command string."""
 
     def __init__(self) -> None:
         self.commands: list[str] = []
@@ -55,17 +55,19 @@ class _FakeEngine:
 
 @dataclass
 class _EamCfg:
-    """LAMMPS config shim for the fake engine (strings are never parsed)."""
+    """LAMMPS config shim for the recording engine (strings are never parsed)."""
 
     pair_style: str = "eam/alloy"
-    pair_coeff: str = "* * Bonny_2013_NiFeCr.eam Cr Ni"
+    pair_coeff: list[str] = field(
+        default_factory=lambda: ["* * Bonny_2013_NiFeCr.eam Cr Ni"]
+    )
 
 
-@dataclass
-class _ResetCfg:
-    """Config shim carrying only what ``reset()`` reads."""
-
-    lammps: _EamCfg = field(default_factory=_EamCfg)
+def _recording_engine() -> LammpsEngine:
+    """A ``LammpsEngine`` whose LAMMPS instance only records commands."""
+    engine = LammpsEngine(config=_EamCfg())
+    engine.lmp = _Recorder()
+    return engine
 
 
 def _index_of(commands: list[str], prefix: str) -> int:
@@ -103,10 +105,10 @@ def test_map_types_rejects_type_missing_from_species() -> None:
 
 def test_reset_sets_one_mass_per_species() -> None:
     """``reset()`` emits one ``mass`` per species with the main engine's values."""
-    engine = _FakeEngine()
+    engine = _recording_engine()
     _, map_type = LammpsEngine.map_types(["Ni", "Cr", "Ni"])
-    av.reset(engine, _ResetCfg(), _CELL, map_type)
-    masses = [c for c in engine.commands if c.startswith("mass ")]
+    av.reset(engine, _CELL, map_type)
+    masses = [c for c in engine.lmp.commands if c.startswith("mass ")]
     assert masses == [
         "mass 1 {}".format(atomic_masses[atomic_numbers["Cr"]]),
         "mass 2 {}".format(atomic_masses[atomic_numbers["Ni"]]),
@@ -115,12 +117,13 @@ def test_reset_sets_one_mass_per_species() -> None:
 
 def test_reset_orders_box_and_masses_before_potential() -> None:
     """``create_box N`` and ``mass`` precede ``pair_coeff`` (eam/alloy needs the box)."""
-    engine = _FakeEngine()
+    engine = _recording_engine()
     _, map_type = LammpsEngine.map_types(["Ni", "Cr", "Ni"])
-    av.reset(engine, _ResetCfg(), _CELL, map_type)
-    i_box = engine.commands.index("create_box 2 box")
-    i_mass = _index_of(engine.commands, "mass ")
-    i_coeff = _index_of(engine.commands, "pair_coeff")
+    av.reset(engine, _CELL, map_type)
+    commands = engine.lmp.commands
+    i_box = commands.index("create_box 2 box")
+    i_mass = _index_of(commands, "mass ")
+    i_coeff = _index_of(commands, "pair_coeff")
     assert i_box < i_mass < i_coeff
 
 
@@ -134,7 +137,7 @@ class _EngineCfg:
     """Engine config; the ``lj/cut`` default sets no masses, so ``reset()`` has to."""
 
     pair_style: str = "lj/cut 6.0"
-    pair_coeff: str = "* * 0.52 2.274"
+    pair_coeff: list[str] = field(default_factory=lambda: ["* * 0.52 2.274"])
     min_style: str = "cg"
     minimize: str = "1e-6 1e-8 1000 10000"
     frz_min: str = "1e-4 1e-6 100 1000"
@@ -163,7 +166,7 @@ def _engine_cfg(potential: str) -> _EngineCfg:
     if potential == "eam/alloy":
         if not _EAM_FILE.is_file():
             pytest.skip(f"{_EAM_FILE} not present (examples/ not shipped)")
-        return _EngineCfg(pair_style="eam/alloy", pair_coeff=f"* * {_EAM_FILE} Cr Ni")
+        return _EngineCfg(pair_style="eam/alloy", pair_coeff=[f"* * {_EAM_FILE} Cr Ni"])
     return _EngineCfg()
 
 

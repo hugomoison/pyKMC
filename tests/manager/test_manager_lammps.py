@@ -4,7 +4,7 @@ pytest.importorskip("lammps")
 import numpy as np
 from mpi4py import MPI
 from pykmc.factory import EngineManagerFactory
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 def _require_8_ranks():
@@ -22,7 +22,7 @@ def lammps_config_Ni():
     @dataclass
     class LammpsConfig:
         pair_style: str = "lj/cut 6.0"
-        pair_coeff: str = "* * 0.52 2.274"
+        pair_coeff: list[str] = field(default_factory=lambda: ["* * 0.52 2.274"])
         min_style: str = "cg"
         minimize: str = "1e-6 1e-8 1000 10000"
         frz_min: str = "1e-4 1e-6 100 1000"
