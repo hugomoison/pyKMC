@@ -720,13 +720,21 @@ class ReferenceEventTable:
                 }
             )
 
-    def remove(self, idx_refs: list[int]) -> None:
+    def remove(self, idx_refs: list[int]) -> set[int]:
         """Remove events with ind == idx_ref as well as its backward event
 
         Parameters
         ----------
-        ind : int
-            index of the event to be removed
+        idx_refs : list[int]
+            logical ids (``idx_ref``) of the events to be removed.
+
+        Returns
+        -------
+        set[int]
+            The ``idx_ref`` values actually deleted: the requested ones together
+            with their backward siblings. The caller uses it to evict active rows
+            orphaned by the purge (see :meth:`ActiveEventTable.drop_orphans`).
+
         """
 
         idx_refs = set(idx_refs)  # make a set if there are doublons
@@ -739,9 +747,16 @@ class ReferenceEventTable:
 
         all_refs = idx_refs | backward_refs  # all ref to remove
 
+        # Only refs that were actually present count as removed.
+        removed = set(
+            self.table.loc[self.table["idx_ref"].isin(all_refs), "idx_ref"].astype(int)
+        )
+
         self.table = self.table[~self.table["idx_ref"].isin(all_refs)].reset_index(
             drop=True
         )  # keep event not (~) in all refs
+
+        return removed
 
     def save(self, outfile: str = "reference_table.pickle") -> None:
         """Save the reference event table to a pickle file.
@@ -797,6 +812,7 @@ class ActiveEventTable:
                 "atom_index": pd.Series(dtype="int64"),
                 "saddle_positions": pd.Series(dtype="object"),
                 "final_positions": pd.Series(dtype="object"),
+                "neighbors": pd.Series(dtype="object"),
                 "energy_barrier": pd.Series(dtype="float64"),
                 "k": pd.Series(dtype="float64"),
                 "k_pref": pd.Series(dtype="float64"),
@@ -825,6 +841,22 @@ class ActiveEventTable:
                 system,
                 positions_pre,
             )
+            # An unrefined row is never carried: whether an event is refined is
+            # decided every step from the events that apply in that step
+            # (`Control.refine_thr`), and a carried pair is skipped by
+            # `Refinement.execute`. Dropping the row lets the next step build it
+            # again and refine it once it matters.
+            if len(self.table) > 0:
+                refined = self.table["refined"].isin(["T", "RT"])
+                self.table = self.table.loc[refined].reset_index(drop=True)
+            # Mark carried-over rows in the events log: a recycled row shows as
+            # 'RT' instead of 'T'. Idempotent for rows recycled over multiple
+            # steps.
+            if len(self.table) > 0:
+                self.table["refined"] = [
+                    "R" + r if isinstance(r, str) and not r.startswith("R") else r
+                    for r in self.table["refined"]
+                ]
 
     def existing_pairs(self) -> set[tuple[int, int]]:
         """Return `(atom_index, num_reference_event)` tuples already in the table.
@@ -942,6 +974,7 @@ class ActiveEventTable:
                 "atom_index": event_refinement_output.central_atom_index,
                 "saddle_positions": event_refinement_output.saddle_positions,
                 "final_positions": event_refinement_output.min2_positions,
+                "neighbors": event_refinement_output.neighbors,
                 "energy_barrier": event_refinement_output.dE_forward,
                 "k": np.nan,
                 "k_pref": np.nan,
@@ -961,6 +994,48 @@ class ActiveEventTable:
         """
         self.table = self.table.drop(ind)
         self.table = self.table.reset_index(drop=True)
+
+    def drop_orphans(self, removed_refs: set[int]) -> int:
+        """Evict active rows whose reference event was purged.
+
+        The active table persists across KMC steps (recycled rows carry over),
+        so when ``ReferenceEventTable.remove`` deletes a reference event the rows
+        still pointing at it become orphans that crash the next step's lookups.
+
+        Parameters
+        ----------
+        removed_refs : set[int]
+            ``idx_ref`` values just deleted from the reference table (forward and
+            backward), as returned by :meth:`ReferenceEventTable.remove`.
+
+        Returns
+        -------
+        int
+            Number of active rows evicted.
+
+        """
+        if not removed_refs or len(self.table) == 0:
+            return 0
+        orphan_mask = self.table["num_reference_event"].isin(removed_refs)
+        n_orphans = int(orphan_mask.sum())
+        if n_orphans:
+            self.table = self.table[~orphan_mask].reset_index(drop=True)
+        return n_orphans
+
+    def _saddle_atom_ids(self, label: int, neighbors_list: NeighborsList) -> np.ndarray:
+        """Atom ids, in order, that the row's `saddle_positions` follow.
+
+        A row stores the rcut neighbors order of the step it was refined in. A
+        recycled row must be compared in that order: the neighbors list is rebuilt
+        every step, and once the system has moved it holds the same atoms in
+        another order. A row without a stored order uses the current list.
+        """
+        if "neighbors" in self.table.columns:
+            ids = self.table.at[label, "neighbors"]
+            if isinstance(ids, np.ndarray):
+                return ids
+        atom = self.table.at[label, "atom_index"]
+        return np.asarray(neighbors_list.get_neighbors("rcut", atom), dtype=int)
 
     def remove_duplicates(self, cell, neighbors_list: NeighborsList = None) -> None:
         """Loop over all active events in the DataFrame, check if there are duplicates by computing delr."""
@@ -985,10 +1060,22 @@ class ActiveEventTable:
 
         for idx, subset in grouped:
             pos_ref = np.array(self.table.loc[idx, "saddle_positions"])
+            ids_ref = (
+                None
+                if neighbors_list is None
+                else self._saddle_atom_ids(idx, neighbors_list)
+            )
             for jdx in subset.index:
                 if jdx <= idx:
                     continue  # dont compute twice
                 pos_comp = np.array(self.table.loc[jdx, "saddle_positions"])
+                if ids_ref is not None:
+                    ids_comp = self._saddle_atom_ids(jdx, neighbors_list)
+                    if not np.array_equal(ids_ref, ids_comp):
+                        # a recycled row: compare atom by atom, not by position
+                        if set(ids_ref.tolist()) != set(ids_comp.tolist()):
+                            continue  # another environment, not a duplicate
+                        pos_comp = pos_comp[pd.Index(ids_comp).get_indexer(ids_ref)]
                 delr = compute_delr(pos_ref, pos_comp, cell)
                 if delr < self.config.psr.matching_score_thr:
                     # print('Removing event with delr',delr)
@@ -1009,16 +1096,15 @@ class ActiveEventTable:
 
                 for i, idx in enumerate(indices):  # Loop over indice of subset
                     central_atom1 = subset.loc[idx, "atom_index"]
-                    env1 = neighbors_list.get_neighbors(
-                        "rcut", central_atom1
-                    )  # list of atom in env1
+                    # atoms of env1, in the order of the row's saddle positions
+                    env1 = self._saddle_atom_ids(idx, neighbors_list)
 
                     for jdx in indices[i + 1 :]:  # to not compare two times
                         central_atom2 = subset.loc[jdx, "atom_index"]
                         if (
                             central_atom1 != central_atom2
                         ):  # if yes already done in part 1.
-                            env2 = neighbors_list.get_neighbors("rcut", central_atom2)
+                            env2 = self._saddle_atom_ids(jdx, neighbors_list)
                             # intersection of atoms in atomic environments
                             common = set(env1) & set(env2)
 

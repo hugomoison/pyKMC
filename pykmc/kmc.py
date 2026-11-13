@@ -283,12 +283,15 @@ class KMC:
             events_info = info_active_events(
                 self.system.types, self.reference_table, active_table
             )
+            # Refs purged this step; the orphan eviction is deferred until after
+            # the recycling prune below (see the drop_orphans call there).
+            removed_refs: set[int] = set()
             if len(err_reference) != 0:
                 self.loggers.info(
                     "log",
                     "\t :=> Removing reference event from which reconstruction failed.",
                 )
-                self.reference_table.remove(list(set(err_reference)))
+                removed_refs = self.reference_table.remove(list(set(err_reference)))
                 self.loggers.info(
                     "log",
                     "\t :=> Removing topology from known environments from which reconstruction failed.",
@@ -495,6 +498,22 @@ class KMC:
                             len(self.active_table.table)
                         ),
                     )
+
+            # == Evict active rows orphaned by this step's reference purge ==
+            # Deferred to here on purpose: the step log, detector.detect and the
+            # recycling prune all read the POSITIONAL idx_selected_event, and the
+            # executed row may itself share the purged ref with a sibling that
+            # failed reconstruction. Evicting (and reset_index) in the purge block
+            # would shift or drop that row; after the prune it only removes the
+            # orphans carried into the next step.
+            n_evicted = self.active_table.drop_orphans(removed_refs)
+            if n_evicted:
+                self.loggers.info(
+                    "log",
+                    "\t :=> Evicted {} orphaned active event(s) after reference purge.".format(
+                        n_evicted
+                    ),
+                )
 
             # == Update variables ==
             self.neighbors_list = NeighborsList(
@@ -790,11 +809,21 @@ class KMC:
                         num_ref_event, result_reconstruction.err_value().message
                     ),
                 )
-                ae_topo = self.reference_table.table[
+                event_ids = self.reference_table.table[
                     self.reference_table.table["idx_ref"] == num_ref_event
-                ]["event_id"].values[0]
-                err_reference.append(num_ref_event)
-                err_ae.append(ae_topo)
+                ]["event_id"].values
+                if len(event_ids) > 0:
+                    err_reference.append(num_ref_event)
+                    err_ae.append(event_ids[0])
+                else:
+                    # Defensive: the row's reference is already gone (orphans are
+                    # evicted in run), so there is nothing more to purge.
+                    self.loggers.info(
+                        "log",
+                        "\t :=> Reference event {} already purged.".format(
+                            num_ref_event
+                        ),
+                    )
 
                 self.loggers.info("log", "\t :=> Removing active event.")
                 active_table.remove(idx_selected_event)
@@ -813,8 +842,14 @@ class KMC:
     def _reconstruction_active_event(
         self, idx_selected_event: int, active_table: AtomicEnvironment
     ):
-        central_atom = active_table.table.loc[idx_selected_event].at["atom_index"]
-        neighbors = self.neighbors_list.get_neighbors("rcut", central_atom)
+        event = active_table.table.loc[idx_selected_event]
+        central_atom = event.at["atom_index"]
+        # The stored positions follow the neighbors order of the step the event was
+        # refined in. A recycled event must use that order: the current list holds
+        # the same atoms in another order (or other atoms) once the system has moved.
+        neighbors = event.get("neighbors")
+        if not isinstance(neighbors, np.ndarray):
+            neighbors = self.neighbors_list.get_neighbors("rcut", central_atom)
         saddle_positions = copy.deepcopy(
             active_table.table.loc[idx_selected_event].at["saddle_positions"]
         )
