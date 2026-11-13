@@ -75,7 +75,7 @@ from typing import Protocol
 
 class MyEngineConfig(Protocol):
     pair_style: str
-    pair_coeff: str
+    pair_coeff: list[str]
     min_style: str
     minimize: str
     verbosity: int

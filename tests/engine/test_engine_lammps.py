@@ -4,7 +4,7 @@ pytest.importorskip("lammps")
 
 from pykmc.engine import Engine, EngineExtension
 from .test_engine_contract import EngineContractTests
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @pytest.fixture(params=["ni_orthorhombic", "ni_triclinic", "ni_slab"])
@@ -17,7 +17,7 @@ def lammps_config_Ni():
     @dataclass
     class LammpsConfig:
         pair_style: str = "lj/cut 6.0"
-        pair_coeff: str = "* * 0.52 2.274"
+        pair_coeff: list[str] = field(default_factory=lambda: ["* * 0.52 2.274"])
         min_style: str = "cg"
         minimize: str = "1e-6 1e-8 1000 10000"
         frz_min: str = "1e-4 1e-6 100 1000"
