@@ -515,8 +515,7 @@
   Selects atoms by type, index, or geometric region (union semantics).
   
   Used for ``inactive_atoms`` and ``frozen_atoms`` config sections.
-  Runtime geometric queries (e.g. ``contains(positions)``) live in
-  ``pykmc/region.py``.
+  The selection itself is done by :class:`pykmc.region.Region`.
 </details>
 
 - **`region_type`** : `Literal['sphere', 'shell', 'box', 'plane']`, optional
@@ -525,7 +524,11 @@
   </details>
 - **`center`** : `list[float]`, optional
   <details><summary>Description</summary>
-  Center [x, y, z] for sphere or shell regions.
+  Fixed center [x, y, z] for sphere or shell regions. Mutually exclusive with center_atom.
+  </details>
+- **`center_atom`** : `int`, optional
+  <details><summary>Description</summary>
+  0-based index of the atom used as center for sphere or shell regions; the region follows that atom. Mutually exclusive with center.
   </details>
 - **`radius`** : `float`, optional
   <details><summary>Description</summary>
@@ -572,8 +575,7 @@
   Selects atoms by type, index, or geometric region (union semantics).
   
   Used for ``inactive_atoms`` and ``frozen_atoms`` config sections.
-  Runtime geometric queries (e.g. ``contains(positions)``) live in
-  ``pykmc/region.py``.
+  The selection itself is done by :class:`pykmc.region.Region`.
 </details>
 
 - **`region_type`** : `Literal['sphere', 'shell', 'box', 'plane']`, optional
@@ -582,7 +584,11 @@
   </details>
 - **`center`** : `list[float]`, optional
   <details><summary>Description</summary>
-  Center [x, y, z] for sphere or shell regions.
+  Fixed center [x, y, z] for sphere or shell regions. Mutually exclusive with center_atom.
+  </details>
+- **`center_atom`** : `int`, optional
+  <details><summary>Description</summary>
+  0-based index of the atom used as center for sphere or shell regions; the region follows that atom. Mutually exclusive with center.
   </details>
 - **`radius`** : `float`, optional
   <details><summary>Description</summary>
