@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 380" width="720" height="380" font-family="Helvetica, Arial, sans-serif" font-size="13">
+  <rect x="0" y="0" width="720" height="380" fill="#ffffff"/>
+
+  <!-- distance_thr circle around the executed event A -->
+  <circle cx="250" cy="210" r="100" fill="#fbe9e7" fill-opacity="0.6" stroke="#d84315" stroke-width="1.5" stroke-dasharray="6 4"/>
+  <line x1="250" y1="210" x2="250" y2="110" stroke="#d84315" stroke-width="1"/>
+  <text x="244" y="168" text-anchor="end" fill="#d84315" font-style="italic">distance_thr</text>
+
+  <!-- A: executed event (hollow = before, filled = after) -->
+  <circle cx="222" cy="210" r="7" fill="none" stroke="#7f8c8d" stroke-width="1.5" stroke-dasharray="2 2"/>
+  <line x1="230" y1="210" x2="242" y2="210" stroke="#d84315" stroke-width="2"/>
+  <polygon points="242,206 250,210 242,214" fill="#d84315"/>
+  <circle cx="250" cy="210" r="7" fill="#d84315"/>
+  <text x="262" y="222" font-weight="bold">A</text>
+
+  <!-- B: unmoved, inside cutoff -> dropped -->
+  <circle cx="325" cy="237" r="7" fill="#607d8b"/>
+  <text x="337" y="250" font-weight="bold">B</text>
+  <text x="305" y="252" fill="#c62828" font-weight="bold" font-size="16">✗</text>
+
+  <!-- C: unmoved, outside cutoff -> recycled -->
+  <circle cx="391" cy="69" r="7" fill="#607d8b"/>
+  <text x="403" y="82" font-weight="bold">C</text>
+  <text x="360" y="80" fill="#2e7d32" font-weight="bold" font-size="16">✓</text>
+
+  <!-- D: moved, outside cutoff -> dropped -->
+  <circle cx="115" cy="296" r="7" fill="none" stroke="#7f8c8d" stroke-width="1.5" stroke-dasharray="2 2"/>
+  <line x1="123" y1="296" x2="132" y2="296" stroke="#607d8b" stroke-width="2"/>
+  <polygon points="132,292 140,296 132,300" fill="#607d8b"/>
+  <circle cx="140" cy="296" r="7" fill="#607d8b"/>
+  <text x="152" y="309" font-weight="bold">D</text>
+  <text x="95" y="311" fill="#c62828" font-weight="bold" font-size="16">✗</text>
+
+  <!-- scale bar -->
+  <line x1="40" y1="352" x2="140" y2="352" stroke="#333" stroke-width="1.5"/>
+  <line x1="40" y1="347" x2="40" y2="357" stroke="#333" stroke-width="1.5"/>
+  <line x1="140" y1="347" x2="140" y2="357" stroke="#333" stroke-width="1.5"/>
+  <text x="90" y="370" text-anchor="middle" fill="#333">10 Å</text>
+
+  <!-- key -->
+  <text x="470" y="140" font-weight="bold">Recycled only if both hold</text>
+  <text x="470" y="160">1. central atom moved &lt; movement_thr</text>
+  <text x="470" y="178">2. central atom &gt; distance_thr from A</text>
+
+  <text x="470" y="215" font-weight="bold">A</text>
+  <text x="490" y="215">executed event (hop shown)</text>
+  <text x="470" y="240" font-weight="bold">B</text>
+  <text x="490" y="240">8 Å, unmoved</text>
+  <text x="490" y="256" fill="#c62828">✗ dropped: inside distance_thr</text>
+  <text x="470" y="281" font-weight="bold">C</text>
+  <text x="490" y="281">20 Å, unmoved</text>
+  <text x="490" y="297" fill="#2e7d32">✓ recycled</text>
+  <text x="470" y="322" font-weight="bold">D</text>
+  <text x="490" y="322">15 Å, moved 0.05 Å</text>
+  <text x="490" y="338" fill="#c62828">✗ dropped: not below movement_thr</text>
+</svg>

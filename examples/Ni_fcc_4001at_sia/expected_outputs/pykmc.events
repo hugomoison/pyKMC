@@ -1,0 +1,57 @@
+#Actif Events Informations File
+	 #Type: The central atom's type.
+	 #Central Atom: Index of the central atom of the event.
+	 #Ref Event: Index of reference event in the reference table.
+	 #dE forward: Energy barrier of the forward reaction (eV).
+	 #dE backward: Energy barrier of the backward reaction (eV).
+	 #dE asym: |dE forward - dE backward| (eV).
+	 #k: rate of the forward reaction (ps-1)
+	 #dra_i: displacement between the initial positions and the saddle positions.
+	 #dra_f: displacement between the final positions and the saddle positions.
+	 #Refined: - T : The event has been refined.
+	 #         - F : The event has not been refined.
+
+#Step: 1
+========== Applicable Events (Selected=4) ==========
+   Types  Central Atom  Ref Event  dE forward  dE backward   dE asym         k     dra_i     dra_f Refined
+0     Ni          1867          0    0.209211     0.209216  0.000005  0.003058  0.538039  0.538039       T
+1     Ni          1867          0    0.209211     0.209216  0.000005  0.003058  0.538039  0.538039       T
+2     Ni          1867          0    0.209429     0.209216  0.000213  0.003032  0.538039  0.538039       T
+3     Ni          4000          0    0.209438     0.209216  0.000223  0.003031  0.538039  0.538039       T
+4     Ni          4000          0    0.209439     0.209216  0.000223  0.003031  0.538039  0.538039       T
+5     Ni          4000          0    0.209441     0.209216  0.000225  0.003031  0.538039  0.538039       T
+6     Ni          4000          0    0.209441     0.209216  0.000226  0.003031  0.538039  0.538039       T
+7     Ni          1867          0    0.209494     0.209216  0.000278  0.003025  0.538039  0.538039       T
+8     Ni          1867          1    0.338262     0.008258  0.330003  0.000021  0.663083  0.275632       F
+9     Ni          1867          1    0.338262     0.008258  0.330003  0.000021  0.663083  0.275632       F
+10    Ni          1867          1    0.338262     0.008258  0.330003  0.000021  0.663083  0.275632       F
+11    Ni          1867          1    0.338262     0.008258  0.330003  0.000021  0.663083  0.275632       F
+#Step: 2
+========== Applicable Events (Selected=7) ==========
+   Types  Central Atom  Ref Event  dE forward  dE backward   dE asym         k     dra_i     dra_f Refined
+0     Ni          4000          0    0.209223     0.209216  0.000007  0.003056  0.538039  0.538039       T
+1     Ni          2265          0    0.209243     0.209216  0.000027  0.003054  0.538039  0.538039       T
+2     Ni          2265          0    0.209282     0.209216  0.000066  0.003049  0.538039  0.538039       T
+
+
+...
+
+
+9     Ni           342          1    0.338262     0.008258  0.330003  0.000021  0.663083  0.275632       F
+10    Ni           342          1    0.338262     0.008258  0.330003  0.000021  0.663083  0.275632       F
+11    Ni           342          1    0.338262     0.008258  0.330003  0.000021  0.663083  0.275632       F
+#Step: 100
+========== Applicable Events (Selected=4) ==========
+   Types  Central Atom  Ref Event  dE forward  dE backward   dE asym         k     dra_i     dra_f Refined
+0     Ni           745          0    0.209181     0.209216  0.000035  0.003061  0.538039  0.538039       T
+1     Ni           745          0    0.209192     0.209216  0.000024  0.003060  0.538039  0.538039       T
+2     Ni           745          0    0.209202     0.209216  0.000014  0.003059  0.538039  0.538039       T
+3     Ni           347          0    0.209231     0.209216  0.000016  0.003055  0.538039  0.538039       T
+4     Ni           347          0    0.209372     0.209216  0.000156  0.003039  0.538039  0.538039       T
+5     Ni           347          0    0.209405     0.209216  0.000189  0.003035  0.538039  0.538039       T
+6     Ni           347          0    0.209405     0.209216  0.000189  0.003035  0.538039  0.538039       T
+7     Ni           745          0    0.209423     0.209216  0.000207  0.003033  0.538039  0.538039       T
+8     Ni           347          1    0.338262     0.008258  0.330003  0.000021  0.663083  0.275632       F
+9     Ni           347          1    0.338262     0.008258  0.330003  0.000021  0.663083  0.275632       F
+10    Ni           347          1    0.338262     0.008258  0.330003  0.000021  0.663083  0.275632       F
+11    Ni           347          1    0.338262     0.008258  0.330003  0.000021  0.663083  0.275632       F

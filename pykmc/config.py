@@ -9,15 +9,24 @@ from typing import Optional
 from pydantic import BaseModel, Field, model_validator, ValidationError, field_validator
 import configparser
 from typing import Any, Literal
-from dataclasses import dataclass
 
 
-@dataclass
-class PhysicalConstants:
-    """Store physical constants."""
+def parse_list(v):
+    """Shared ``mode="before"`` step of the list-valued fields.
 
-    kb = 8.6173303e-05  # eV.K^-1
-    h = 4.135667e-3  # eV.ps
+    ``"[a, b, c]"`` becomes ``["a", "b", "c"]`` (items stripped, empty items
+    dropped) and ``"none"`` (any case) becomes ``None``. Pydantic then converts
+    the items to the field's item type, e.g. ``"4"`` to ``4`` in a
+    ``list[int]``. Any other value is returned unchanged, so each field decides
+    what a string without brackets means.
+    """
+    if v is None or (isinstance(v, str) and v.strip().lower() == "none"):
+        return None
+    if isinstance(v, str):
+        s = v.strip()
+        if s.startswith("[") and s.endswith("]"):
+            return [x.strip() for x in s[1:-1].split(",") if x.strip()]
+    return v
 
 
 class ControlConfig(BaseModel):
@@ -87,6 +96,11 @@ class ControlConfig(BaseModel):
 
     verbosity: Optional[int] = Field(
         default=1, description="Controls the level of detail in the simulation output."
+    )
+
+    disp_thr: Optional[float] = Field(
+        default=0.05,
+        description="Angstroms. Atoms displaced by more than this between two KMC steps are counted as moved in the output file.",
     )
 
     refine_thr: Optional[float] = Field(
@@ -495,14 +509,9 @@ class PartnConfig(BaseModel):
     @field_validator("nperp_limitation", "r_nperp_limitation", mode="before")
     @classmethod
     def parse_list_of_ints(cls, v):
-        if v is None or (isinstance(v, str) and v.strip().lower() == "none"):
-            return None
-        if isinstance(v, str):
-            v = v.strip("[]")
-            try:
-                return [int(x.strip()) for x in v.split(",") if x.strip()]
-            except ValueError:
-                raise ValueError(f"Invalid list of integers: {v}")
+        v = parse_list(v)
+        if isinstance(v, str):  # also accepted without brackets: 4, 8, -1
+            v = [x.strip() for x in v.strip("[]").split(",") if x.strip()]
         return v
 
 
@@ -561,7 +570,11 @@ class LammpsConfig(BaseModel):
     """Lammps parameters."""
 
     pair_style: str = Field(default=..., description="Lammps pair_style command.")
-    pair_coeff: str = Field(default=..., description="Lammps pair_coeff command.")
+    pair_coeff: list[str] = Field(
+        default=...,
+        min_length=1,
+        description="Lammps pair_coeff command. Several commands are written as a list, one pair_coeff command per element, in order; e.g. with pair_style = hybrid/overlay eam/alloy zbl 1.0 2.0: [* * eam/alloy ./Cu01.eam.alloy Cu, 1 1 zbl 29.0 29.0]. A value without brackets is one command, kept as written.",
+    )
     min_style: Optional[str] = Field(
         default="cg", description="Lammps min_style command."
     )
@@ -577,6 +590,14 @@ class LammpsConfig(BaseModel):
         default=None,
         description="LAMMPS log verbosity. None inherits control.verbosity. 0 disables log file.",
     )
+
+    @field_validator("pair_coeff", mode="before")
+    @classmethod
+    def parse_pair_coeff(cls, v):
+        v = parse_list(v)
+        # Without brackets the value is one command, kept whole even if it
+        # contains a comma (e.g. in a file name).
+        return [v] if isinstance(v, str) else v
 
 
 class IraConfig(BaseModel):

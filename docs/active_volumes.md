@@ -18,7 +18,7 @@ ract = 21
 rmov = 15
 ```
 
-*Note: ract must be larger than or equal to rmov to work. The difference between the two is the buffer region of the AV*
+*Note: ract must be larger than or equal to rmov to work. The difference between the two is the buffer region of the AV i.e. `ract`-`rmov`=buffer*
 
 ---
 
@@ -31,7 +31,9 @@ that are included in the AV, and captures the state of the overall system. The m
 be moved during event searches and refinement. A frozen buffer region is made on the exterior of the AV in order to accurately model
 the forces between atoms near the boundary.
 
-FIGURE of AV
+<p align="center">
+  <img src="images/activevolume.png" width="400"/>
+</p>
 
 ## Algorithm
 1. **Reset LAMMPS Instance**: LAMMPS is cleared to prevent carry over of previous AV conditions
@@ -60,5 +62,5 @@ will minimize the AV during refinement before the event is applied, and compare 
 being sent for refinement is already minimized, so there should be no difference after minimization within the AV, 
 within 10e-3 eV. If there is a difference, it means the settings for the AV need to be adjusted. This is caused by
 the buffer region being less than the cutoff of the potential being used, leading to movable atoms next to the buffer to
-experience improper forces. 
+experience improper forces. This can be fixed by either increasing `ract` or decreasing `rmov`
 

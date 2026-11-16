@@ -1,5 +1,5 @@
-# `pykmc.point_set_registration` Module
+# `pykmc.psr` Module
 
-::: pykmc.point_set_registration
+::: pykmc.psr.psr
     options:
         show_source: true

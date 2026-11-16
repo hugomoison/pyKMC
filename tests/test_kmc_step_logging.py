@@ -75,13 +75,15 @@ class _RecordingLoggers:
         step: int,
         delta_t: float,
         total_time: float,
-        num_reference_event: Any,
+        total_energy: Any,
         energy_barrier: Any,
+        num_reference_event: Any,
         k_event: Any,
         k_tot: Any,
-        total_energy: Any,
-        cpu_time: float,
-        wall_time: float,
+        disp_max: float,
+        disp_tot: float,
+        n_moved: int,
+        step_wall_time: float,
     ) -> None:
         """Record the step line exactly as ``KMC.run`` evaluated it."""
         self.step_lines.append(
@@ -187,7 +189,9 @@ def test_step_log_reads_executed_row_before_prune(
     monkeypatch.setattr(
         kmc_module,
         "info_active_events",
-        lambda *args, **kwargs: SimpleNamespace(output_msg=lambda: ""),
+        lambda *args, **kwargs: SimpleNamespace(
+            output_msg=lambda selected: (selected, "")
+        ),
     )
 
     monkeypatch.chdir(tmp_path)

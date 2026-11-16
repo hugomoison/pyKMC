@@ -1,0 +1,71 @@
+#Actif Events Informations File
+	 #Type: The central atom's type.
+	 #Central Atom: Index of the central atom of the event.
+	 #Ref Event: Index of reference event in the reference table.
+	 #dE forward: Energy barrier of the forward reaction (eV).
+	 #dE backward: Energy barrier of the backward reaction (eV).
+	 #dE asym: |dE forward - dE backward| (eV).
+	 #k: rate of the forward reaction (ps-1)
+	 #dra_i: displacement between the initial positions and the saddle positions.
+	 #dra_f: displacement between the final positions and the saddle positions.
+	 #Refined: - T : The event has been refined.
+	 #         - F : The event has not been refined.
+
+#Step: 1
+========== Applicable Events (Selected=4) ==========
+   Types  Central Atom  Ref Event  dE forward  dE backward   dE asym             k     dra_i     dra_f Refined
+0     Fe           911          1    0.649433     0.096567  0.552866  1.230287e-10  0.802969  0.366786       T
+1     Fe           909          1    0.649433     0.096567  0.552866  1.230286e-10  0.802969  0.366786       T
+2     Fe          1110          1    0.649433     0.096567  0.552866  1.230286e-10  0.802969  0.366786       T
+3     Fe          1089          1    0.649433     0.096567  0.552866  1.230285e-10  0.802969  0.366786       T
+4     Fe           889          1    0.649433     0.096567  0.552866  1.230285e-10  0.802969  0.366786       T
+5     Fe          1091          1    0.649433     0.096567  0.552866  1.230283e-10  0.802969  0.366786       T
+6     Fe          1109          1    0.649433     0.096567  0.552866  1.230280e-10  0.802969  0.366786       T
+7     Fe           891          1    0.649433     0.096567  0.552866  1.230279e-10  0.802969  0.366786       T
+8     Fe           910          0    2.577496     2.577496  0.000000  5.011330e-43  1.511983  1.511983       F
+9     Fe          1090          0    2.577496     2.577496  0.000000  5.011330e-43  1.511983  1.511983       F
+10    Fe          1108          0    2.577496     2.577496  0.000000  5.011330e-43  1.511983  1.511983       F
+11    Fe          1111          0    2.577496     2.577496  0.000000  5.011330e-43  1.511983  1.511983       F
+12    Fe          1129          0    2.577496     2.577496  0.000000  5.011330e-43  1.511983  1.511983       F
+13    Fe          1309          0    2.577496     2.577496  0.000000  5.011330e-43  1.511983  1.511983       F
+#Step: 2
+========== Applicable Events (Selected=0) ==========
+  Types  Central Atom  Ref Event  dE forward  dE backward   dE asym             k     dra_i     dra_f Refined
+0    Fe           889          2    0.096582     0.649301  0.552719  2.385017e-01  0.366786  0.802969       T
+1    Fe           889          2    0.096582     0.649301  0.552719  2.385004e-01  0.366786  0.802969       T
+2    Fe           888          3    0.566006     0.040229  0.525777  3.101062e-09  0.889870  0.241410       F
+3    Fe          1110          3    0.566006     0.040229  0.525777  3.101062e-09  0.889870  0.241410       F
+#Step: 3
+========== Applicable Events (Selected=5) ==========
+   Types  Central Atom  Ref Event  dE forward  dE backward   dE asym             k     dra_i     dra_f Refined
+0     Fe           889          1    0.649432     0.096567  0.552865  1.230310e-10  0.802969  0.366786       T
+1     Fe          1110          1    0.649433     0.096567  0.552866  1.230293e-10  0.802969  0.366786       T
+
+
+...
+
+
+#Step: 99
+========== Applicable Events (Selected=6) ==========
+   Types  Central Atom  Ref Event  dE forward  dE backward   dE asym             k     dra_i     dra_f Refined
+0     Fe          1038          1    0.649432     0.096567  0.552865  1.230310e-10  0.802969  0.366786       T
+1     Fe           819          1    0.649433     0.096567  0.552866  1.230293e-10  0.802969  0.366786       T
+2     Fe           837          1    0.649433     0.096567  0.552866  1.230292e-10  0.802969  0.366786       T
+3     Fe          1017          1    0.649433     0.096567  0.552866  1.230292e-10  0.802969  0.366786       T
+4     Fe          1039          1    0.649433     0.096567  0.552866  1.230292e-10  0.802969  0.366786       T
+5     Fe           817          1    0.649433     0.096567  0.552866  1.230288e-10  0.802969  0.366786       T
+6     Fe           839          1    0.649433     0.096567  0.552866  1.230288e-10  0.802969  0.366786       T
+7     Fe          1019          1    0.649433     0.096567  0.552866  1.230288e-10  0.802969  0.366786       T
+8     Fe           838          0    2.577496     2.577496  0.000000  5.011330e-43  1.511983  1.511983       F
+9     Fe          1018          0    2.577496     2.577496  0.000000  5.011330e-43  1.511983  1.511983       F
+10    Fe          1020          0    2.577496     2.577496  0.000000  5.011330e-43  1.511983  1.511983       F
+11    Fe          1036          0    2.577496     2.577496  0.000000  5.011330e-43  1.511983  1.511983       F
+12    Fe          1058          0    2.577496     2.577496  0.000000  5.011330e-43  1.511983  1.511983       F
+13    Fe          1237          0    2.577496     2.577496  0.000000  5.011330e-43  1.511983  1.511983       F
+#Step: 100
+========== Applicable Events (Selected=1) ==========
+  Types  Central Atom  Ref Event  dE forward  dE backward   dE asym             k     dra_i     dra_f Refined
+0    Fe           839          2    0.096582     0.649301  0.552719  2.385015e-01  0.366786  0.802969       T
+1    Fe           839          2    0.096582     0.649301  0.552719  2.385005e-01  0.366786  0.802969       T
+2    Fe           840          3    0.566006     0.040229  0.525777  3.101062e-09  0.889870  0.241410       F
+3    Fe          1017          3    0.566006     0.040229  0.525777  3.101062e-09  0.889870  0.241410       F

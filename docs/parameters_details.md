@@ -207,9 +207,9 @@
   <details><summary>Description</summary>
   Lammps pair_style command.
   </details>
-- **`pair_coeff`** : `str`, mandatory
+- **`pair_coeff`** : `list[str]`, mandatory
   <details><summary>Description</summary>
-  Lammps pair_coeff command.
+  Lammps pair_coeff command. Several commands are written as a list, one pair_coeff command per element, in order; e.g. with pair_style = hybrid/overlay eam/alloy zbl 1.0 2.0: [* * eam/alloy ./Cu01.eam.alloy Cu, 1 1 zbl 29.0 29.0]. A value without brackets is one command, kept as written.
   </details>
 - **`min_style`** : `str`, default = `'cg'`
   <details><summary>Description</summary>

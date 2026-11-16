@@ -1,0 +1,154 @@
+          |              
+,---.,   .|__/ ,-.-.,---.
+|   ||   ||  \ | | ||    
+|---'`---|`   `` ' '`---'
+|    `---              
+
+
+
+============================================================
+                   SIMULATION PARAMETERS                    
+============================================================
+control
+    initial_config              : ./initial_config.xyz
+    trajectory_output           : ./trajkmc.xyz
+    reference_table_output      : ./reference_table.pickle
+    visited_environments_output : ./visited_environments.pickle
+    reference_table             : None
+    visited_environments        : None
+    restart_file                : None
+    reconstruction              : True
+    n_steps                     : 100
+    engine                      : lammps
+    n_sessions                  : 7
+    group_size                  : -1
+    engine_use_rank_0           : False
+    verbosity                   : 1
+    disp_thr                    : 0.05
+    refine_thr                  : 0.9999
+    basin                       : False
+    active_volume               : False
+    recycle                     : False
+    bias                        : False
+    max_physical_time           : None
+atomicenvironment
+    style                       : cna/graph
+    rnei                        : 2.9
+    rcut                        : 6.5
+    neighbors_add               : 0
+    coordination_threshold      : None
+    atom_coloring_mode          : full
+eventsearch
+    style                       : partn
+    nsearch                     : 10
+    emax_event                  : 5.0
+    emin_event                  : 0.0
+    backward_emin_event         : 0.0
+    energy_asymmetry            : 5
+    refined_minimum_delr_thr    : 0.1
+    refined_energy_thr          : 0.05
+    delr_thr                    : 0.5
+psr
+    style                       : ira
+    matching_score_thr          : 0.4
+rateconstant
+    style                       : constant
+    k0                          : 10.0
+    T                           : 300.0
+lammps
+    pair_style                  : eam/alloy
+    pair_coeff                  : * * ./Cu01.eam.alloy Cu
+    min_style                   : cg
+    minimize                    : 1e-10 1e-12 10000 10000
+    frz_min                     : 1.0e-6 1.0e-8 10 10
+    verbosity                   : 1
+partn
+    verbosity                   : 2
+    delr_thr                    : 0.1
+    zseed                       : 0
+    push_mode                   : rad
+    push_dist_thr               : 1.0
+    push_step_size              : 0.4
+    ninit                       : 2
+    lanczos_min_size            : 10
+    lanczos_max_size            : 20
+    lanczos_disp                : 0.0005
+    lanczos_eval_conv_thr       : 0.001
+    eigval_thr                  : -0.01
+    eigen_step_size             : 0.2
+    nsmooth                     : 3
+    neigen                      : 1
+    alpha_mix_cr                : 0.2
+    nnewchance                  : 0
+    nperp                       : 3
+    nperp_limitation            : [4, 8, 12, 16, -1]
+    forc_thr                    : 0.001
+    convergence_property        : maxval
+    nevalf_max                  : 9999
+    push_over                   : 1.0
+    dmax                        : 6.0
+    r_nevalf_max                : 300
+    r_max_attempts              : 5
+    r_delr_sad_thr              : 0.4
+    r_push_mode                 : list
+    r_push_dist_thr             : 1.0
+    r_push_step_size            : 0.0001
+    r_ninit                     : 0
+    r_lanczos_min_size          : 20
+    r_lanczos_max_size          : 50
+    r_lanczos_disp              : 0.0005
+    r_lanczos_eval_conv_thr     : 0.001
+    r_eigval_thr                : -0.01
+    r_eigen_step_size           : 0.005
+    r_nsmooth                   : 0
+    r_neigen                    : 1
+    r_alpha_mix_cr              : 0.2
+    r_nnewchance                : 0
+    r_nperp                     : 3
+    r_nperp_limitation          : [100]
+    r_forc_thr                  : 0.001
+    r_dmax                      : 1.0
+ira
+    kmax_factor                 : 2.0
+    sym_thr                     : 0.01
+basin
+reconstruction
+    push_fraction               : 0.15
+activevolume
+eventrecycling
+inactive_atoms
+frozen_atoms
+bias
+
+:=> Reading initial configuration file : ./initial_config.xyz
+:=> Constructing Neighbors Lists
+:=> Computing Atomic Environments
+:=> Generate a empty reference table
+
+===========================
+= Starting KMC simulation =
+===========================
+:=> Minimizing the system
+Step : 1
+	 :=> 1 new atomic environments found
+	 :=> Searching 10 reference events
+	 :=> Adding 2 events to the reference table
+	 :=> Refining 36 events
+	 :=> 36 active events after removing duplicates.
+	 :=> Event Reconstruction
+Step : 2
+	 :=> 0 new atomic environments found
+
+
+...
+
+
+	 :=> Event Reconstruction
+Step : 100
+	 :=> 0 new atomic environments found
+	 :=> Searching 0 reference events
+	 :=> Adding 0 events to the reference table
+	 :=> Refining 36 events
+	 :=> 36 active events after removing duplicates.
+	 :=> Event Reconstruction
+:=> End of simulation

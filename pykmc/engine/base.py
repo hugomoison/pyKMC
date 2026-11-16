@@ -163,8 +163,14 @@ class Engine(Registrable, root=True):
         positions: np.ndarray,
         cell: Cell,
         pbc: list[bool] | np.ndarray,
+        species: list[str] | None = None,
     ) -> None:
-        """Load atomic system into the engine."""
+        """Load atomic system into the engine.
+
+        ``species`` is every species of the simulation. Pass it when the
+        system is a cropped region that may miss a species, so the engine
+        keeps the type numbering of the full system.
+        """
 
     @abstractmethod
     def initialize_potential(self) -> None:

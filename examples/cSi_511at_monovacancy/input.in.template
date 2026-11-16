@@ -1,8 +1,8 @@
 [Control] 
-initial_config = tmp.xyz
+initial_config = initial_config.xyz
 n_steps = 100
 engine = lammps
-verbosity = 2
+verbosity = 1
 n_sessions = 7
 
 [Lammps] 
@@ -19,13 +19,9 @@ rcut = 6.3
 
 [EventSearch] 
 style = partn
-nsearch = 50
-emax_event = 3.5
-emin_event = 0.0
-r_evalf_max = 1000
+nsearch = 10
 
 [pARTn]
-path_artnso = /root/programs/artn-plugin-1501/lib/libartn-lmp.so
 
 [RateConstant] 
 style = constant
@@ -37,4 +33,3 @@ style = ira
 
 [IRA]
 
-[Basin]

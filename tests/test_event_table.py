@@ -1,10 +1,22 @@
 """Unit tests for full-colour typing in the reference event table."""
 
+from unittest.mock import MagicMock
+
 import numpy as np
 import pandas as pd
+import pytest
 
-from pykmc import NeighborsList
-from pykmc.event_table import ReferenceEventTable
+from pykmc import NeighborsList, constants
+from pykmc.event_table import ActiveEventTable, ReferenceEventTable
+from pykmc.rate_constant import RateConstantError, RateConstantOutput, RateRequest
+from pykmc.result import (
+    Err,
+    ErrorInfo,
+    ErrorType,
+    EventRefinementOutput,
+    EventSearchOutput,
+    Ok,
+)
 
 
 def _build_trivial_series(config, system):
@@ -252,3 +264,150 @@ class TestGreyDedupSpeciesGating:
 
         # Sanity control: the byte-identical event IS recognised as a duplicate.
         assert table.is_new_event(fwd) is False
+
+
+class _SpyRateConstant:
+    """Record each ``compute`` call; fail on the barriers listed in ``fail``."""
+
+    def __init__(self, fail: tuple[float, ...] = ()) -> None:
+        self.calls = []
+        self.fail = fail
+
+    def compute(self, rate_requests: list[RateRequest]) -> list:
+        self.calls.append(list(rate_requests))
+        results = []
+        for request in rate_requests:
+            if request.dE in self.fail:
+                backup = RateConstantOutput(k=-request.dE, prefactor=1.0)
+                results.append(
+                    Err(
+                        ErrorInfo(
+                            type=RateConstantError.COMPUTATION_FAILED,
+                            message="spy failure",
+                            variables={"backup": backup},
+                        )
+                    )
+                )
+            else:
+                results.append(
+                    Ok(RateConstantOutput(k=10.0 * request.dE, prefactor=10.0))
+                )
+        return results
+
+
+class TestAddEventsRateConstant:
+    """``add_events`` computes the rate constants of all new events in one call.
+
+    ``is_valid_new_event`` is replaced by prepared results: event A keeps forward
+    and backward (2 rows), event B is rejected, event C keeps only forward (1 row).
+    """
+
+    @staticmethod
+    def _event(dE_forward: float, dE_backward: float) -> EventSearchOutput:
+        positions = np.zeros((2, 3))
+        return EventSearchOutput(
+            central_atom_index=0,
+            min1_positions=positions,
+            saddle_positions=positions + 1.0,
+            min2_positions=positions + 2.0,
+            dE_forward=dE_forward,
+            dE_backward=dE_backward,
+            move_atom_index=1,
+        )
+
+    @staticmethod
+    def _rows(n: int) -> Ok:
+        return Ok(pd.DataFrame({"energy_barrier": [0.0] * n, "k": [np.nan] * n}))
+
+    def _add(
+        self,
+        config: object,
+        monkeypatch: pytest.MonkeyPatch,
+        rate_constant: _SpyRateConstant,
+        loggers: object = None,
+    ) -> tuple[ReferenceEventTable, list[EventSearchOutput]]:
+        events = [self._event(0.1, 0.2), self._event(0.3, 0.4), self._event(0.5, 0.6)]
+        validations = iter(
+            [
+                self._rows(2),
+                Err(ErrorInfo(type=ErrorType.EVENT_NOT_NEW, message="")),
+                self._rows(1),
+            ]
+        )
+        table = ReferenceEventTable(
+            config, rate_constant=rate_constant, loggers=loggers
+        )
+        monkeypatch.setattr(
+            table, "is_valid_new_event", lambda **kwargs: next(validations)
+        )
+        table.add_events(events)
+        return table, events
+
+    def test_one_call_with_a_request_per_added_row(
+        self, config_system_single_type: object, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """One ``compute`` call; forward from min1, backward from min2, same saddle."""
+        spy = _SpyRateConstant()
+        table, (a, _, c) = self._add(config_system_single_type, monkeypatch, spy)
+
+        assert len(spy.calls) == 1
+        requests = spy.calls[0]
+        assert [r.dE for r in requests] == [0.1, 0.2, 0.5]
+        assert requests[0].initial_positions is a.min1_positions
+        assert requests[1].initial_positions is a.min2_positions
+        assert requests[2].initial_positions is c.min1_positions
+        assert requests[0].saddle_positions is requests[1].saddle_positions
+        assert requests[2].saddle_positions is c.saddle_positions
+        assert all(r.central_atom == 1 for r in requests)
+
+        assert list(table.table["k"]) == pytest.approx([1.0, 2.0, 5.0])
+        assert list(table.table["k_pref"]) == pytest.approx([10.0, 10.0, 10.0])
+
+    def test_failed_rate_uses_the_backup(
+        self, config_system_single_type: object, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A row whose rate fails gets the backup of the error, with a warning."""
+        spy = _SpyRateConstant(fail=(0.2,))
+        loggers = MagicMock()
+        table, _ = self._add(config_system_single_type, monkeypatch, spy, loggers)
+
+        assert list(table.table["k"]) == pytest.approx([1.0, -0.2, 5.0])
+        assert list(table.table["k_pref"]) == pytest.approx([10.0, 1.0, 10.0])
+        # the backward row of event A (idx_ref 1) is the one that failed
+        loggers.warning.assert_called_once_with(
+            "log",
+            "Rate constant compute failed on reference event 1 (spy failure), "
+            "use backup value k0 = 1 ps^-1",
+        )
+
+
+class TestActiveAddEventsRateConstant:
+    """``ActiveEventTable.add_events`` and the rate constant of its events."""
+
+    def test_reference_prefactor_with_active_barrier(
+        self, config_system_single_type: object
+    ) -> None:
+        """k = k_pref of the reference event x Boltzmann factor of the active barrier."""
+        config = config_system_single_type
+        reference_table = ReferenceEventTable(config)
+        reference_table.table = pd.DataFrame({"idx_ref": [0, 1], "k_pref": [2.0, 4.0]})
+        events = [
+            EventRefinementOutput(
+                central_atom_index=3,
+                saddle_positions=np.zeros((2, 3)),
+                E_saddle=0.0,
+                dE_forward=dE,
+                num_reference_event=num_reference_event,
+                refined="T",
+            )
+            for dE, num_reference_event in ((0.5, 1), (0.3, 0))
+        ]
+
+        active_table = ActiveEventTable(config)
+        active_table.add_events(events, reference_table)
+
+        kT = constants.KB * config.rateconstant.T
+        assert list(active_table.table["k_pref"]) == pytest.approx([4.0, 2.0])
+        assert list(active_table.table["k"]) == pytest.approx(
+            [4.0 * np.exp(-0.5 / kT), 2.0 * np.exp(-0.3 / kT)]
+        )

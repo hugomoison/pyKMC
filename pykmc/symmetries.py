@@ -9,6 +9,7 @@ def unique_symmetries(
     final_positions: np.ndarray,
     sym_thr: float,
     types: list = None,
+    origin: np.ndarray = None,
 ) -> tuple[list[np.ndarray], list[np.ndarray]]:
     """Identify the unique symmetry operations of an event based on atomic displacements.
 
@@ -26,6 +27,10 @@ def unique_symmetries(
     types : list, optional
         Element types for each atom. When provided, symmetry detection respects
         element types (fewer symmetries for multi-element systems).
+    origin : np.ndarray, optional
+        Point (3,) used by SOFI as the origin of the symmetry operations,
+        typically the position of the central atom. When None, SOFI uses the
+        geometric center of `initial_positions`.
 
     Returns
     -------
@@ -41,7 +46,9 @@ def unique_symmetries(
     typ = list(types) if types is not None else nat * [1]
 
     sofi = ira_mod.SOFI()
-    sym = sofi.compute(nat, typ, initial_positions, sym_thr)  # sym data ira object
+    sym = sofi.compute(
+        nat, typ, initial_positions, sym_thr, origin=origin
+    )  # sym data ira object
 
     # Find unique symmetries
     # Displacment event matrix

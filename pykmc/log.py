@@ -4,9 +4,9 @@ It also contains custom handlers/formatters for diverse console and file output
 """
 
 import sys
+import time
 import logging
 import logging.config
-from itertools import zip_longest
 from typing import Any, TextIO
 from enum import Enum
 import re
@@ -296,6 +296,16 @@ LOGGING_CONFIG = {
 }
 
 
+def _get_n_cpus() -> int:
+    """Return the number of MPI processes (1 if mpi4py is not available)."""
+    try:
+        from mpi4py import MPI
+
+        return MPI.COMM_WORLD.Get_size()
+    except ImportError:
+        return 1
+
+
 class LogKMC(LogManager):
     """Manage logging for the KMC, offering dynamic verbosity control.
 
@@ -309,12 +319,22 @@ class LogKMC(LogManager):
         Configuration dictionary for loggers in the format expected by logging.config.dictConfig.
     verbosity : int, optional
         Defines the loggers level (0=WARNING, 1=INFO, 2=DEBUG). Defaults to 1.
+    n_cpus : int, optional
+        Number of CPUs used, to compute the total CPU time. Defaults to the
+        size of MPI.COMM_WORLD (1 if mpi4py is not available).
 
     """
 
-    def __init__(self, config_dict: dict[str, Any], verbosity: int = 1) -> None:
+    def __init__(
+        self,
+        config_dict: dict[str, Any],
+        verbosity: int = 1,
+        n_cpus: int | None = None,
+    ) -> None:
         super().__init__(config_dict)
         self._verbosity = verbosity
+        self._start_wall_time = time.perf_counter()
+        self._n_cpus = n_cpus if n_cpus is not None else _get_n_cpus()
         # apply verbosity option modifying logger and handlers level
         self._apply_verbosity_level()
 
@@ -411,95 +431,163 @@ class LogKMC(LogManager):
                     )
         self.new_line(logger_name)
 
-    def output_file_header(self, logger_name: str) -> None:
+    # Columns of the output file : (header, header width, value format)
+    OUTPUT_COLUMNS = (
+        ("Step", 8, "{:<8d}"),
+        ("dT(s)", 13, "{:<13.6e}"),
+        ("T(s)", 13, "{:<13.6e}"),
+        ("E(eV)", 17, "{:<17.7f}"),
+        ("Ea(eV)", 11, "{:<11.7f}"),
+        ("Ref", 5, "{:<5d}"),
+        ("k_evt(ps-1)", 13, "{:<13.6e}"),
+        ("k_tot(ps-1)", 13, "{:<13.6e}"),
+        ("drmax(A)", 9, "{:<9.2f}"),
+        ("drtot(A)", 9, "{:<9.2f}"),
+        ("Nmoved", 7, "{:<7d}"),
+        ("dWall(s)", 10, "{:<10.2f}"),
+        ("Wall(s)", 12, "{:<12.2f}"),
+        ("CPU(s)", 12, "{:<12.2f}"),
+    )
+
+    def output_file_header(self, logger_name: str, disp_thr: float = 0.05) -> None:
         """Write the header of the output file.
 
         Parameters
         ----------
         logger_name: str
             The logger name.
+        disp_thr : float, optional
+            Displacement threshold (A) used to count moved atoms, by default 0.05.
 
         """
         # Information header :
         self.info(logger_name, "# Simulation Progress Tracking File")
         self.new_line(logger_name)
         self.info(logger_name, "# Column Details:")
-        self.info(logger_name, "\t# Step          : Simulation step number.")
-        self.info(
-            logger_name, "\t# dT(s)         : Time elapsed for this specific step."
-        )
-        self.info(logger_name, "\t# T(s)          : Total time since simulation start.")
+        self.info(logger_name, "#   Step        : Simulation step number.")
+        self.info(logger_name, "#   dT(s)       : Time elapsed for this specific step.")
+        self.info(logger_name, "#   T(s)        : Total time since simulation start.")
+        self.info(logger_name, "#   E(eV)       : Energy of the system.")
         self.info(
             logger_name,
-            "\t# Ref event     : Index in the reference talbe of the selected event.",
-        )
-        self.info(logger_name, "\t# Ea(eV)        : Event activation energy barrier.")
-        self.info(
-            logger_name, "\t# k_evt(ps-1)   : Rate constant of the selected event."
+            "#   Ea(eV)      : Activation energy barrier of the selected event.",
         )
         self.info(
             logger_name,
-            "\t# k_tot(ps-1)   : Total rate constant of all possible events at this step",
+            "#   Ref         : Index in the reference table of the selected event.",
         )
-        self.info(logger_name, "\t# E(eV)         : Energy of the system.")
-        self.info(logger_name, "\t# Cpu time(s) : Cpu time in seconds. ")
-        self.info(logger_name, "\t# Wall time(s) : Wall time in seconds. ")
-        self.new_line(logger_name)
-        # First line of the table
+        self.info(logger_name, "#   k_evt(ps-1) : Rate constant of the selected event.")
         self.info(
             logger_name,
-            "{:<10s} {:<14s} {:<14s} {:<14s} {:<14s} {:<14s} {:<14s} {:<14s} {:<14s} {:<14s}".format(
-                "Step",
-                "dT(s)",
-                "T(s)",
-                "Ref event",
-                "Ea(eV)",
-                "k_evt(ps-1)",
-                "k_tot(ps-1)",
-                "E(eV)",
-                "Cpu time(s)",
-                "Wall time(s)",
+            "#   k_tot(ps-1) : Total rate constant of all possible events at this step.",
+        )
+        self.info(
+            logger_name,
+            "#   drmax(A)    : Maximum atomic displacement since the previous step.",
+        )
+        self.info(
+            logger_name,
+            "#   drtot(A)    : Sum of displacements of atoms displaced by more than {} A since the previous step.".format(
+                disp_thr
             ),
         )
-        self.info(logger_name, "{:s}".format(110 * "-"))
+        self.info(
+            logger_name,
+            "#   Nmoved      : Number of atoms displaced by more than {} A since the previous step.".format(
+                disp_thr
+            ),
+        )
+        self.info(logger_name, "#   dWall(s)    : Wall time of this step.")
+        self.info(
+            logger_name, "#   Wall(s)     : Total wall time since simulation start."
+        )
+        self.info(
+            logger_name,
+            "#   CPU(s)      : Total CPU time (Wall(s) x {} CPUs).".format(
+                self._n_cpus
+            ),
+        )
+        self.new_line(logger_name)
+        # First line of the table
+        header = " ".join(
+            "{:<{}s}".format(name, width) for name, width, _ in self.OUTPUT_COLUMNS
+        )
+        self.info(logger_name, header.rstrip())
+        self.info(logger_name, "-" * len(header.rstrip()))
 
-    def table_line_info_kmc(self, logger_name: str, *args: int | float) -> None:
+    def table_line_info_kmc(
+        self,
+        logger_name: str,
+        step: int,
+        delta_t: float | None = None,
+        total_time: float | None = None,
+        total_energy: float | None = None,
+        energy_barrier: float | None = None,
+        num_reference_event: int | None = None,
+        k_event: float | None = None,
+        k_tot: float | None = None,
+        disp_max: float | None = None,
+        disp_tot: float | None = None,
+        n_moved: int | None = None,
+        step_wall_time: float | None = None,
+    ) -> None:
         """Write a formatted line of simulation output values into the output table.
+
+        The total wall time is measured since the creation of the logger, and
+        the total CPU time is the total wall time multiplied by the number of CPUs.
 
         Parameters
         ----------
         logger_name : str
             The logger name.
-        *args : int | float
-            Values representing the columns of the simulation output progress table.
-            These should correspond to:
-                - Step Number
-                - Time elapsed for this step (dT in s)
-                - Total cumulative time (T in s)
-                - Index in the reference table of the selected event.
-                - Event energy barrier (Ea in eV)
-                - Rate constant of current event (k_evt in ps-1)
-                - Total rate constant of all events (k_tot in ps-1)
-                - Total energy (E in eV).
+        step : int
+            Step number.
+        delta_t : float, optional
+            Time elapsed for this step (s).
+        total_time : float, optional
+            Total cumulative time (s).
+        total_energy : float, optional
+            Total energy (eV).
+        energy_barrier : float, optional
+            Selected event energy barrier (eV).
+        num_reference_event : int, optional
+            Index in the reference table of the selected event.
+        k_event : float, optional
+            Rate constant of the selected event (ps-1).
+        k_tot : float, optional
+            Total rate constant of all events (ps-1).
+        disp_max : float, optional
+            Maximum atomic displacement since the previous step (A).
+        disp_tot : float, optional
+            Sum of displacements of atoms displaced by more than the threshold (A).
+        n_moved : int, optional
+            Number of atoms displaced by more than the threshold.
+        step_wall_time : float, optional
+            Wall time of this step (s).
 
         """
-        formats = [
-            "{:<10n}",
-            "{:<14e}",
-            "{:<14e}",
-            "{:<14d}",
-            "{:<14e}",
-            "{:<14e}",
-            "{:<14e}",
-            "{:<14e}",
-            "{:<14e}",
-            "{:<14e}",
-        ]
+        total_wall_time = time.perf_counter() - self._start_wall_time
+        values = (
+            step,
+            delta_t,
+            total_time,
+            total_energy,
+            energy_barrier,
+            None if num_reference_event is None else int(num_reference_event),
+            k_event,
+            k_tot,
+            disp_max,
+            disp_tot,
+            n_moved,
+            step_wall_time,
+            total_wall_time,
+            total_wall_time * self._n_cpus,
+        )
         formatted_values = [
-            fmt.format(e) if e is not None else " " * 14
-            for fmt, e in zip_longest(formats, args, fillvalue=None)
+            fmt.format(v) if v is not None else " " * width
+            for (_, width, fmt), v in zip(self.OUTPUT_COLUMNS, values)
         ]
-        self.info(logger_name, " ".join(formatted_values))
+        self.info(logger_name, " ".join(formatted_values).rstrip())
 
     def events_file_header(self, logger_name: str) -> None:
         """Write header of the events file

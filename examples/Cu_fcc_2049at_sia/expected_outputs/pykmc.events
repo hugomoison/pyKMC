@@ -1,0 +1,55 @@
+#Actif Events Informations File
+	 #Type: The central atom's type.
+	 #Central Atom: Index of the central atom of the event.
+	 #Ref Event: Index of reference event in the reference table.
+	 #dE forward: Energy barrier of the forward reaction (eV).
+	 #dE backward: Energy barrier of the backward reaction (eV).
+	 #dE asym: |dE forward - dE backward| (eV).
+	 #k: rate of the forward reaction (ps-1)
+	 #dra_i: displacement between the initial positions and the saddle positions.
+	 #dra_f: displacement between the final positions and the saddle positions.
+	 #Refined: - T : The event has been refined.
+	 #         - F : The event has not been refined.
+
+#Step: 1
+========== Applicable Events (Selected=5) ==========
+   Types  Central Atom  Ref Event  dE forward  dE backward   dE asym         k     dra_i     dra_f Refined
+0     Cu          1103          0    0.092510     0.092472  0.000038  0.279194  0.512007  0.512007       T
+1     Cu          1103          0    0.092513     0.092472  0.000041  0.279155  0.512007  0.512007       T
+2     Cu          1128          0    0.092515     0.092472  0.000043  0.279139  0.512007  0.512007       T
+3     Cu          1103          0    0.092515     0.092472  0.000044  0.279132  0.512007  0.512007       T
+4     Cu          1128          0    0.092517     0.092472  0.000046  0.279109  0.512007  0.512007       T
+5     Cu          1128          0    0.092520     0.092472  0.000048  0.279081  0.512007  0.512007       T
+6     Cu          1103          0    0.092521     0.092472  0.000049  0.279075  0.512007  0.512007       T
+7     Cu          1128          0    0.092525     0.092472  0.000054  0.279025  0.512007  0.512007       T
+8     Cu          1103          1    0.228921     0.228921  0.000000  0.001427  0.835915  0.835915       F
+9     Cu          1103          1    0.228921     0.228921  0.000000  0.001427  0.835915  0.835915       F
+10    Cu          1103          1    0.228921     0.228921  0.000000  0.001427  0.835915  0.835915       F
+11    Cu          1103          1    0.228921     0.228921  0.000000  0.001427  0.835915  0.835915       F
+#Step: 2
+========== Applicable Events (Selected=2) ==========
+   Types  Central Atom  Ref Event  dE forward  dE backward   dE asym         k     dra_i     dra_f Refined
+0     Cu          1128          0    0.092509     0.092472  0.000038  0.279197  0.512007  0.512007       T
+1     Cu          1128          0    0.092513     0.092472  0.000041  0.279159  0.512007  0.512007       T
+2     Cu           839          0    0.092514     0.092472  0.000043  0.279141  0.512007  0.512007       T
+
+...
+
+
+10    Cu          1866          1    0.228921     0.228921  0.000000  0.001427  0.835915  0.835915       F
+11    Cu          1866          1    0.228921     0.228921  0.000000  0.001427  0.835915  0.835915       F
+#Step: 100
+========== Applicable Events (Selected=2) ==========
+   Types  Central Atom  Ref Event  dE forward  dE backward   dE asym         k     dra_i     dra_f Refined
+0     Cu          1893          0    0.092509     0.092472  0.000038  0.279197  0.512007  0.512007       T
+1     Cu          1893          0    0.092513     0.092472  0.000041  0.279159  0.512007  0.512007       T
+2     Cu          1605          0    0.092514     0.092472  0.000043  0.279141  0.512007  0.512007       T
+3     Cu          1893          0    0.092515     0.092472  0.000043  0.279135  0.512007  0.512007       T
+4     Cu          1605          0    0.092517     0.092472  0.000045  0.279112  0.512007  0.512007       T
+5     Cu          1605          0    0.092520     0.092472  0.000048  0.279084  0.512007  0.512007       T
+6     Cu          1893          0    0.092520     0.092472  0.000049  0.279079  0.512007  0.512007       T
+7     Cu          1605          0    0.092525     0.092472  0.000053  0.279028  0.512007  0.512007       T
+8     Cu          1605          1    0.228921     0.228921  0.000000  0.001427  0.835915  0.835915       F
+9     Cu          1605          1    0.228921     0.228921  0.000000  0.001427  0.835915  0.835915       F
+10    Cu          1605          1    0.228921     0.228921  0.000000  0.001427  0.835915  0.835915       F
+11    Cu          1605          1    0.228921     0.228921  0.000000  0.001427  0.835915  0.835915       F

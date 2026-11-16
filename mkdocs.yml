@@ -30,10 +30,14 @@ nav:
   - Getting Started:
       - Installation: install/installation.md
       - User Guide: user_guide.md
+      - Atomic Environment: atomic_environments.md
+      - Event Recycling: recycling.md
+      - Active Volumes: active_volumes.md
   - Troubleshooting: troubleshooting.md
   - KMC Parameters: parameters.md
   - Developer Guide: 
       - Strategy pattern : dev_strategy_pattern.md
+      - Result type : dev_results.md
       - Engine : dev_engine.md
       - Manager and Parallelization : dev_parallelization_manager.md
       - Code formatting : dev_code_formatting.md
@@ -49,6 +53,7 @@ nav:
       - Engine: api/engine.md
       - LammpsEngine: api/lammpsengine.md
       - EventTable : api/event_table.md
+      - EventRecycling : api/event_recycling.md
       - EventSearch : api/eventsearch.md
       - Refinement : api/refinement.md
       - PointSetRegistration : api/point_set_registration.md

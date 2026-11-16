@@ -111,6 +111,17 @@ class AtomicEnvironment:
         """See :py:func:`.environments.region` for details."""
         return region(r, positions, atom_types)
 
+    def _expand_non_crystal_idx(
+        self, non_crystal_idx: list[int], neighbors_list: list[list[int]]
+    ) -> list[int]:
+        """Extend `non_crystal_idx` to its `self.neighbors_add`-th neighbour shell."""
+        for _i in range(self.neighbors_add):  # Do it recursively
+            tmp = []
+            for idx in non_crystal_idx:
+                tmp += neighbors_list[idx]
+            non_crystal_idx = list(set(non_crystal_idx + tmp))
+        return non_crystal_idx
+
     def compute_cna(self) -> list[str]:
         """See :py:func:`.environments.cna` for details on CNA computation."""
         return cna(self.neighbors_list)
@@ -151,12 +162,9 @@ class AtomicEnvironment:
 
         # If radd_cna != None add neighbors of non crystal from cna
         if self.neighbors_add > 0:
-            tmp = []
-            for _i in range(self.neighbors_add):  # Do it recursively
-                for idx in non_crystal_idx:
-                    tmp += neighbors_list[idx]
-            non_crystal_idx += tmp
-            non_crystal_idx = list(set(non_crystal_idx))
+            non_crystal_idx = self._expand_non_crystal_idx(
+                non_crystal_idx, neighbors_list
+            )
         # Compute graph topo for all non cristalline atoms
         list_graphs_hash = graph(
             neighbors_list,
@@ -206,12 +214,9 @@ class AtomicEnvironment:
 
         # Optionally extend to the N-th neighbour shell of each non-crystal atom
         if self.neighbors_add > 0:
-            tmp = []
-            for _i in range(self.neighbors_add):  # Do it recursively
-                for idx in non_crystal_idx:
-                    tmp += neighbors_list[idx]
-            non_crystal_idx += tmp
-            non_crystal_idx = list(set(non_crystal_idx))
+            non_crystal_idx = self._expand_non_crystal_idx(
+                non_crystal_idx, neighbors_list
+            )
 
         # Compute graph topology only for the non-crystalline atoms
         list_graphs_hash = graph(
@@ -234,12 +239,9 @@ class AtomicEnvironment:
 
         # If radd_cna != None add neighbors of non crystal from cna
         if self.neighbors_add > 0:
-            tmp = []
-            for _i in range(self.neighbors_add):  # Do it recursively
-                for idx in non_crystal_idx:
-                    tmp += neighbors_list[idx]
-            non_crystal_idx += tmp
-            non_crystal_idx = list(set(non_crystal_idx))
+            non_crystal_idx = self._expand_non_crystal_idx(
+                non_crystal_idx, neighbors_list
+            )
         # Compute graph topo for all non cristalline atoms
         list_graphs_hash = graph(
             neighbors_list,

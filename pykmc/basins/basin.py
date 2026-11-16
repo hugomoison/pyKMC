@@ -11,12 +11,12 @@ from pykmc import (
     AtomicEnvironment,
     ReferenceEventTable,
     PointSetRegistration,
-    check_match,
     Reconstruction,
 )
 from typing import Optional
 from ..utils import geometry
-from ..rate_constant import compute_rate_Eyring
+from ..log import LogKMC
+from ..rate_constant import RateConstant, RateRequest
 import pandas as pd
 import copy
 import numpy as np
@@ -66,12 +66,25 @@ class StateData:
 
 class BasinsGenericEvents:
     def __init__(
-        self, config: Config, reference_table, known_environments, manager
+        self,
+        config: Config,
+        reference_table,
+        known_environments,
+        manager,
+        rate_constant: RateConstant = None,
+        loggers: LogKMC = None,
     ) -> None:
         self.config = config  # Config object with basins parameters
         self.explorer = None  # object to explore a state in the basin
         self.reference_table = reference_table  # Object with reference generic events
         self.manager = manager  # object to do external task (minimize, refine)
+        # computes the rate constant of refined events, built from the config if None
+        if rate_constant is None:
+            rate_constant = RateConstant.create(
+                config.rateconstant.style, config=config.rateconstant
+            )
+        self.rate_constant = rate_constant
+        self.loggers = loggers  # simulation loggers, nothing is logged if None
 
         self.connectivity_table = None  # Dataframe of basin connexion state
         self.selected_event = None  # The selected event after basin exploration
@@ -327,18 +340,48 @@ class BasinsGenericEvents:
         # new_system = copy.deepcopy(self.states[from_state].system)
 
         # Apply PSR between event initial position and environment positions of the central_atoms
-        result = PointSetRegistration(
-            self.config,
-            new_system,
-            ref_event,
-            self.states[from_state].neighbors_list,
-            central_atom,
-        ).match()
-        if not result.is_ok():  # PSR Err
-            return result
-            # Check if PointSetRegistration match is valid
-        result = check_match(result, self.config.psr.matching_score_thr)
-        if not result.is_ok():  # PSR matching score not valid :
+
+        # TODO: duplicated in refine_absorbing() below and in Refinement.refine_single().
+        # Extract into a shared method once basin.py calls Refinement directly instead
+        # of re-implementing this preprocessing.
+        # Build the point clouds PointSetRegistration needs: local neighborhood of
+        # central_atom in new_system (coords1/typ1) against the reference event's
+        # initial positions (coords2/typ2)
+        neighbor_list = self.states[from_state].neighbors_list.get_neighbors(
+            "rcut", central_atom
+        )
+        coords1 = new_system.positions[neighbor_list]
+        coords2 = ref_event.at["initial_positions"]
+
+        if self.config.atomicenvironment.atom_coloring_mode == "full":
+            typ1 = list(np.array(new_system.types)[neighbor_list])
+            typ2 = list(ref_event.at["types"])
+        else:
+            # Grey alloy: all atoms treated identically -> species-blind IRA
+            # matching (a single shared dummy label, sized per structure).
+            typ1 = ["X"] * len(coords1)
+            typ2 = ["X"] * len(coords2)
+
+        # unwrap around the central atom (minimum-image convention, valid for
+        # orthorhombic and triclinic cells alike)
+        coords1 = geometry.unwrap_relative_to(
+            coords1, new_system.positions[central_atom], new_system.cell
+        )
+
+        result = PointSetRegistration.create(
+            self.config.psr.style, config=self.config.ira
+        ).match_and_check(
+            len(coords1),
+            typ1,
+            coords1,
+            len(coords2),
+            typ2,
+            coords2,
+            self.config.psr.matching_score_thr,
+            candidate1=int(np.where(np.asarray(neighbor_list) == central_atom)[0][0]),
+            candidate2=int(ref_event.at["move_atom_idx"]),
+        )
+        if not result.is_ok():  # PSR Err or matching score not valid
             return result
         else:
             psr_output = result.ok_value()  # get psr results
@@ -346,20 +389,24 @@ class BasinsGenericEvents:
         # Apply PSR to generic event to move
 
         # Apply symmetry matrix if sym != 0
+        # Symmetries are applied to displacements, as in refinement.py: a
+        # displacement does not depend on the origin, and the initial
+        # positions are invariant under the symmetry, so they stay unchanged.
         if sym_idx != 0:
-            sym_matrices = ref_event["sym_matrix"]
-            sym_matrix = sym_matrices[sym_idx]
-            supposed_initial_positions = geometry.transform_positions(
-                supposed_initial_positions,
+            sym_matrix = ref_event["sym_matrix"][sym_idx]
+            sym_perm = ref_event["sym_perm"][sym_idx]
+            new_displacement_saddle = geometry.transform_positions(
+                saddle_positions - supposed_initial_positions, sym_matrix, 0, sym_perm
+            )
+            new_displacement_final = geometry.transform_positions(
+                supposed_final_positions - supposed_initial_positions,
                 sym_matrix,
                 0,
-                ref_event["sym_perm"][sym_idx],
+                sym_perm,
             )
-            saddle_positions = geometry.transform_positions(
-                saddle_positions, sym_matrix, 0, ref_event["sym_perm"][sym_idx]
-            )
-            supposed_final_positions = geometry.transform_positions(
-                supposed_final_positions, sym_matrix, 0, ref_event["sym_perm"][sym_idx]
+            saddle_positions = supposed_initial_positions + new_displacement_saddle
+            supposed_final_positions = (
+                supposed_initial_positions + new_displacement_final
             )
         supposed_initial_positions = geometry.transform_positions(
             supposed_initial_positions,
@@ -451,32 +498,64 @@ class BasinsGenericEvents:
                 # ENSURE "STATE" FULL
                 self.states[row["state"]].ensure_full_state(self.config)
 
-                result = PointSetRegistration(
-                    self.config,
-                    tmp_system,
-                    ref_event,
-                    self.states[row["state"]].neighbors_list,
-                    row["central_atom"],
-                ).match()
-                if not result.is_ok():  # PSR Err
-                    return result
-                    # Check if PointSetRegistration match is valid
-                result = check_match(result, self.config.psr.matching_score_thr)
-                if not result.is_ok():  # PSR matching score not valid :
+                # TODO: duplicated in system_from_state() above and in
+                # Refinement.refine_single(). Extract into a shared method once
+                # basin.py calls Refinement directly instead of re-implementing
+                # this preprocessing.
+                # Build the point clouds PointSetRegistration needs: local neighborhood
+                # of central_atom in tmp_system (coords1/typ1) against the reference
+                # event's initial positions (coords2/typ2)
+                neighbor_list = self.states[row["state"]].neighbors_list.get_neighbors(
+                    "rcut", row["central_atom"]
+                )
+                coords1 = tmp_system.positions[neighbor_list]
+                coords2 = ref_event.at["initial_positions"]
+
+                if self.config.atomicenvironment.atom_coloring_mode == "full":
+                    typ1 = list(np.array(tmp_system.types)[neighbor_list])
+                    typ2 = list(ref_event.at["types"])
+                else:
+                    # Grey alloy: all atoms treated identically -> species-blind IRA
+                    # matching (a single shared dummy label, sized per structure).
+                    typ1 = ["X"] * len(coords1)
+                    typ2 = ["X"] * len(coords2)
+
+                # unwrap around the central atom (minimum-image convention, valid
+                # for orthorhombic and triclinic cells alike)
+                coords1 = geometry.unwrap_relative_to(
+                    coords1, tmp_system.positions[row["central_atom"]], tmp_system.cell
+                )
+
+                result = PointSetRegistration.create(
+                    self.config.psr.style, config=self.config.ira
+                ).match_and_check(
+                    len(coords1),
+                    typ1,
+                    coords1,
+                    len(coords2),
+                    typ2,
+                    coords2,
+                    self.config.psr.matching_score_thr,
+                    candidate1=int(
+                        np.where(np.asarray(neighbor_list) == row["central_atom"])[0][0]
+                    ),
+                    candidate2=int(ref_event.at["move_atom_idx"]),
+                )
+                if not result.is_ok():  # PSR Err or matching score not valid
                     return result
                 else:
                     psr_output = result.ok_value()  # get psr results
 
                 # Apply symmetry matrix if sym != 0
+                # Symmetry is applied to the displacement, as in refinement.py
                 if row["sym"] != 0:
-                    sym_matrices = ref_event["sym_matrix"]
-                    sym_matrix = sym_matrices[row["sym"]]
-                    saddle_positions = geometry.transform_positions(
-                        saddle_positions,
-                        sym_matrix,
-                        0,
-                        ref_event["sym_perm"][row["sym"]],
+                    sym_matrix = ref_event["sym_matrix"][row["sym"]]
+                    sym_perm = ref_event["sym_perm"][row["sym"]]
+                    initial_positions = ref_event["initial_positions"]
+                    new_displacement_saddle = geometry.transform_positions(
+                        saddle_positions - initial_positions, sym_matrix, 0, sym_perm
                     )
+                    saddle_positions = initial_positions + new_displacement_saddle
                 saddle_positions = geometry.transform_positions(
                     saddle_positions,
                     psr_output.rotation_matrix,
@@ -514,12 +593,14 @@ class BasinsGenericEvents:
                     "min": future1,
                     "saddle": future2,
                     "neighbors": neighbors,
+                    "k_pref": float(ref_event["k_pref"]),
                 }
 
                 # RELEASE MEMORY :
                 self.states[row["state"]].release_heavy_objects()
 
         # modify connectivity table entry future1 hold min energy, future2 holds E_saddle
+        rows, rate_requests = [], []
         for idx, ctx in futures_context.items():
             E_min = ctx["min"].result()
             result_sad = ctx["saddle"].result()
@@ -530,7 +611,6 @@ class BasinsGenericEvents:
                 dE = E_sad
             else:
                 dE = E_sad - E_min
-            k = compute_rate_Eyring(dE, self.config)
 
             # also save saddle positions refined
             idx_state = self.connectivity_table.df.loc[idx].at["state_connexion"]
@@ -538,9 +618,31 @@ class BasinsGenericEvents:
             self.absorbing_saddle_positions[(from_state_for_saddle, idx_state)] = (
                 result_sad.ok_value().saddle_positions[ctx["neighbors"]]
             )
+            # prefactor of the reference event, with the refined barrier
+            rows.append(idx)
+            rate_requests.append(RateRequest(dE=dE, prefactor=ctx["k_pref"]))
+
+        # rate constants of all refined events in one call
+        results = self.rate_constant.compute(rate_requests)
+        for idx, request, result in zip(rows, rate_requests, results, strict=True):
+            if isinstance(result, Ok):
+                output = result.ok_value()
+            else:  # the strategy failed: use its backup computed with k0
+                error = result.err_value()
+                output = error.variables["backup"]
+                if self.loggers is not None:
+                    row = self.connectivity_table.df.loc[idx]
+                    self.loggers.warning(
+                        "log",
+                        "Rate constant compute failed on basin event "
+                        f"(state {row['state']} -> {row['state_connexion']}, "
+                        f"reference event {row['event_connexion']}) "
+                        f"({error.message}), "
+                        f"use backup value k0 = {output.prefactor:g} ps^-1",
+                    )
             # update connectivity table row
-            self.connectivity_table.df.loc[idx, "dE_forward"] = dE
-            self.connectivity_table.df.loc[idx, "k_forward"] = k
+            self.connectivity_table.df.loc[idx, "dE_forward"] = request.dE
+            self.connectivity_table.df.loc[idx, "k_forward"] = output.k
         return Ok(None)
 
     def is_new_state(self, system):

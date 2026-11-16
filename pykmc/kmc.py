@@ -46,7 +46,7 @@ from .eventsearch import EventSearch
 from .refinement import Refinement
 from .log import Colors
 import time
-from .utils import push_towards, compute_delr
+from .utils import push_towards, compute_delr, per_atom_displacement
 import copy
 from .basins.detection import DetectorThreshold
 from .basins import BasinsGenericEvents
@@ -96,6 +96,7 @@ class KMC:
         self.engine = None
         self.neighbors_list = None
         self.atomic_environment = None
+        self.rate_constant = None
         self.reference_table = None
         self.visited_environments = None
         self.total_energy = None
@@ -167,6 +168,8 @@ class KMC:
             restart_info = np.load(self.config.control.restart_file)
             last_step = restart_info["last_step"]
             total_time = restart_info["last_time"]
+            # Shift the logger start time so that Wall(s) and CPU(s) continue
+            self.loggers._start_wall_time -= restart_info["total_wall_time"]
             self.loggers.info(
                 "log",
                 ":=> last step = {}, last_end_time = {}ps".format(
@@ -181,12 +184,15 @@ class KMC:
 
         # Build the persistent active event table once, with the recycler
         # plugin (built in __init__) attached.
-        self.active_table = ActiveEventTable(self.config, recycler=self.recycler)
+        self.active_table = ActiveEventTable(
+            self.config, recycler=self.recycler, rate_constant=self.rate_constant
+        )
 
         # KMC LOOP
         for step in range(last_step, nkmc_steps + last_step):
             start_real = time.time()
-            start_cpu = time.process_time()
+            # Positions at the end of the previous step, for the displacement output
+            step_start_positions = self.system.positions.copy()
 
             self.loggers.info(
                 "log",
@@ -290,11 +296,13 @@ class KMC:
                 self.visited_environments = self.visited_environments.difference(
                     set(err_ae)
                 )
-            events_info = events_info.output_msg()
+            sorted_selected_event, events_info = events_info.output_msg(
+                idx_selected_event
+            )
 
             # INFO :
             self.loggers.events_file_step_first_line("events", step)
-            self.loggers.events_applicable_info_line("events", idx_selected_event)
+            self.loggers.events_applicable_info_line("events", sorted_selected_event)
             self.loggers.info("events", events_info)
 
             # TODO: Temporary, need to unified kmc main loop and basin operations + ugly
@@ -317,6 +325,8 @@ class KMC:
                     self.reference_table,
                     self.visited_environments,
                     self.manager,
+                    rate_constant=self.rate_constant,
+                    loggers=self.loggers,
                 )
                 self.system.update_positions(
                     result_reconstruction.ok_value().min1_positions
@@ -331,7 +341,9 @@ class KMC:
                         result_basin.ok_value().from_state
                     ].neighbors_list
                     # construct new active table with only event : new_actual_state - > exit_state
-                    tmp_active_table = ActiveEventTable(self.config)
+                    tmp_active_table = ActiveEventTable(
+                        self.config, rate_constant=self.rate_constant
+                    )
                     tmp_event = EventRefinementOutput(
                         central_atom_index=result_basin.ok_value().central_atom,
                         saddle_positions=result_basin.ok_value().saddle_positions,
@@ -341,7 +353,7 @@ class KMC:
                         num_reference_event=result_basin.ok_value().num_reference_event,
                     )
                     neighbors = result_basin.ok_value().neighbors
-                    tmp_active_table.add_events(tmp_event)
+                    tmp_active_table.add_events(tmp_event, self.reference_table)
                     # reconstruct event
                     result_basin_reconstruction = self._reconstruction_active_event(
                         0, tmp_active_table
@@ -365,7 +377,9 @@ class KMC:
                             basin.connectivity_table,
                             result_basin.ok_value().exit_state,
                         )
-                        basin_info = basin_info.output_msg()
+                        idx_exit_event, basin_info = basin_info.output_msg(
+                            idx_exit_event
+                        )
                         self.loggers.events_basin_info_line("events", idx_exit_event)
                         self.loggers.info("events", basin_info)
 
@@ -380,6 +394,7 @@ class KMC:
                         self.system.update_positions(
                             result_reconstruction.ok_value().min2_positions
                         )
+                        self.total_energy = result_reconstruction.ok_value().min2_etot
                 else:
                     self.loggers.info(
                         "log",
@@ -390,6 +405,7 @@ class KMC:
                     self.system.update_positions(
                         result_reconstruction.ok_value().min2_positions
                     )
+                    self.total_energy = result_reconstruction.ok_value().min2_etot
                 if basin.connectivity_table is not None:
                     basin.connectivity_table.save(
                         "basin_connectivity_" + str(step) + ".pickle"
@@ -404,6 +420,12 @@ class KMC:
                 self.total_energy = result_reconstruction.ok_value().min2_etot
                 prune_detach_recycler = False
             total_time += delta_t * 10**-12  # time is in seconds
+
+            # Atomic displacements since the previous step
+            step_disp = per_atom_displacement(
+                step_start_positions, self.system.positions, self.system.cell
+            )
+            moved = step_disp > self.config.control.disp_thr
 
             ###=> Synchronise all lammps instances with new positions
             self.manager.broadcast("set_positions", positions=self.system.positions)
@@ -430,19 +452,20 @@ class KMC:
             self.loggers.info("info", kmc_loop_info.output_msg())
 
             elapsed_real = time.time() - start_real
-            elapsed_cpu = time.process_time() - start_cpu
 
             self.loggers.table_line_info_kmc(
                 "output",
                 step,
                 delta_t * 10**-12,
                 total_time,
-                active_table.table.loc[idx_selected_event].at["num_reference_event"],
+                self.total_energy,
                 active_table.table.loc[idx_selected_event].at["energy_barrier"],
+                active_table.table.loc[idx_selected_event].at["num_reference_event"],
                 active_table.table.loc[idx_selected_event].at["k"],
                 ktot,
-                self.total_energy,
-                elapsed_cpu,
+                step_disp.max(),
+                step_disp[moved].sum(),
+                int(moved.sum()),
                 elapsed_real,
             )
 
@@ -699,7 +722,7 @@ class KMC:
         # Extend the persistent active table (initialised once in `run()`).
         # Any rows surviving from the previous step are already present and
         # are not re-added because Refinement skipped them via existing_pairs.
-        self.active_table.add_events(events)
+        self.active_table.add_events(events, self.reference_table)
         return self.active_table
 
     def _select_event(
@@ -959,7 +982,7 @@ class KMC:
 
     def _save(self) -> None:
         """Save the reference event table and the list of visited environments."""
-        self.reference_table.save("reference_table.pickle")
+        self.reference_table.save(self.config.control.reference_table_output)
         with open(self.config.control.visited_environments_output, "wb") as file:
             pickle.dump(self.visited_environments, file)
 
@@ -971,6 +994,7 @@ class KMC:
             "restart_" + str(last_step) + ".npz",
             last_step=last_step,
             last_time=last_time,
+            total_wall_time=time.perf_counter() - self.loggers._start_wall_time,
         )
 
     def _close(self) -> None:

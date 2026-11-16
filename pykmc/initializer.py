@@ -13,6 +13,7 @@ from .system import System
 from .neighbors_list import NeighborsList
 from .atomic_environment import AtomicEnvironment
 from .event_table import ReferenceEventTable
+from .rate_constant import RateConstant
 from .bias import DirectionBias, PointBias, TopoBias
 import pickle
 
@@ -37,6 +38,7 @@ class Initializer:
         self.initialize_engine()
         self.initialize_neighbors_list()
         self.initialize_atomic_environments()
+        self.initialize_rate_constant()
         self.initialize_reference_table()
         self._initialize_visited_environments()
         self.initialize_bias()
@@ -48,7 +50,7 @@ class Initializer:
 
         if self.kmc.config.control.restart_file is None:
             self.kmc.loggers.table_line_info_kmc(
-                "output", 0, 0.0, 0.0, None, None, None, None, self.kmc.total_energy
+                "output", 0, 0.0, 0.0, self.kmc.total_energy
             )
         else:
             self.kmc.loggers.info("log", ":=> Restarting")
@@ -61,7 +63,9 @@ class Initializer:
         self.kmc.loggers.title("log")
         self.kmc.loggers.write_parameters("log", self.kmc.config)
         if self.kmc.config.control.restart_file is None:
-            self.kmc.loggers.output_file_header("output")
+            self.kmc.loggers.output_file_header(
+                "output", disp_thr=self.kmc.config.control.disp_thr
+            )
             self.kmc.loggers.events_file_header("events")
 
     def initialize_system(self) -> None:
@@ -122,6 +126,12 @@ class Initializer:
             coloring_mode=self.kmc.config.atomicenvironment.atom_coloring_mode,
         )
 
+    def initialize_rate_constant(self) -> None:
+        """Initialize the rate constant shared by the event tables."""
+        self.kmc.rate_constant = RateConstant.create(
+            self.kmc.config.rateconstant.style, config=self.kmc.config.rateconstant
+        )
+
     def initialize_reference_table(self) -> None:
         """Initialize the Reference Event Table."""
         if self.kmc.config.control.reference_table is not None:
@@ -133,7 +143,11 @@ class Initializer:
             )
         else:
             self.kmc.loggers.info("log", ":=> Generate a empty reference table")
-        self.kmc.reference_table = ReferenceEventTable(self.kmc.config)
+        self.kmc.reference_table = ReferenceEventTable(
+            self.kmc.config,
+            rate_constant=self.kmc.rate_constant,
+            loggers=self.kmc.loggers,
+        )
 
     def initialize_bias(self) -> None:
         """Instantiate the bias object from the config, or set it to None."""

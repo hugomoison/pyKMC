@@ -2,9 +2,8 @@
 initial_config = ./initial_config.xyz 
 n_steps = 100
 engine = lammps
-verbosity = 2
+verbosity = 1
 n_sessions = 7
-engine_use_rank_0 = False
 
 [Lammps] 
 pair_style = eam/alloy 
@@ -19,9 +18,7 @@ rcut = 6.5
 
 [EventSearch] 
 style = partn
-nsearch = 20
-emax_event = 5.0
-emin_event = 0.0
+nsearch = 10
 
 [pARTn] 
 
@@ -36,5 +33,3 @@ matching_score_thr = 0.4
 
 [IRA]
 kmax_factor = 2.0
-
-[BASIN]

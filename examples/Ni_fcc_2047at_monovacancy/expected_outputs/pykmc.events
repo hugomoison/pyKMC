@@ -1,0 +1,53 @@
+#Actif Events Informations File
+	 #Type: The central atom's type.
+	 #Central Atom: Index of the central atom of the event.
+	 #Ref Event: Index of reference event in the reference table.
+	 #dE forward: Energy barrier of the forward reaction (eV).
+	 #dE backward: Energy barrier of the backward reaction (eV).
+	 #dE asym: |dE forward - dE backward| (eV).
+	 #k: rate of the forward reaction (ps-1)
+	 #dra_i: displacement between the initial positions and the saddle positions.
+	 #dra_f: displacement between the final positions and the saddle positions.
+	 #Refined: - T : The event has been refined.
+	 #         - F : The event has not been refined.
+
+#Step: 1
+========== Applicable Events (Selected=11) ==========
+   Types  Central Atom  Ref Event  dE forward  dE backward   dE asym             k     dra_i     dra_f Refined
+0     Ni          1165          0    1.188051     1.188128  0.000078  1.100580e-19  1.214003  1.214003       T
+1     Ni          1170          0    1.188051     1.188128  0.000078  1.100580e-19  1.214003  1.214003       T
+2     Ni          1139          0    1.188051     1.188128  0.000078  1.100580e-19  1.214003  1.214003       T
+3     Ni          1388          0    1.188051     1.188128  0.000078  1.100580e-19  1.214003  1.214003       T
+4     Ni          1164          0    1.188051     1.188128  0.000078  1.100580e-19  1.214003  1.214003       T
+5     Ni          1135          0    1.188051     1.188128  0.000078  1.100580e-19  1.214003  1.214003       T
+6     Ni          1166          0    1.188051     1.188128  0.000078  1.100580e-19  1.214003  1.214003       T
+7     Ni          1420          0    1.188051     1.188128  0.000078  1.100580e-19  1.214003  1.214003       T
+8     Ni          1419          0    1.188051     1.188128  0.000078  1.100580e-19  1.214003  1.214003       T
+9     Ni          1423          0    1.188051     1.188128  0.000078  1.100580e-19  1.214003  1.214003       T
+10    Ni          1167          0    1.188051     1.188128  0.000078  1.100580e-19  1.214003  1.214003       T
+11    Ni          1133          0    1.188051     1.188128  0.000078  1.100580e-19  1.214003  1.214003       T
+#Step: 2
+========== Applicable Events (Selected=1) ==========
+   Types  Central Atom  Ref Event  dE forward  dE backward   dE asym             k     dra_i     dra_f Refined
+0     Ni          1164          0    1.188050     1.188128  0.000078  1.100605e-19  1.214003  1.214003       T
+1     Ni          1135          0    1.188050     1.188128  0.000078  1.100605e-19  1.214003  1.214003       T
+
+...
+
+10    Ni           126          0    1.188051     1.188128  0.000078  1.100583e-19  1.214003  1.214003       T
+11    Ni          1917          0    1.188051     1.188128  0.000078  1.100583e-19  1.214003  1.214003       T
+#Step: 100
+========== Applicable Events (Selected=9) ==========
+   Types  Central Atom  Ref Event  dE forward  dE backward   dE asym             k     dra_i     dra_f Refined
+0     Ni          1858          0    1.188050     1.188128  0.000078  1.100605e-19  1.214003  1.214003       T
+1     Ni            67          0    1.188050     1.188128  0.000078  1.100605e-19  1.214003  1.214003       T
+2     Ni          1917          0    1.188050     1.188128  0.000078  1.100605e-19  1.214003  1.214003       T
+3     Ni           126          0    1.188050     1.188128  0.000078  1.100605e-19  1.214003  1.214003       T
+4     Ni            99          0    1.188050     1.188128  0.000078  1.100604e-19  1.214003  1.214003       T
+5     Ni          1890          0    1.188050     1.188128  0.000078  1.100604e-19  1.214003  1.214003       T
+6     Ni          1889          0    1.188050     1.188128  0.000078  1.100604e-19  1.214003  1.214003       T
+7     Ni            98          0    1.188050     1.188128  0.000078  1.100604e-19  1.214003  1.214003       T
+8     Ni            96          0    1.188051     1.188128  0.000078  1.100583e-19  1.214003  1.214003       T
+9     Ni           125          0    1.188051     1.188128  0.000078  1.100582e-19  1.214003  1.214003       T
+10    Ni            65          0    1.188051     1.188128  0.000078  1.100582e-19  1.214003  1.214003       T
+11    Ni            97          0    1.188051     1.188128  0.000078  1.100582e-19  1.214003  1.214003       T

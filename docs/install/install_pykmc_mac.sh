@@ -102,7 +102,7 @@ cd "$INSTALL_DIR"
 git clone -b develop https://github.com/hugomoison/pyKMC.git
 git clone -b stable_22Jul2025_update3 --depth 1 https://github.com/lammps/lammps.git
 git clone https://github.com/mammasmias/IterativeRotationsAssignments.git
-git clone https://gitlab.com/mammasmias/artn-plugin.git
+git clone -b v1.1.0 --depth 1 https://gitlab.com/mammasmias/artn-plugin.git
 ok "All repositories cloned"
 
 # ------------------------------------------
