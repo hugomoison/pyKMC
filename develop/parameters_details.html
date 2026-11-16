@@ -2627,6 +2627,20 @@
   </details></p>
 </li>
 <li>
+<p><strong><code>require_center</code></strong> : <code>bool</code>, default = <code>False</code>
+<br />
+<details><summary>Description</summary>
+  Whether only the central atom of an event is tested against the bias predicate. False (default): the predicate is satisfied by any atom of atom_indices found in the event neighbourhood. Only meaningful when atom_indices is set.
+  </details></p>
+</li>
+<li>
+<p><strong><code>thr_boost</code></strong> : <code>float</code>, optional
+<br />
+<details><summary>Description</summary>
+  Barrier cutoff in eV above which a desired event is excluded from the boost, keeping its unmodified rate. None (default) disables the cutoff. Only used in boost mode.
+  </details></p>
+</li>
+<li>
 <p><strong><code>direction</code></strong> : <code>list[float]</code>, optional
 <br />
 <details><summary>Description</summary>
@@ -2655,17 +2669,17 @@
   </details></p>
 </li>
 <li>
-<p><strong><code>topo_source</code></strong> : <code>str</code>, optional
+<p><strong><code>atom_source_idx</code></strong> : <code>int</code>, optional
 <br />
 <details><summary>Description</summary>
-  Source topology ID for 'topo' bias (e.g. vacancy).
+  Atom index for 'topo' bias. The topology ID of this atom at initialisation is used as the source topology for the remainder of the simulation.
   </details></p>
 </li>
 <li>
-<p><strong><code>topo_target</code></strong> : <code>str</code>, optional
+<p><strong><code>atom_target_idx</code></strong> : <code>int</code>, optional
 <br />
 <details><summary>Description</summary>
-  Target topology ID for 'topo' bias (e.g. interstitial).
+  Atom index for 'topo' bias (two-index mode). The topology ID of this atom at initialisation is used as the target topology. When absent, direction mode is active and a direction vector must be provided.
   </details>
 </p>
 </li>
