@@ -659,15 +659,22 @@ class RegionConfig(BaseModel):
     """Selects atoms by type, index, or geometric region (union semantics).
 
     Used for ``inactive_atoms`` and ``frozen_atoms`` config sections.
-    Runtime geometric queries (e.g. ``contains(positions)``) live in
-    ``pykmc/region.py``.
+    The selection itself is done by :class:`pykmc.region.Region`.
     """
 
     region_type: Optional[Literal["sphere", "shell", "box", "plane"]] = Field(
         default=None, description="Shape of the geometric region."
     )
     center: Optional[list[float]] = Field(
-        default=None, description="Center [x, y, z] for sphere or shell regions."
+        default=None,
+        description="Fixed center [x, y, z] for sphere or shell regions. "
+        "Mutually exclusive with center_atom.",
+    )
+    center_atom: Optional[int] = Field(
+        default=None,
+        ge=0,
+        description="0-based index of the atom used as center for sphere or shell "
+        "regions; the region follows that atom. Mutually exclusive with center.",
     )
     radius: Optional[float] = Field(
         default=None, description="Outer radius for sphere or shell regions."
@@ -752,10 +759,13 @@ class RegionConfig(BaseModel):
             return self
         t = self.region_type
         if t in ("sphere", "shell"):
-            if self.center is None or self.radius is None:
+            if (self.center is None) == (self.center_atom is None):
                 raise ValueError(
-                    f"region_type='{t}' requires region_center and region_radius."
+                    f"region_type='{t}' requires exactly one of region_center "
+                    "and region_center_atom."
                 )
+            if self.radius is None:
+                raise ValueError(f"region_type='{t}' requires region_radius.")
             if t == "shell" and self.inner_radius is None:
                 raise ValueError("region_type='shell' requires region_inner_radius.")
             if self.side not in ("inside", "outside"):
