@@ -111,9 +111,9 @@ mask = box.contains(positions)
 
 ## Selection rules
 
-**Union.** An atom is selected if its type is in `types`, OR its index is in `indices`, OR it is in the shape.
+**Union.** An atom is selected if its type is in `types`, OR its index is in `indices`, OR it is in the shape. `shape` also accepts a list of strategies: the atom is then selected if it is in at least one of them. For anything more complex (intersection, per-shape inversion), combine the masks of several `Region` yourself.
 
-**Inversion.** `invert=True` (`side = outside` in the input file) selects the atoms outside the shape. It applies to the shape only, never to `types` and `indices`.
+**Inversion.** `invert=True` (`side = outside` in the input file) selects the atoms outside the shape (outside all of them for a list). It applies to the shape only, never to `types` and `indices`.
 
 **Bounds are included.** An atom exactly on the sphere, on a box face or on the plane is inside.
 
@@ -122,7 +122,7 @@ mask = box.contains(positions)
 | Shape | Config attributes | Inside when |
 |---|---|---|
 | `sphere` | `center` or `center_atom`, `radius` | `d <= radius` |
-| `shell` | `center` or `center_atom`, `radius`, `inner_radius` | `inner_radius <= d <= radius` |
+| `shell` | `center` or `center_atom`, `radius`, `inner_radius` | `inner_radius < d <= radius` |
 | `box` | `lo`, `hi` | `lo <= x, y, z <= hi` |
 | `plane` | `normal` (`x`, `y`, `z`), `threshold`, `side` (`above`, `below`) | coordinate `>=` (above) or `<=` (below) `threshold` |
 
