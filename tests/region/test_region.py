@@ -55,7 +55,8 @@ def test_sphere_uses_minimum_image_with_cell() -> None:
 
 def test_shell() -> None:
     config = SimpleNamespace(center=(5.0, 5.0, 5.0), radius=3.0, inner_radius=2.0)
-    assert Region.create("shell", config=config).select(POSITIONS) == [2, 3]
+    # Atom 2 lies exactly on inner_radius: excluded. Atom 3 lies on radius: included.
+    assert Region.create("shell", config=config).select(POSITIONS) == [3]
 
 
 def test_box() -> None:
@@ -100,6 +101,17 @@ def test_invert_does_not_apply_to_types_and_indices() -> None:
     assert region.select(POSITIONS, TYPES) == [1, 2, 3, 4, 5]
 
 
+def test_list_of_shapes_is_a_union() -> None:
+    near = RegionStrategy.create("sphere", config=sphere(0.5))
+    far = RegionStrategy.create("sphere", config=sphere(0.5, center=(8.0, 5.0, 5.0)))
+    assert Region(shape=[near, far]).select(POSITIONS) == [0, 3]
+    assert Region(shape=[near, far], invert=True).select(POSITIONS) == [1, 2, 4, 5]
+
+
+def test_empty_list_of_shapes_selects_nothing() -> None:
+    assert Region(shape=[]).select(POSITIONS) == []
+
+
 def test_types_require_atom_types() -> None:
     region = Region(types=["Fe"])
     with pytest.raises(ValueError, match="atom_types"):
@@ -133,7 +145,7 @@ def test_no_criteria_selects_nothing() -> None:
                 "region_radius": 3.0,
                 "region_inner_radius": 2.0,
             },
-            [2, 3],
+            [3],
         ),
         (
             {
