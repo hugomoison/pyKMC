@@ -26,7 +26,12 @@ class ShellConfig(SphereConfig, Protocol):
 
 
 class Shell(Sphere):
-    """Positions at a distance in ``[inner_radius, radius]`` from the center."""
+    """Positions at a distance in ``(inner_radius, radius]`` from the center.
+
+    The inner bound is excluded, so a ``Sphere`` of radius ``r1`` and a
+    ``Shell`` of radii ``(r1, r2)`` split a ``Sphere`` of radius ``r2`` without
+    overlap.
+    """
 
     name = "shell"
 
@@ -36,6 +41,6 @@ class Shell(Sphere):
     def contains(
         self, positions: np.ndarray, cell: np.ndarray | None = None
     ) -> np.ndarray:
-        """Return True for positions between `inner_radius` and `radius`."""
+        """Return True for positions with ``inner_radius < d <= radius``."""
         dists = self.distances(positions, cell)
-        return (dists >= self.config.inner_radius) & (dists <= self.config.radius)
+        return (dists > self.config.inner_radius) & (dists <= self.config.radius)
