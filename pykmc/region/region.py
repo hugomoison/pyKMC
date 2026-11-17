@@ -16,30 +16,37 @@ class Region:
     """Select atoms by type, index or geometric shape, with union semantics.
 
     An atom is selected if its type is in `types`, OR its index is in
-    `indices`, OR it lies in the shape (or outside of it when `invert` is True).
+    `indices`, OR it lies in at least one of the shapes (or outside of all of
+    them when `invert` is True).
 
     Parameters
     ----------
-    shape : RegionStrategy, optional
-        Geometric shape. When None, only `types` and `indices` select atoms.
+    shape : RegionStrategy or Iterable[RegionStrategy], optional
+        Geometric shape, or several shapes whose union is used. When None or
+        empty, only `types` and `indices` select atoms.
     types : Iterable[str], optional
         Chemical symbols to select.
     indices : Iterable[int], optional
         0-based atom indices to select. Indices outside ``[0, N)`` are ignored.
     invert : bool, optional
-        Select the atoms outside the shape instead of inside. It does not
-        apply to `types` and `indices`.
+        Select the atoms outside the union of the shapes instead of inside it.
+        It does not apply to `types` and `indices`.
 
     """
 
     def __init__(
         self,
-        shape: RegionStrategy | None = None,
+        shape: RegionStrategy | Iterable[RegionStrategy] | None = None,
         types: Iterable[str] = (),
         indices: Iterable[int] = (),
         invert: bool = False,
     ) -> None:
-        self.shape = shape
+        if shape is None:
+            self.shapes: tuple[RegionStrategy, ...] = ()
+        elif isinstance(shape, RegionStrategy):
+            self.shapes = (shape,)
+        else:
+            self.shapes = tuple(shape)
         self.types = frozenset(types)
         self.indices = tuple(indices)
         self.invert = invert
@@ -87,8 +94,10 @@ class Region:
             idx = np.asarray(self.indices, dtype=int)
             selected[idx[(idx >= 0) & (idx < n)]] = True
 
-        if self.shape is not None:
-            inside = self.shape.contains(positions, cell)
+        if self.shapes:
+            inside = np.zeros(n, dtype=bool)
+            for shape in self.shapes:
+                inside |= shape.contains(positions, cell)
             selected |= ~inside if self.invert else inside
 
         return selected
