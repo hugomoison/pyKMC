@@ -566,7 +566,7 @@ class BasinsGenericEvents:
                     "rcut", row["central_atom"]
                 )
 
-                if self.config.control.active_volume == True:
+                if self.config.eventsearch.active_volume:
                     # add a job to manager queue
                     future2 = self.manager.partn_refine(
                         config=self.config,
@@ -576,6 +576,8 @@ class BasinsGenericEvents:
                         types=tmp_system.types.copy(),
                         saddle_idx=neighbors.copy(),
                         saddle_positions=saddle_positions.copy(),
+                        rmov=self.config.eventsearch.rmov,
+                        rbuff=self.config.eventsearch.rbuff,
                     )
                 # Move system do saddle positions
                 else:
@@ -607,7 +609,7 @@ class BasinsGenericEvents:
             if not result_sad.is_ok():
                 return result_sad
             E_sad = result_sad.ok_value().E_saddle
-            if self.config.control.active_volume == True:
+            if self.config.eventsearch.active_volume:
                 dE = E_sad
             else:
                 dE = E_sad - E_min

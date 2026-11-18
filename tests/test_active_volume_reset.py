@@ -144,21 +144,9 @@ class _EngineCfg:
     verbosity: int = 0
 
 
-@dataclass
-class _AVCfg:
-    """Active-volume radii sized for a 4x4x4 FCC cell (14.1 Angstrom)."""
-
-    ract: float = 6.0
-    rmov: float = 3.0
-    AV_debug: bool = False
-
-
-@dataclass
-class _SearchCfg:
-    """Config shim for ``partn_search_AV``."""
-
-    lammps: _EngineCfg = field(default_factory=_EngineCfg)
-    activevolume: _AVCfg = field(default_factory=_AVCfg)
+# Active-volume radii sized for a 4x4x4 FCC cell (14.1 Angstrom).
+_RMOV = 3.0
+_RBUFF = 3.0
 
 
 def _engine_cfg(potential: str) -> _EngineCfg:
@@ -226,12 +214,11 @@ def test_partn_search_AV_crop_holds_every_species(
     _require_serial()
 
     types, positions, cell = _fcc_ni_cell(cr_stride)
-    config = _SearchCfg(lammps=_engine_cfg(potential))
-    engine = LammpsEngine(config=config.lammps, comm=None)
+    engine = LammpsEngine(config=_engine_cfg(potential), comm=None)
     engine.start()
     try:
         atom_map, central_id = av.partn_search_AV(
-            engine, config, 0, positions, cell, types
+            engine, 0, positions, cell, types, _RMOV, _RBUFF
         )
         lmp = engine.lmp
         int_types, _ = LammpsEngine.map_types(types)

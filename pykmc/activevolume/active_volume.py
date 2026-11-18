@@ -11,12 +11,25 @@ from ..config import Config
 from ..region import Region, SphereParams
 
 
-def define_AV(config, central_atom_idx: int, positions, cell):
+def define_AV(central_atom_idx: int, positions, cell, rmov: float, rbuff: float):
     """Select the atoms of the active volume around `central_atom_idx`.
 
-    The active volume is the sphere of radius `ract` around the central atom
-    (minimum image). Inside it, atoms at a distance ``<= rmov`` can move, the
-    others (``rmov < d <= ract``) form the fixed buffer.
+    The active volume is the sphere of radius ``rmov + rbuff`` around the
+    central atom (minimum image). Inside it, atoms at a distance ``<= rmov``
+    can move, the others (``rmov < d <= rmov + rbuff``) form the fixed buffer.
+
+    Parameters
+    ----------
+    central_atom_idx : int
+        Index of the atom at the center of the active volume.
+    positions : np.ndarray, shape (N, 3)
+        Positions of the full system.
+    cell : np.ndarray, shape (3, 3)
+        Simulation cell.
+    rmov : float
+        Radius (Angstrom) of the movable atoms.
+    rbuff : float
+        Thickness (Angstrom) of the fixed buffer around the movable atoms.
 
     Returns
     -------
@@ -29,13 +42,10 @@ def define_AV(config, central_atom_idx: int, positions, cell):
 
     """
 
-    # NEED TO ADD WARNING IF R_A<R_M
-    r_a = config.activevolume.ract  # Ensure AV is larger than topology analysis
-    r_m = config.activevolume.rmov
-
-    # Degine AV sphere
+    # Define AV sphere
     region_av = Region.create(
-        "sphere", config=SphereParams(center_atom=central_atom_idx, radius=r_a)
+        "sphere",
+        config=SphereParams(center_atom=central_atom_idx, radius=rmov + rbuff),
     )
     av_idx = np.asarray(region_av.select(positions, cell=cell), dtype=int)
 
@@ -43,7 +53,7 @@ def define_AV(config, central_atom_idx: int, positions, cell):
     _, distances = find_mic(
         positions[av_idx] - positions[central_atom_idx], cell, pbc=True
     )
-    buffer_idx = av_idx[distances > r_m]
+    buffer_idx = av_idx[distances > rmov]
 
     return positions[av_idx], av_idx, buffer_idx
 
@@ -134,12 +144,17 @@ def redefine_atoms(engine, positions, type=None) -> None:
 
 
 def partn_search_AV(
-    engine, config, central_atom_idx: int, positions, cell, type
+    engine, central_atom_idx: int, positions, cell, type, rmov: float, rbuff: float
 ) -> [np.array, int]:
+    """Rebuild the engine box with only the active volume around `central_atom_idx`.
+
+    ``rmov`` is the radius of the movable atoms and ``rbuff`` the thickness of
+    the fixed buffer (see :func:`define_AV`).
+    """
     int_types, map_type = engine.map_types(type)
     reset(engine, cell, map_type=map_type)
     av_positions, av_idx, buffer_idx = define_AV(
-        config, central_atom_idx, positions, cell
+        central_atom_idx, positions, cell, rmov, rbuff
     )
 
     atom_map = np.array(av_idx, dtype=int)
@@ -159,6 +174,9 @@ def partn_refine_AV(
     type,
     saddle_idx,
     saddle_positions,
+    rmov: float,
+    rbuff: float,
+    debug: bool = False,
 ) -> [float, np.array, int]:
     """
     Receive the system with the central atom index, define an active volume around this atom, then update the positions
@@ -166,14 +184,18 @@ def partn_refine_AV(
 
     This was added in order to get the activation energy for an event, as the traditional method does not work for
     Active Volumes.
+
+    ``rmov`` and ``rbuff`` are the active volume radii (see :func:`define_AV`).
+    With ``debug``, the energy of the active volume is printed before and after
+    a short minimization, to check that the active volume is large enough.
     """
 
     atom_map, central_lammps_id = partn_search_AV(
-        engine, config, central_atom_idx, positions, cell, type
+        engine, central_atom_idx, positions, cell, type, rmov, rbuff
     )
     av_positions = positions[atom_map]
 
-    if config.activevolume.AV_debug == True:
+    if debug:
         E_before = get_potential_energy(engine)
         engine.command("min_style {}".format(config.lammps.min_style))
         engine.command("minimize 1.0e-6 1.0e-8 10 10")

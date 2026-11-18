@@ -485,16 +485,31 @@ class LammpsEngine(Engine):
 
     @lammps_error_handler
     def partn_search(
-        self, config, central_atom_idx: int, positions=None, cell=None, types=None
+        self,
+        config,
+        central_atom_idx: int,
+        positions=None,
+        cell=None,
+        types=None,
+        rmov: float | None = None,
+        rbuff: float | None = None,
     ):
+        """Run a pARTn event search around ``central_atom_idx``.
+
+        When ``rmov`` and ``rbuff`` are given, the search runs in an active
+        volume of movable radius ``rmov`` and fixed buffer thickness ``rbuff``
+        around the central atom; ``positions``, ``cell`` and ``types`` of the
+        full system are then required.
+        """
+        use_av = rmov is not None and rbuff is not None
         original_stdout_fd = os.dup(1)
         devnull = os.open(os.devnull, os.O_WRONLY)
         os.dup2(devnull, 1)
 
         print("Central Atom", central_atom_idx)
-        if config.control.active_volume:
+        if use_av:
             atom_map, central_lammps_id = partn_search_AV(
-                self, config, central_atom_idx, positions, cell, types
+                self, central_atom_idx, positions, cell, types, rmov, rbuff
             )
         else:
             atom_map = None
@@ -569,7 +584,7 @@ class LammpsEngine(Engine):
                     dE_forward = E_sad - E_min1
                     dE_backward = E_sad - E_min2
 
-                    if config.control.active_volume:
+                    if use_av:
                         min1positions, min2positions, saddlepositions, index_move = (
                             position_results_AV(config, artn, atom_map, positions, cell)
                         )
@@ -651,8 +666,18 @@ class LammpsEngine(Engine):
         saddle_idx=None,
         saddle_positions=None,
         minimize_outer_atoms: bool = True,
+        rmov: float | None = None,
+        rbuff: float | None = None,
     ):
-        if config.control.active_volume:
+        """Refine a saddle point with pARTn around ``central_atom_idx``.
+
+        When ``rmov`` and ``rbuff`` are given, the refinement runs in an active
+        volume of movable radius ``rmov`` and fixed buffer thickness ``rbuff``
+        around the central atom, and ``E_saddle`` is the barrier relative to
+        the active volume at ``positions``.
+        """
+        use_av = rmov is not None and rbuff is not None
+        if use_av:
             E_init, atom_map, central_lammps_id = partn_refine_AV(
                 self,
                 config,
@@ -662,6 +687,8 @@ class LammpsEngine(Engine):
                 types,
                 saddle_idx,
                 saddle_positions,
+                rmov,
+                rbuff,
             )
         else:
             central_lammps_id = [central_atom_idx + 1]
@@ -733,7 +760,7 @@ class LammpsEngine(Engine):
                         saddlepositions = self._positions_from_lammps(
                             artn.extract("tau_sad")
                         )
-                        if config.control.active_volume:
+                        if use_av:
                             saddlepositions_results = positions.copy()
                             for i, atom_idx in enumerate(atom_map):
                                 saddlepositions_results[atom_idx] = saddlepositions[i]

@@ -14,7 +14,6 @@ The bracket parser is shared with ``nperp_limitation`` and
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -254,21 +253,6 @@ def test_hybrid_overlay_energy() -> None:
     assert e_hybrid == pytest.approx(e_lj + e_zbl, rel=1e-12, abs=1e-10)
 
 
-@dataclass
-class _AVCfg:
-    ract: float = 6.0
-    rmov: float = 3.0
-    AV_debug: bool = False
-
-
-@dataclass
-class _SearchCfg:
-    """Config shim for ``partn_search_AV``."""
-
-    lammps: LammpsConfig
-    activevolume: _AVCfg = field(default_factory=_AVCfg)
-
-
 def _active_volume_energy(cfg: LammpsConfig) -> float:
     """Energy of the active-volume crop that ``partn_search_AV`` builds in a 256-atom Ni cell."""
     pytest.importorskip("pypARTn")
@@ -281,11 +265,12 @@ def _active_volume_energy(cfg: LammpsConfig) -> float:
     try:
         av.partn_search_AV(
             engine,
-            _SearchCfg(lammps=cfg),
             0,
             atoms.get_positions(),
             np.array(atoms.get_cell()),
             atoms.get_chemical_symbols(),
+            rmov=3.0,
+            rbuff=3.0,
         )
         engine.lmp.command("run 0")
         return engine.lmp.get_thermo("pe")
