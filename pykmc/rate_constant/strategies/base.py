@@ -13,6 +13,12 @@ from pykmc._core.result import ErrorInfo, Ok, Result
 from ..result import RateConstantOutput
 
 if TYPE_CHECKING:
+    from pykmc.config import Config
+    from pykmc.engine.base import EngineExtension
+    from pykmc.log import LogKMC
+    from pykmc.manager import Manager
+    from pykmc.system import System
+
     from ..rate_constant import RateRequest
 
 
@@ -28,6 +34,38 @@ class RateConstantStrategy(Registrable, root=True):
     A concrete strategy declares its own config `Protocol` and stores it in
     `self.config`, which must expose the temperature `T` (K).
     """
+
+    @property
+    def engine_extensions(self) -> tuple[type[EngineExtension], ...]:
+        """Engine extensions every session must load for this strategy.
+
+        A property, so that a strategy imports its extensions, and the engine they
+        need, only when it is the one configured. Default: none.
+        """
+        return ()
+
+    def setup(
+        self, config: Config, manager: Manager, system: System, loggers: LogKMC
+    ) -> None:
+        """Give the strategy what it needs beyond its own config, once the engines exist.
+
+        Parameters
+        ----------
+        config : Config
+            The full simulation configuration.
+        manager : Manager
+            The engine session pool.
+        system : System
+            The simulated system.
+        loggers : LogKMC
+            The simulation loggers.
+
+        Notes
+        -----
+        Default: nothing. A strategy that sends work to the engines overrides it,
+        and checks there that it can run.
+
+        """
 
     @abstractmethod
     def prefactor(self) -> float:

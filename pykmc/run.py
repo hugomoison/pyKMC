@@ -9,6 +9,7 @@ from mpi4py import MPI
 from .kmc import KMC
 from pykmc.factory import EngineManagerFactory
 from .config import Config
+from .rate_constant import RateConstant
 
 
 def main() -> None:
@@ -31,12 +32,17 @@ def main() -> None:
         else config.control.group_size
     )
     # KMC
+    # Every rank asks the rate constant for the engine extensions it needs.
+    engine_extensions = RateConstant.create(
+        config.rateconstant.style, config=config.rateconstant
+    ).engine_extensions
     factory = EngineManagerFactory(
         engine_style=config.control.engine,
         n_workers=config.control.n_sessions,
         comm=comm,
         engine_config=config.lammps,
         group_size=group_size,
+        engine_extensions=list(engine_extensions),
     )
     manager = factory.launch()
     if manager is not None:  # On rank 0
