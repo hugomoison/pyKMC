@@ -8,6 +8,7 @@ from typing import Protocol
 from .base import Engine
 from ase.cell import Cell
 from ase.data import atomic_masses, atomic_numbers
+from ase.geometry import find_mic
 
 try:
     from mpi4py import MPI
@@ -570,7 +571,7 @@ class LammpsEngine(Engine):
 
                     if config.control.active_volume:
                         min1positions, min2positions, saddlepositions, index_move = (
-                            position_results_AV(config, artn, atom_map, positions)
+                            position_results_AV(config, artn, atom_map, positions, cell)
                         )
                     else:
                         min1positions = self._positions_from_lammps(
@@ -582,10 +583,18 @@ class LammpsEngine(Engine):
                         saddlepositions = self._positions_from_lammps(
                             artn.extract("tau_sad")
                         )
-                        dist = (min1positions - saddlepositions) ** 2
-                        dist = dist.sum(axis=-1)
-                        dist = np.sqrt(dist)
-                        dist[dist > config.atomicenvironment.rcut] = 0
+                        # minimum image: pARTn returns wrapped coordinates and
+                        # the atom that hops may cross the cell boundary
+                        boxlo, boxhi, xy, yz, xz, periodicity, _ = (
+                            self.lmp.extract_box()
+                        )
+                        lx, ly, lz = np.subtract(boxhi, boxlo)
+                        box = self._positions_from_lammps(
+                            np.array([[lx, 0, 0], [xy, ly, 0], [xz, yz, lz]])
+                        )
+                        _, dist = find_mic(
+                            min1positions - saddlepositions, box, pbc=periodicity
+                        )
                         index_move = np.argmax(dist)
 
                     if delr1 < delr2:
