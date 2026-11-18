@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import numpy as np
-from .environments import cna, coordination, graph, identify_diamond, region
+from .environments import cna, coordination, graph, identify_diamond
 from .config import RegionConfig
+from .region import Region
 
 
 class AtomicEnvironment:
@@ -108,8 +109,21 @@ class AtomicEnvironment:
         positions: np.ndarray | None,
         atom_types: list[str] | None,
     ) -> list[str]:
-        """See :py:func:`.environments.region` for details."""
-        return region(r, positions, atom_types)
+        """Classify each atom as ``'in'`` or ``'out'`` of the region.
+
+        See :py:class:`pykmc.region.Region` for the selection rules.
+        ``side='outside'`` inverts sphere, shell and box shapes. For a plane,
+        ``side`` ('above'/'below') is read by the shape itself.
+        """
+        region = Region.create(
+            r.region_type,
+            config=r,
+            types=r.types,
+            indices=r.indices,
+            invert=r.side == "outside",
+        )
+        mask = region.mask(positions, atom_types)
+        return ["in" if m else "out" for m in mask]
 
     def _expand_non_crystal_idx(
         self, non_crystal_idx: list[int], neighbors_list: list[list[int]]

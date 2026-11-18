@@ -1,0 +1,139 @@
+"""Selection of atoms by type, index and geometric region."""
+
+from __future__ import annotations
+
+from typing import Iterable
+
+import numpy as np
+
+from .strategies import RegionStrategy
+
+
+class Region:
+    """Select atoms by type, index or geometric shape, with union semantics.
+
+    An atom is selected if its type is in `types`, OR its index is in
+    `indices`, OR it lies in at least one of the shapes (or outside of all of
+    them when `invert` is True).
+
+    Parameters
+    ----------
+    shape : RegionStrategy or Iterable[RegionStrategy], optional
+        Geometric shape, or several shapes whose union is used. When None or
+        empty, only `types` and `indices` select atoms.
+    types : Iterable[str], optional
+        Chemical symbols to select.
+    indices : Iterable[int], optional
+        0-based atom indices to select. Indices outside ``[0, N)`` are ignored.
+    invert : bool, optional
+        Select the atoms outside the union of the shapes instead of inside it.
+        It does not apply to `types` and `indices`.
+
+    """
+
+    def __init__(
+        self,
+        shape: RegionStrategy | Iterable[RegionStrategy] | None = None,
+        types: Iterable[str] = (),
+        indices: Iterable[int] = (),
+        invert: bool = False,
+    ) -> None:
+        if shape is None:
+            self.shapes: tuple[RegionStrategy, ...] = ()
+        elif isinstance(shape, RegionStrategy):
+            self.shapes = (shape,)
+        else:
+            self.shapes = tuple(shape)
+        self.types = frozenset(types)
+        self.indices = tuple(indices)
+        self.invert = invert
+
+    def mask(
+        self,
+        positions: np.ndarray,
+        atom_types: list[str] | None = None,
+        cell: np.ndarray | None = None,
+    ) -> np.ndarray:
+        """Return which atoms are selected.
+
+        Parameters
+        ----------
+        positions : np.ndarray, shape (N, 3)
+            Cartesian positions.
+        atom_types : list[str], optional
+            Chemical symbol of each atom. Required when `types` is not empty.
+        cell : np.ndarray, shape (3, 3), optional
+            Simulation cell. When given, the shape is evaluated with periodic
+            boundary conditions.
+
+        Returns
+        -------
+        np.ndarray, shape (N,)
+            Boolean mask, True for selected atoms.
+
+        Raises
+        ------
+        ValueError
+            If `types` is not empty and `atom_types` is None.
+
+        """
+        n = len(positions)
+        selected = np.zeros(n, dtype=bool)
+
+        if self.types:
+            if atom_types is None:
+                raise ValueError("Selecting atoms by type requires atom_types.")
+            selected |= np.fromiter(
+                (t in self.types for t in atom_types), dtype=bool, count=n
+            )
+
+        if self.indices:
+            idx = np.asarray(self.indices, dtype=int)
+            selected[idx[(idx >= 0) & (idx < n)]] = True
+
+        if self.shapes:
+            inside = np.zeros(n, dtype=bool)
+            for shape in self.shapes:
+                inside |= shape.contains(positions, cell)
+            selected |= ~inside if self.invert else inside
+
+        return selected
+
+    def select(
+        self,
+        positions: np.ndarray,
+        atom_types: list[str] | None = None,
+        cell: np.ndarray | None = None,
+    ) -> list[int]:
+        """Return the sorted indices of the selected atoms. See :meth:`mask`."""
+        return np.flatnonzero(self.mask(positions, atom_types, cell)).tolist()
+
+    @classmethod
+    def create(
+        cls,
+        shape: str | None,
+        *,
+        types: Iterable[str] = (),
+        indices: Iterable[int] = (),
+        invert: bool = False,
+        **kwargs,
+    ) -> "Region":
+        """Build a Region wired with the requested shape.
+
+        Parameters
+        ----------
+        shape : str or None
+            Name of the registered shape (e.g. "sphere"). When None, only
+            `types` and `indices` select atoms and `kwargs` are ignored.
+        types, indices, invert
+            See :class:`Region`.
+        **kwargs
+            Forwarded to the shape's constructor (e.g. ``config=...``).
+
+        """
+        return cls(
+            shape=None if shape is None else RegionStrategy.create(shape, **kwargs),
+            types=types,
+            indices=indices,
+            invert=invert,
+        )

@@ -8,46 +8,44 @@ from typing import Protocol
 from ase.geometry import find_mic
 from ..system import System
 from ..config import Config
+from ..region import Region, SphereParams
 
 
 def define_AV(config, central_atom_idx: int, positions, cell):
-    # Defining parameters
-    # Radius of whole active volume in Ang
-    r_a = config.activevolume.ract  # Ensure AV is larger than topology analysis
-    # Defines the radius of atoms that can move.
-    r_m = config.activevolume.rmov
+    """Select the atoms of the active volume around `central_atom_idx`.
+
+    The active volume is the sphere of radius `ract` around the central atom
+    (minimum image). Inside it, atoms at a distance ``<= rmov`` can move, the
+    others (``rmov < d <= ract``) form the fixed buffer.
+
+    Returns
+    -------
+    av_positions : np.ndarray, shape (M, 3)
+        Positions of the active volume atoms.
+    av_idx : np.ndarray, shape (M,)
+        Sorted indices of the active volume atoms.
+    buffer_idx : np.ndarray
+        Sorted indices of the buffer atoms, a subset of `av_idx`.
+
+    """
 
     # NEED TO ADD WARNING IF R_A<R_M
+    r_a = config.activevolume.ract  # Ensure AV is larger than topology analysis
+    r_m = config.activevolume.rmov
 
-    center = positions[central_atom_idx]
+    # Degine AV sphere
+    region_av = Region.create(
+        "sphere", config=SphereParams(center_atom=central_atom_idx, radius=r_a)
+    )
+    av_idx = np.asarray(region_av.select(positions, cell=cell), dtype=int)
 
-    inner_movable_idx = []
-    buffer_idx = []
-    total_active_idx = []
-    non_active_idx = []
+    # Distances to the central atom, to find buffer region
+    _, distances = find_mic(
+        positions[av_idx] - positions[central_atom_idx], cell, pbc=True
+    )
+    buffer_idx = av_idx[distances > r_m]
 
-    for i, pos in enumerate(positions):
-        diff = pos - center
-        diff_mic, distance = find_mic(diff, cell, pbc=True)
-        if np.abs(distance) <= r_m:
-            inner_movable_idx.append(i)
-            total_active_idx.append(i)  # Inner is also part of total active
-        elif (
-            np.abs(distance) > r_m and np.abs(distance) <= r_a
-        ):  # Can change to make it between r_m and r_a
-            buffer_idx.append(i)
-            total_active_idx.append(i)
-        else:
-            non_active_idx.append(i)
-
-    buffer_idx = np.array(sorted(buffer_idx))
-    av_idx = np.array(sorted(total_active_idx))
-
-    av_positions = positions[av_idx]
-
-    # print(len(av_idx)," atoms in AV,", len(av_idx)-len(buffer_idx), "movable atoms")
-
-    return av_positions, av_idx, buffer_idx
+    return positions[av_idx], av_idx, buffer_idx
 
 
 def make_AV(engine, av_indices, buffer_indices):
