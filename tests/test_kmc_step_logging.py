@@ -38,6 +38,9 @@ class _FakeManager:
     def set_all_positions(self, positions: Optional[np.ndarray] = None) -> None:
         """Pretend to broadcast positions to the engines."""
 
+    def broadcast(self, *args: Any, **kwargs: Any) -> None:
+        """Pretend to broadcast a call to the engines."""
+
     def close_all(self) -> None:
         """Pretend to shut the pool down."""
 
@@ -153,6 +156,10 @@ def test_step_log_reads_executed_row_before_prune(
     sim.loggers = _RecordingLoggers()
     sim.reference_table = reference_table_Cu_fake
     sim.visited_environments = visited_environments_Cu
+    # The fake table predates the idx_ref and k_pref columns add_events reads.
+    reference = reference_table_Cu_fake.table
+    reference["idx_ref"] = reference.index
+    reference["k_pref"] = config.rateconstant.k0
 
     ref_idx = int(reference_table_Cu_fake.table.index[0])
     positions = np.array(system_Cu.positions, copy=True)
