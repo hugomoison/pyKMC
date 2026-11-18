@@ -32,14 +32,14 @@ def define_AV(config, central_atom_idx: int, positions, cell):
     # NEED TO ADD WARNING IF R_A<R_M
     r_a = config.activevolume.ract  # Ensure AV is larger than topology analysis
     r_m = config.activevolume.rmov
-    
-    #Degine AV sphere 
+
+    # Degine AV sphere
     region_av = Region.create(
         "sphere", config=SphereParams(center_atom=central_atom_idx, radius=r_a)
     )
     av_idx = np.asarray(region_av.select(positions, cell=cell), dtype=int)
 
-    # Distances to the central atom, to find buffer region 
+    # Distances to the central atom, to find buffer region
     _, distances = find_mic(
         positions[av_idx] - positions[central_atom_idx], cell, pbc=True
     )
