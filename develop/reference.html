@@ -1465,6 +1465,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#pykmc.ActiveEventTable.drop_orphans" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        drop_orphans
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#pykmc.ActiveEventTable.existing_pairs" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4095,6 +4106,84 @@
 <div class="doc doc-object doc-function">
 
 
+<h4 id="pykmc.ActiveEventTable.drop_orphans" class="doc doc-heading">
+            <span class="doc doc-object-name doc-function-name">drop_orphans</span>
+
+
+</h4>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">drop_orphans</span><span class="p">(</span><span class="n">removed_refs</span><span class="p">)</span>
+</span></code></pre></div>
+
+    <div class="doc doc-contents ">
+
+        <p>Evict active rows whose reference event was purged.</p>
+<p>The active table persists across KMC steps (recycled rows carry over),
+so when <code>ReferenceEventTable.remove</code> deletes a reference event the rows
+still pointing at it become orphans that crash the next step's lookups.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>removed_refs</code>
+            </td>
+            <td>
+                  <code><span title="set">set</span>[<span title="int">int</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p><code>idx_ref</code> values just deleted from the reference table (forward and
+backward), as returned by :meth:<code>ReferenceEventTable.remove</code>.</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="int">int</span></code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Number of active rows evicted.</p>
+              </div>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    </div>
+
+</div>
+
+<div class="doc doc-object doc-function">
+
+
 <h4 id="pykmc.ActiveEventTable.existing_pairs" class="doc doc-heading">
             <span class="doc doc-object-name doc-function-name">existing_pairs</span>
 
@@ -6691,7 +6780,20 @@ Both thresholds are in Angstroms.</p>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>If the event has been refined (T: True, F: False, B: In basin)</p>
+                <p>If the event has been refined (T: True, F: False, B: In basin; RT marks
+a refined row recycled from a previous step)</p>
+              </div>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td><code><span title="pykmc.EventRefinementOutput.neighbors">neighbors</span></code></td>
+            <td>
+                  <code><span title="typing.Optional">Optional</span>[<span title="numpy.ndarray">ndarray</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Atom indices that <code>saddle_positions</code> and <code>min2_positions</code> are ordered by
+(the rcut neighbors of the central atom when the event was refined).</p>
               </div>
             </td>
           </tr>
@@ -13668,18 +13770,43 @@ DataFrame if nothing is recyclable.</p>
       <tbody>
           <tr class="doc-section-item">
             <td>
-                <code>ind</code>
+                <code>idx_refs</code>
             </td>
             <td>
-                  <code><span title="int">int</span></code>
+                  <code><span title="list">list</span>[<span title="int">int</span>]</code>
             </td>
             <td>
               <div class="doc-md-description">
-                <p>index of the event to be removed</p>
+                <p>logical ids (<code>idx_ref</code>) of the events to be removed.</p>
               </div>
             </td>
             <td>
                 <em>required</em>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+
+
+    <p><span class="doc-section-title">Returns:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                  <code><span title="set">set</span>[<span title="int">int</span>]</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>The <code>idx_ref</code> values actually deleted: the requested ones together
+with their backward siblings. The caller uses it to evict active rows
+orphaned by the purge (see :meth:<code>ActiveEventTable.drop_orphans</code>).</p>
+              </div>
             </td>
           </tr>
       </tbody>

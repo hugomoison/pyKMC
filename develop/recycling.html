@@ -1700,6 +1700,7 @@ The second check catches atoms that stayed put while their neighbours moved: the
 <li>Drop the executed event itself.</li>
 <li>For every other row of the active table, compute the displacement of its central atom between the snapshot and the current positions. Drop the row if the displacement is <code>movement_thr</code> or more.</li>
 <li>Compute the distance between the row's central atom and the executed event's central atom, both at their current positions. Drop the row if the distance is <code>distance_thr</code> or less.</li>
+<li>Drop every row that was not refined. <code>refine_thr</code> leaves an event unrefined while much faster events carry the total rate, and that choice is made again at every step, so an unrefined row is rebuilt each time (a registration match, no saddle search) and is refined as soon as it matters.</li>
 <li>The surviving rows stay in the active table. The log reports <code>N events flagged for recycling</code>.</li>
 </ol>
 <p>At the next step:</p>
