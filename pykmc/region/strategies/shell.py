@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Protocol
 
 import numpy as np
 
-from .sphere import Sphere, SphereConfig
+from .sphere import Sphere, SphereConfig, SphereParams
 
 
 class ShellConfig(SphereConfig, Protocol):
@@ -25,6 +26,16 @@ class ShellConfig(SphereConfig, Protocol):
     inner_radius: float
 
 
+@dataclass(frozen=True, kw_only=True)
+class ShellParams(SphereParams):
+    """Concrete :class:`ShellConfig`, to build a shell from code.
+
+    Example: ``ShellParams(center_atom=12, radius=6.0, inner_radius=3.0)``.
+    """
+
+    inner_radius: float
+
+
 class Shell(Sphere):
     """Positions at a distance in ``(inner_radius, radius]`` from the center.
 
@@ -37,6 +48,12 @@ class Shell(Sphere):
 
     def __init__(self, config: ShellConfig) -> None:
         super().__init__(config)
+        inner_radius = getattr(config, "inner_radius", None)
+        if inner_radius is None or not 0 <= inner_radius < config.radius:
+            raise ValueError(
+                f"shell region requires 0 <= inner_radius < radius, got "
+                f"inner_radius={inner_radius!r} and radius={config.radius!r}."
+            )
 
     def contains(
         self, positions: np.ndarray, cell: np.ndarray | None = None

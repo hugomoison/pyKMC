@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable
+from typing import Iterable
 
 import numpy as np
 
 from .strategies import RegionStrategy
-
-if TYPE_CHECKING:
-    from pykmc.config import RegionConfig
 
 
 class Region:
@@ -114,7 +111,7 @@ class Region:
     @classmethod
     def create(
         cls,
-        shape: str,
+        shape: str | None,
         *,
         types: Iterable[str] = (),
         indices: Iterable[int] = (),
@@ -125,8 +122,9 @@ class Region:
 
         Parameters
         ----------
-        shape : str
-            Name of the registered shape (e.g. "sphere").
+        shape : str or None
+            Name of the registered shape (e.g. "sphere"). When None, only
+            `types` and `indices` select atoms and `kwargs` are ignored.
         types, indices, invert
             See :class:`Region`.
         **kwargs
@@ -134,27 +132,8 @@ class Region:
 
         """
         return cls(
-            shape=RegionStrategy.create(shape, **kwargs),
+            shape=None if shape is None else RegionStrategy.create(shape, **kwargs),
             types=types,
             indices=indices,
             invert=invert,
-        )
-
-    @classmethod
-    def from_config(cls, config: "RegionConfig") -> "Region":
-        """Build a Region from an ``[inactive_atoms]``/``[frozen_atoms]`` section.
-
-        ``side='outside'`` inverts sphere, shell and box shapes. For a plane,
-        ``side`` ('above'/'below') is read by the shape itself.
-        """
-        shape = (
-            None
-            if config.region_type is None
-            else RegionStrategy.create(config.region_type, config=config)
-        )
-        return cls(
-            shape=shape,
-            types=config.types,
-            indices=config.indices,
-            invert=config.side == "outside",
         )

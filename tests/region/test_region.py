@@ -7,7 +7,14 @@ import pytest
 
 from pykmc.atomic_environment import AtomicEnvironment
 from pykmc.config import RegionConfig
-from pykmc.region import Region, RegionStrategy
+from pykmc.region import (
+    BoxParams,
+    PlaneParams,
+    Region,
+    RegionStrategy,
+    ShellParams,
+    SphereParams,
+)
 
 POSITIONS = np.array(
     [
@@ -160,9 +167,12 @@ def test_no_criteria_selects_nothing() -> None:
         ({"indices": "1 5"}, [1, 5]),
     ],
 )
-def test_from_config(ini, expected) -> None:
+def test_region_config(ini, expected) -> None:
     config = RegionConfig(**ini)
-    assert Region.from_config(config).select(POSITIONS, TYPES) == expected
+    ae = AtomicEnvironment(
+        style="region", region=config, positions=POSITIONS, atom_types=TYPES
+    )
+    assert ae.get_atoms_with_id("in") == expected
 
 
 def test_atomic_environment_region_style_delegates_to_region() -> None:
@@ -202,6 +212,48 @@ def test_sphere_requires_exactly_one_center(config) -> None:
         Region.create("sphere", config=config)
 
 
+@pytest.mark.parametrize(
+    ("shape", "config", "match"),
+    [
+        ("sphere", SimpleNamespace(center_atom=0), "radius > 0"),
+        ("sphere", SimpleNamespace(center_atom=0, radius=0.0), "radius > 0"),
+        ("shell", SimpleNamespace(center_atom=0, radius=2.0), "inner_radius"),
+        (
+            "shell",
+            SimpleNamespace(center_atom=0, radius=2.0, inner_radius=2.0),
+            "inner_radius",
+        ),
+        ("box", SimpleNamespace(lo=(0, 0, 0)), "3 values"),
+        ("box", SimpleNamespace(lo=(0, 0), hi=(1, 1, 1)), "3 values"),
+        ("box", SimpleNamespace(lo=(0, 2, 0), hi=(1, 1, 1)), "lo <= hi"),
+        ("plane", SimpleNamespace(normal="w", threshold=1.0, side="above"), "normal"),
+        ("plane", SimpleNamespace(normal="z", side="above"), "threshold"),
+        ("plane", SimpleNamespace(normal="z", threshold=1.0), "side"),
+    ],
+)
+def test_shape_rejects_invalid_parameters(shape, config, match) -> None:
+    with pytest.raises(ValueError, match=match):
+        Region.create(shape, config=config)
+
+
+@pytest.mark.parametrize(
+    ("shape", "params", "expected"),
+    [
+        ("sphere", SphereParams(center=(5.0, 5.0, 5.0), radius=2.0), [0, 1, 2]),
+        ("sphere", SphereParams(center_atom=0, radius=2.0), [0, 1, 2]),
+        (
+            "shell",
+            ShellParams(center=(5.0, 5.0, 5.0), radius=3.0, inner_radius=2.0),
+            [3],
+        ),
+        ("box", BoxParams(lo=(4.0, 4.0, 4.0), hi=(7.0, 6.0, 6.0)), [0, 1, 2]),
+        ("plane", PlaneParams(normal="z", threshold=6.0, side="above"), [4]),
+    ],
+)
+def test_params_dataclasses(shape, params, expected) -> None:
+    assert Region.create(shape, config=params).select(POSITIONS) == expected
+
+
 def test_center_atom_out_of_range() -> None:
     region = Region.create("sphere", config=SimpleNamespace(center_atom=6, radius=1.0))
     with pytest.raises(IndexError, match="center_atom=6"):
@@ -211,7 +263,8 @@ def test_center_atom_out_of_range() -> None:
 def test_config_center_atom() -> None:
     config = RegionConfig(region_type="sphere", region_center_atom=4, region_radius=1.0)
     assert config.center_atom == 4
-    assert Region.from_config(config).select(POSITIONS) == [4]
+    region = Region.create(config.region_type, config=config)
+    assert region.select(POSITIONS) == [4]
 
 
 @pytest.mark.parametrize(

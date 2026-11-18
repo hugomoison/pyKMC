@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Protocol, Sequence
 
 import numpy as np
@@ -33,6 +34,18 @@ class SphereConfig(Protocol):
     radius: float
 
 
+@dataclass(frozen=True, kw_only=True)
+class SphereParams:
+    """Concrete :class:`SphereConfig`, to build a sphere from code.
+
+    Example: ``SphereParams(center_atom=12, radius=6.0)``.
+    """
+
+    radius: float
+    center: Sequence[float] | None = None
+    center_atom: int | None = None
+
+
 class Sphere(RegionStrategy):
     """Positions at a distance ``<= radius`` from the center."""
 
@@ -44,6 +57,11 @@ class Sphere(RegionStrategy):
         if (center is None) == (center_atom is None):
             raise ValueError(
                 f"{self.name} region requires exactly one of center and center_atom."
+            )
+        radius = getattr(config, "radius", None)
+        if radius is None or radius <= 0:
+            raise ValueError(
+                f"{self.name} region requires a radius > 0, got {radius!r}."
             )
         self.config = config
         self._center = None if center is None else np.asarray(center, dtype=float)

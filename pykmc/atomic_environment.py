@@ -112,8 +112,17 @@ class AtomicEnvironment:
         """Classify each atom as ``'in'`` or ``'out'`` of the region.
 
         See :py:class:`pykmc.region.Region` for the selection rules.
+        ``side='outside'`` inverts sphere, shell and box shapes. For a plane,
+        ``side`` ('above'/'below') is read by the shape itself.
         """
-        mask = Region.from_config(r).mask(positions, atom_types)
+        region = Region.create(
+            r.region_type,
+            config=r,
+            types=r.types,
+            indices=r.indices,
+            invert=r.side == "outside",
+        )
+        mask = region.mask(positions, atom_types)
         return ["in" if m else "out" for m in mask]
 
     def _expand_non_crystal_idx(

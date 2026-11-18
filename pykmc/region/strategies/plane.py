@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Literal, Protocol
 
 import numpy as np
@@ -31,6 +32,18 @@ class PlaneConfig(Protocol):
     side: Literal["above", "below"]
 
 
+@dataclass(frozen=True, kw_only=True)
+class PlaneParams:
+    """Concrete :class:`PlaneConfig`, to build a half-space from code.
+
+    Example: ``PlaneParams(normal="z", threshold=10.0, side="above")``.
+    """
+
+    normal: Literal["x", "y", "z"]
+    threshold: float
+    side: Literal["above", "below"]
+
+
 class Plane(RegionStrategy):
     """Positions on the `side` of the plane, the plane itself included.
 
@@ -40,9 +53,17 @@ class Plane(RegionStrategy):
     name = "plane"
 
     def __init__(self, config: PlaneConfig) -> None:
-        if config.side not in ("above", "below"):
+        if getattr(config, "normal", None) not in _AXIS:
             raise ValueError(
-                f"plane region requires side 'above' or 'below', got {config.side!r}"
+                f"plane region requires normal 'x', 'y' or 'z', "
+                f"got {getattr(config, 'normal', None)!r}"
+            )
+        if getattr(config, "threshold", None) is None:
+            raise ValueError("plane region requires a threshold.")
+        if getattr(config, "side", None) not in ("above", "below"):
+            raise ValueError(
+                f"plane region requires side 'above' or 'below', "
+                f"got {getattr(config, 'side', None)!r}"
             )
         self.config = config
 

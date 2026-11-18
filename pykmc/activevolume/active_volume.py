@@ -7,8 +7,8 @@ import ctypes
 from typing import Protocol
 from ase.geometry import find_mic
 from ..system import System
-from ..config import Config, RegionConfig
-from ..region import Region
+from ..config import Config
+from ..region import Region, SphereParams
 
 
 def define_AV(config, central_atom_idx: int, positions, cell):
@@ -28,19 +28,18 @@ def define_AV(config, central_atom_idx: int, positions, cell):
         Sorted indices of the buffer atoms, a subset of `av_idx`.
 
     """
+
     # NEED TO ADD WARNING IF R_A<R_M
     r_a = config.activevolume.ract  # Ensure AV is larger than topology analysis
     r_m = config.activevolume.rmov
-
+    
+    #Degine AV sphere 
     region_av = Region.create(
-        "sphere",
-        config=RegionConfig(
-            region_type="sphere", center_atom=central_atom_idx, radius=r_a
-        ),
+        "sphere", config=SphereParams(center_atom=central_atom_idx, radius=r_a)
     )
     av_idx = np.asarray(region_av.select(positions, cell=cell), dtype=int)
 
-    # Distances to the central atom, for the active volume atoms only
+    # Distances to the central atom, to find buffer region 
     _, distances = find_mic(
         positions[av_idx] - positions[central_atom_idx], cell, pbc=True
     )
