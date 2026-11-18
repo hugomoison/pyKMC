@@ -52,9 +52,7 @@ From the input file, `AtomicEnvironment.compute_region` passes the `RegionConfig
 from pykmc.region import Region, SphereParams
 
 # Active volume: sphere of radius ract around the central atom, with periodic boundary conditions
-region_av = Region.create(
-    "sphere", config=SphereParams(center_atom=12, radius=ract)
-)
+region_av = Region.create("sphere", config=SphereParams(center_atom=12, radius=ract))
 av_idx = region_av.select(positions, cell=cell)
 ```
 
@@ -115,7 +113,9 @@ class MyShape(RegionStrategy):
     def __init__(self, config: MyShapeConfig) -> None:
         self.config = config
 
-    def contains(self, positions: np.ndarray, cell: np.ndarray | None = None) -> np.ndarray:
+    def contains(
+        self, positions: np.ndarray, cell: np.ndarray | None = None
+    ) -> np.ndarray:
         """Return True for positions inside the shape."""
         ...
 ```
