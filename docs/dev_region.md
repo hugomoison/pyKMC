@@ -12,15 +12,12 @@ Several parts of pyKMC need to select a subset of atoms:
 - `[frozen_atoms]`: atoms held fixed (`fix setforce 0.0 0.0 0.0`) during event searches and refinements.
 - Active volumes: the atoms around a central atom that are simulated, split into movable atoms and a frozen buffer.
 
-Before this module, the selection logic lived in `pykmc/environments/region.py`, as a function reachable only through `AtomicEnvironment(style="region")`, and active volumes reimplemented their own spherical selection with periodic boundary conditions. `pykmc/region/` gathers this logic in one place, so that every consumer shares the same shapes, the same conventions (bounds, periodicity, inversion) and the same tests.
-
-The module follows the [facade/strategy architecture](dev_strategy_pattern.md): each shape is a strategy, so a new shape (cylinder, slab, ...) is one new file.
-
+The module follows the [facade/strategy architecture](dev_strategy_pattern.md): each shape is a strategy.
 ## Architecture
 
 ```mermaid
 graph LR;
-A("Region.from_config(RegionConfig)<br>Region.create(shape, config=...)")
+A("Region.create(shape, config=...)")
 --> B("<br>Region (facade)<br>types | indices | shape<br>invert<br>mask() / select()<br>");
 B --> C("<br>RegionStrategy ABC<br>contains(positions, cell)<br>");
 subgraph registry["shape registry with auto-discovery"]
@@ -49,56 +46,19 @@ The responsibilities are split as follows:
 
 ## Usage
 
-### From the configuration
-
-`[inactive_atoms]` and `[frozen_atoms]` are parsed into a `RegionConfig`. `Region.from_config` builds the matching facade:
+From the input file, `AtomicEnvironment.compute_region` passes the `RegionConfig` (`[inactive_atoms]`/`[frozen_atoms]`) directly to `Region.create(config.region_type, config=config, types=..., indices=..., invert=config.side == "outside")`; `shape=None` selects by `types`/`indices` only. From code, `Region.create` with the shape's `Params` dataclass (`SphereParams`, `ShellParams`, `BoxParams`, `PlaneParams`). Each shape checks its parameters when it is built:
 
 ```python
-from pykmc.region import Region
+from pykmc.region import Region, SphereParams
 
-region = Region.from_config(config.frozen_atoms)
-frozen = region.select(system.positions, system.types)  # sorted list of indices
-mask = region.mask(system.positions, system.types)  # boolean array (N,)
+# Active volume: sphere of radius ract around the central atom, with periodic boundary conditions
+region_av = Region.create(
+    "sphere", config=SphereParams(center_atom=12, radius=ract)
+)
+av_idx = region_av.select(positions, cell=cell)
 ```
 
-The corresponding input file section:
-
-```ini
-[frozen_atoms]
-region_type = sphere
-region_center_atom = 42   # or region_center = 5.0 5.0 5.0, not both
-region_radius = 6.0
-side = outside            # select the atoms outside the sphere
-types = O                 # and every O atom, wherever it is
-```
-
-### From code
-
-`Region.create` builds a region without a `RegionConfig`. The shape's config only has to expose the attributes declared by its `Protocol`, so a `SimpleNamespace` or a dataclass is enough:
-
-```python
-from types import SimpleNamespace
-from pykmc.region import Region
-
-# Sphere of radius 6 Å around atom 12, with periodic boundary conditions
-around = Region.create("sphere", config=SimpleNamespace(center_atom=12, radius=6.0))
-inside = around.mask(positions, cell=cell)
-
-# Buffer of an active volume: shell between rmov and ract
-buffer = Region.create(
-    "shell",
-    config=SimpleNamespace(center_atom=12, radius=ract, inner_radius=rmov),
-).select(positions, cell=cell)
-```
-
-A strategy can also be used alone when only the geometry is needed:
-
-```python
-from pykmc.region import RegionStrategy
-
-box = RegionStrategy.create("box", config=SimpleNamespace(lo=(0, 0, 0), hi=(5, 5, 5)))
-mask = box.contains(positions)
-```
+See `define_AV` in `pykmc/activevolume/active_volume.py`: the movable atoms and the buffer are then split by their distance to the central atom.
 
 ### `mask` and `select`
 
@@ -115,7 +75,7 @@ mask = box.contains(positions)
 
 **Inversion.** `invert=True` (`side = outside` in the input file) selects the atoms outside the shape (outside all of them for a list). It applies to the shape only, never to `types` and `indices`.
 
-**Bounds are included.** An atom exactly on the sphere, on a box face or on the plane is inside.
+**Bounds are included**, except the inner bound of a shell: a sphere of radius `r1` and a shell `(r1, r2)` split a sphere of radius `r2` without overlap.
 
 **Shapes.**
 
@@ -128,24 +88,10 @@ mask = box.contains(positions)
 
 For a plane, `side` chooses the half-space and is read by the strategy itself; `outside` is not allowed.
 
-**Center of a sphere or shell.** Exactly one of `center` (fixed `[x, y, z]`) and `center_atom` (0-based index) must be set, both in `RegionConfig` and when the strategy is built. With `center_atom`, the center is read from the positions at each evaluation, so the region follows the atom.
-
 **Periodic boundary conditions.** Without `cell`, positions are used as they are. With `cell` (shape `(3, 3)`), periodicity is applied in the three directions:
 
 - `sphere` and `shell` use the minimum image distance to the center;
 - `box` and `plane` first wrap the positions back into the cell, so the box or the plane is expected to lie inside the cell.
-
-**Indices.** Values of `indices` outside `[0, N)` are ignored. A `center_atom` outside `[0, N)` raises an `IndexError`.
-
-## Current integration
-
-For now, `Region` is called through `AtomicEnvironment.compute_region`, which turns the mask into the `"in"`/`"out"` labels still read by `kmc.py` (`inactive_atoms`) and `engine/lammps.py` (`frozen_atoms`). The positions are passed without `cell`, which reproduces the behavior of the former `pykmc/environments/region.py` exactly.
-
-Known limitations, to be addressed when atom selections move out of `AtomicEnvironment` (planned `State` object holding the frozen, inactive and active atoms):
-
-- `"region"` is not a real atomic environment style: it is not selectable in `[AtomicEnvironment] style` and only encodes a selection as fake environment IDs.
-- `inactive_atoms` is evaluated once, at initialization and on restart, while `frozen_atoms` is re-evaluated with the current positions at every engine call.
-- Periodic boundary conditions are not applied to `inactive_atoms` and `frozen_atoms`.
 
 ## Adding a shape
 
