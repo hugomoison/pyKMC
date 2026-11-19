@@ -184,36 +184,35 @@ def partn_refine_AV(
 
 
 def position_results_AV(
-    config, artn, atom_map, positions, cell
+    atom_map, positions, cell, min1positions, min2positions, saddlepositions
 ) -> [np.array, np.array, np.array, int]:
+    """Map the active volume results of an event search back to the full system.
 
-    min1positions = artn.extract("tau_min1")
-    min2positions = artn.extract("tau_min2")
-    saddlepositions = artn.extract("tau_sad")
+    ``min1positions``, ``min2positions`` and ``saddlepositions`` are the
+    active volume positions returned by pARTn, already converted to the
+    frame of the system (``LammpsEngine._positions_from_lammps``). Atom ``i``
+    of the active volume is atom ``atom_map[i]`` of the full system; the
+    atoms outside the active volume keep their ``positions``.
 
+    Returns
+    -------
+    min1, min2, saddle : np.ndarray, shape (N, 3)
+        Full-system positions at the two minima and at the saddle.
+    index_move : int
+        Full-system index of the atom that moves the most between the first
+        minimum and the saddle.
+    """
     # find atom that moves the most; minimum image, as pARTn returns wrapped
     # coordinates and the atom that hops may cross the cell boundary
     _, dist = find_mic(min1positions - saddlepositions, cell, pbc=True)
-    index_move = np.argmax(dist)
-
-    index_move_mapped = atom_map[index_move]
+    index_move_mapped = atom_map[np.argmax(dist)]
 
     min1positions_mapped = positions.copy()
     min2positions_mapped = positions.copy()
     saddlepositions_mapped = positions.copy()
-
-    for i, atom_idx in enumerate(atom_map):
-        saddlepositions_mapped[atom_idx][0] = saddlepositions[i][0]
-        saddlepositions_mapped[atom_idx][1] = saddlepositions[i][1]
-        saddlepositions_mapped[atom_idx][2] = saddlepositions[i][2]
-
-        min1positions_mapped[atom_idx][0] = min1positions[i][0]
-        min1positions_mapped[atom_idx][1] = min1positions[i][1]
-        min1positions_mapped[atom_idx][2] = min1positions[i][2]
-
-        min2positions_mapped[atom_idx][0] = min2positions[i][0]
-        min2positions_mapped[atom_idx][1] = min2positions[i][1]
-        min2positions_mapped[atom_idx][2] = min2positions[i][2]
+    min1positions_mapped[atom_map] = min1positions
+    min2positions_mapped[atom_map] = min2positions
+    saddlepositions_mapped[atom_map] = saddlepositions
 
     return (
         min1positions_mapped,

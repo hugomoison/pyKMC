@@ -584,20 +584,27 @@ class LammpsEngine(Engine):
                     dE_forward = E_sad - E_min1
                     dE_backward = E_sad - E_min2
 
+                    min1positions = self._positions_from_lammps(
+                        artn.extract("tau_min1")
+                    )
+                    min2positions = self._positions_from_lammps(
+                        artn.extract("tau_min2")
+                    )
+                    saddlepositions = self._positions_from_lammps(
+                        artn.extract("tau_sad")
+                    )
                     if use_av:
                         min1positions, min2positions, saddlepositions, index_move = (
-                            position_results_AV(config, artn, atom_map, positions, cell)
+                            position_results_AV(
+                                atom_map,
+                                positions,
+                                cell,
+                                min1positions,
+                                min2positions,
+                                saddlepositions,
+                            )
                         )
                     else:
-                        min1positions = self._positions_from_lammps(
-                            artn.extract("tau_min1")
-                        )
-                        min2positions = self._positions_from_lammps(
-                            artn.extract("tau_min2")
-                        )
-                        saddlepositions = self._positions_from_lammps(
-                            artn.extract("tau_sad")
-                        )
                         # minimum image: pARTn returns wrapped coordinates and
                         # the atom that hops may cross the cell boundary
                         boxlo, boxhi, xy, yz, xz, periodicity, _ = (

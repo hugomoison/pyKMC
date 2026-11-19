@@ -8,8 +8,6 @@ relaxing neighbour, a second description of a hop already in the table.
 
 from __future__ import annotations
 
-from types import SimpleNamespace
-
 import numpy as np
 import pytest
 
@@ -19,20 +17,21 @@ pytest.importorskip("pypARTn")
 from pykmc.activevolume import active_volume as av  # noqa: E402
 
 _CELL = np.diag([10.0, 10.0, 10.0])
-_CONFIG = SimpleNamespace(atomicenvironment=SimpleNamespace(rcut=6.5))
 
 # Local (active-volume) indices
 _HOPPER, _NEIGHBOUR, _ON_PLANE, _STILL = 0, 1, 2, 3
 
 
-class _FakeArtn:
-    """Serve pARTn's ``tau_*`` arrays from a dict."""
-
-    def __init__(self, arrays: dict[str, np.ndarray]) -> None:
-        self._arrays = arrays
-
-    def extract(self, name: str) -> np.ndarray:
-        return self._arrays[name]
+def _results(arrays: dict[str, np.ndarray], atom_map, positions):
+    """Call ``position_results_AV`` with pARTn's ``tau_*`` arrays."""
+    return av.position_results_AV(
+        atom_map,
+        positions,
+        _CELL,
+        arrays["tau_min1"],
+        arrays["tau_min2"],
+        arrays["tau_sad"],
+    )
 
 
 def _boundary_hop() -> dict[str, np.ndarray]:
@@ -59,9 +58,7 @@ def test_move_atom_is_the_atom_that_hops_across_the_boundary() -> None:
     atom_map = np.array([7, 3, 5, 1])
     positions = np.zeros((8, 3))
 
-    *_, index_move = av.position_results_AV(
-        _CONFIG, _FakeArtn(_boundary_hop()), atom_map, positions, _CELL
-    )
+    *_, index_move = _results(_boundary_hop(), atom_map, positions)
 
     assert index_move == atom_map[_HOPPER]
 
@@ -72,8 +69,6 @@ def test_move_atom_ignores_an_atom_rewrapped_onto_the_opposite_face() -> None:
     arrays["tau_sad"][_HOPPER] = arrays["tau_min1"][_HOPPER]  # nobody hops
     atom_map = np.array([7, 3, 5, 1])
 
-    *_, index_move = av.position_results_AV(
-        _CONFIG, _FakeArtn(arrays), atom_map, np.zeros((8, 3)), _CELL
-    )
+    *_, index_move = _results(arrays, atom_map, np.zeros((8, 3)))
 
     assert index_move == atom_map[_NEIGHBOUR]
