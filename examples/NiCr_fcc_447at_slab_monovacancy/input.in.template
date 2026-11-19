@@ -37,7 +37,6 @@ verbosity = 2
 n_sessions = 7
 engine_use_rank_0 = False
 basin = True
-active_volume = False
 
 [Lammps]
 pair_style = eam/alloy
