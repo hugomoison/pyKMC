@@ -149,6 +149,9 @@ class _Recorder:
     def command(self, cmd: str) -> None:
         self.commands.append(cmd)
 
+    def create_atoms(self, *args, **kwargs) -> None:
+        self.commands.append("create_atoms")
+
     def close(self) -> None:
         pass
 
@@ -193,14 +196,17 @@ def test_engine_initialize_potential(cfg, expected) -> None:
     "cfg, expected", [(_HYBRID, _HYBRID_COMMANDS), (_SINGLE, _SINGLE_COMMANDS)]
 )
 def test_active_volume_reset_loads_potential_through_engine(cfg, expected) -> None:
-    """The active-volume ``reset()`` ends with the engine's own potential commands."""
+    """The active-volume ``reset()`` loads the potential through the engine's own commands."""
     pytest.importorskip("pypARTn")
     from pykmc.activevolume import active_volume as av
 
     engine = _recording_engine(cfg)
-    _, map_type = engine.map_types(["Ni"])
-    av.reset(engine, np.diag([20.0, 20.0, 20.0]), map_type)
-    assert engine.lmp.commands[-len(expected) :] == expected
+    av.reset(
+        engine, np.zeros((1, 3)), ["Ni"], np.diag([20.0, 20.0, 20.0]), species=["Ni"]
+    )
+    commands = engine.lmp.commands
+    i_style = commands.index(expected[0])
+    assert commands[i_style : i_style + len(expected)] == expected
     assert sum(c.startswith("pair_style") for c in engine.lmp.commands) == 1
 
 

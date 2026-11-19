@@ -52,6 +52,10 @@ class _Recorder:
         """Store ``cmd`` verbatim."""
         self.commands.append(cmd)
 
+    def create_atoms(self, *args, **kwargs) -> None:
+        """Record the atom creation as a pseudo-command."""
+        self.commands.append("create_atoms")
+
 
 @dataclass
 class _EamCfg:
@@ -103,11 +107,14 @@ def test_map_types_rejects_type_missing_from_species() -> None:
         LammpsEngine.map_types(["Ni", "Cr"], ["Fe", "Ni"])
 
 
+_TYPES = ["Ni", "Cr", "Ni"]
+_POSITIONS = np.array([[1.0, 1.0, 1.0], [3.0, 1.0, 1.0], [1.0, 3.0, 1.0]])
+
+
 def test_reset_sets_one_mass_per_species() -> None:
     """``reset()`` emits one ``mass`` per species with the main engine's values."""
     engine = _recording_engine()
-    _, map_type = LammpsEngine.map_types(["Ni", "Cr", "Ni"])
-    av.reset(engine, _CELL, map_type)
+    av.reset(engine, _POSITIONS, _TYPES, _CELL, species=_TYPES)
     masses = [c for c in engine.lmp.commands if c.startswith("mass ")]
     assert masses == [
         "mass 1 {}".format(atomic_masses[atomic_numbers["Cr"]]),
@@ -118,8 +125,7 @@ def test_reset_sets_one_mass_per_species() -> None:
 def test_reset_orders_box_and_masses_before_potential() -> None:
     """``create_box N`` and ``mass`` precede ``pair_coeff`` (eam/alloy needs the box)."""
     engine = _recording_engine()
-    _, map_type = LammpsEngine.map_types(["Ni", "Cr", "Ni"])
-    av.reset(engine, _CELL, map_type)
+    av.reset(engine, _POSITIONS, _TYPES, _CELL, species=_TYPES)
     commands = engine.lmp.commands
     i_box = commands.index("create_box 2 box")
     i_mass = _index_of(commands, "mass ")
