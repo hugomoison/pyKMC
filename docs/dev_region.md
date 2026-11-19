@@ -51,8 +51,8 @@ From the input file, `AtomicEnvironment.compute_region` passes the `RegionConfig
 ```python
 from pykmc.region import Region, SphereParams
 
-# Active volume: sphere of radius ract around the central atom, with periodic boundary conditions
-region_av = Region.create("sphere", config=SphereParams(center_atom=12, radius=ract))
+# Active volume: sphere of radius rmov + rbuff around the central atom, with periodic boundary conditions
+region_av = Region.create("sphere", config=SphereParams(center_atom=12, radius=rmov + rbuff))
 av_idx = region_av.select(positions, cell=cell)
 ```
 

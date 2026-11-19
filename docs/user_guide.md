@@ -190,6 +190,16 @@ Once a reference event is reused, it is refined to adapt to the current atomic c
 - The difference in energy barriers between the generic and refined events is less than `refined_energy_thr`.
 These thresholds ensure that the refined event remains consistent with the original.
 
+For large systems, event searches and refinements can be performed in an active volume around the central atom instead of the full system, by setting both `rmov` (radius of the movable atoms) and `rbuff` (thickness of the fixed buffer around them):
+```INI
+[EventSearch]
+style = partn
+nsearch = 50
+rmov = 15
+rbuff = 6
+```
+The two keys must be set together, and `rmov + rbuff` must be larger than `rcut`. See [Active volumes](active_volumes.md) for details.
+
 To further control the behavior of the selected event search algorithm (style), you must define a separate section matching the algorithm name. For instance, if you choose `style = partn` you must also include a `[pARTn]` section in your INI file to configure specific parameters for the pARTn method. 
 
 ### pARTn 

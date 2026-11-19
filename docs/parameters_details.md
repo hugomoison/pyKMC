@@ -65,10 +65,6 @@
   <details><summary>Description</summary>
   Basin mode
   </details>
-- **`active_volume`** : `bool`, default = `False`
-  <details><summary>Description</summary>
-  Incorporate AV's into simulations, recommended for large systems
-  </details>
 - **`recycle`** : `bool`, default = `False`
   <details><summary>Description</summary>
   Recycle non-perturbed events from the previous KMC step instead of re-searching them. Requires an [EventRecycling] section.
@@ -154,6 +150,14 @@
 - **`delr_thr`** : `float`, default = `0.5`
   <details><summary>Description</summary>
   delr threshold between one minima and the intial configuration to consider the event valid.
+  </details>
+- **`rmov`** : `float`, optional
+  <details><summary>Description</summary>
+  Active volume: radius (in Angstrom) of the movable atoms around the central atom. Must be set together with `rbuff`. None (default) disables the active volume.
+  </details>
+- **`rbuff`** : `float`, optional
+  <details><summary>Description</summary>
+  Active volume: thickness (in Angstrom) of the fixed buffer around the movable atoms. The active volume radius is `rmov + rbuff`. Must be set together with `rmov`.
   </details>
 
 ---
@@ -463,27 +467,6 @@
 - **`push_fraction`** : `float`, default = `0.15`
   <details><summary>Description</summary>
   Fraction used to push the system from the saddle point toward each minimum during reconstruction.
-  </details>
-
----
-
-## `Activevolume` Section (optional)
-
-<details><summary>Section Overview</summary>
-  Active Volume Parameters
-</details>
-
-- **`ract`** : `float`, default = `6.0`
-  <details><summary>Description</summary>
-  Radius of entire active volume, spherical
-  </details>
-- **`rmov`** : `float`, default = `4.0`
-  <details><summary>Description</summary>
-  Radius of movable atoms in active volume, spherical
-  </details>
-- **`AV_debug`** : `bool`, default = `False`
-  <details><summary>Description</summary>
-  Debug flag for active volume size checks
   </details>
 
 ---
