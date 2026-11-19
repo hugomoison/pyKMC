@@ -129,7 +129,7 @@ class Refinement:
                 # Now check if energy barrier consistent with generic one
                 # TODO partn should not return different things depending on AV or not. We get the total energy at the saddle point or dE, but not both.
                 # TODO and to be consistent, you should modify res.ok_value().E_saddle.
-                if self.config.control.active_volume == True:
+                if self.config.eventsearch.active_volume:
                     res.ok_value().dE_forward = res.ok_value().E_saddle
                 else:
                     res.ok_value().dE_forward = res.ok_value().E_saddle - total_energy
@@ -291,7 +291,7 @@ class Refinement:
                                 central_atom_index=at_idx,
                                 saddle_positions=self.system.positions.copy(),
                                 E_saddle=dfevent["energy_barrier"]
-                                if self.config.control.active_volume
+                                if self.config.eventsearch.active_volume
                                 else total_energy + dfevent["energy_barrier"],
                                 refined="F",
                             )
@@ -303,7 +303,7 @@ class Refinement:
                     # TODO : when AV, partn_refine needs the minimum positions to compute the initial energy with AV
                     # TODO : but this is the third parameter here, and without AV, the third parameter is the saddle positions.
                     # TODO : and with AV, you only need to send saddle positions in the rcut, while without we send all saddle positions, this is just too confusing
-                    if self.config.control.active_volume == True:
+                    if self.config.eventsearch.active_volume:
                         # add a job to manager queue
                         f = self.manager.partn_refine(
                             config=self.config,
@@ -315,6 +315,8 @@ class Refinement:
                             saddle_positions=self.system.positions.copy()[
                                 neighbors.copy()
                             ],
+                            rmov=self.config.eventsearch.rmov,
+                            rbuff=self.config.eventsearch.rbuff,
                         )  # send copy not reference !
                     else:
                         # add a job to manager queue

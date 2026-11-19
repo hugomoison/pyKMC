@@ -110,11 +110,6 @@ class ControlConfig(BaseModel):
 
     basin: Optional[bool] = Field(default=False, description="Basin mode")
 
-    active_volume: Optional[bool] = Field(
-        default=False,
-        description="Incorporate AV's into simulations, recommended for large systems",
-    )
-
     recycle: Optional[bool] = Field(
         default=False,
         description="Recycle non-perturbed events from the previous KMC step instead of re-searching them. Requires an [EventRecycling] section.",
@@ -232,6 +227,35 @@ class EventSearchConfig(BaseModel):
         default=0.5,
         description="delr threshold between one minima and the intial configuration to consider the event valid.",
     )
+
+    rmov: Optional[float] = Field(
+        default=None,
+        gt=0.0,
+        description="Active volume: radius (in Angstrom) of the movable atoms around the central atom. "
+        "Must be set together with `rbuff`. None (default) disables the active volume.",
+    )
+
+    rbuff: Optional[float] = Field(
+        default=None,
+        gt=0.0,
+        description="Active volume: thickness (in Angstrom) of the fixed buffer around the movable atoms. "
+        "The active volume radius is `rmov + rbuff`. Must be set together with `rmov`.",
+    )
+
+    @model_validator(mode="after")
+    def check_active_volume_radii(self) -> "EventSearchConfig":
+        """Ensure ``rmov`` and ``rbuff`` are both set or both unset."""
+        if (self.rmov is None) != (self.rbuff is None):
+            raise ValueError(
+                "[EventSearch] rmov and rbuff must be set together "
+                f"(got rmov = {self.rmov}, rbuff = {self.rbuff})."
+            )
+        return self
+
+    @property
+    def active_volume(self) -> bool:
+        """True when the active volume is used (``rmov`` and ``rbuff`` set)."""
+        return self.rmov is not None and self.rbuff is not None
 
 
 class PartnConfig(BaseModel):
@@ -546,23 +570,6 @@ class PSRConfig(BaseModel):
     matching_score_thr: float = Field(
         default=0.1,
         description="Maximum value of the matching score of the algorithm used.",
-    )
-
-
-class ActiveVolume(BaseModel):
-    """Active Volume Parameters"""
-
-    ract: float = Field(
-        default=6.0, description="Radius of entire active volume, spherical"
-    )
-
-    rmov: float = Field(
-        default=4.0, description="Radius of movable atoms in active volume, spherical"
-    )
-
-    AV_debug: bool = Field(
-        default=False,
-        description="Debug flag for active volume size checks",
     )
 
 
@@ -948,10 +955,6 @@ class Config(BaseModel):
         default_factory=ReconstructionConfig, description="Reconstruction parameters"
     )
 
-    activevolume: Optional[ActiveVolume] = Field(
-        default=None, description="Active volume parameters"
-    )
-
     eventrecycling: Optional[EventRecyclingConfig] = Field(
         default=None,
         description="Event recycling parameters. Required when control.recycle = True.",
@@ -1061,7 +1064,6 @@ class Config(BaseModel):
             ("eventsearch.style", "partn"): ["partn"],
             ("psr.style", "ira"): ["ira"],
             ("control.basin", True): ["basin"],
-            ("control.active_volume", True): ["activevolume"],
             ("control.recycle", True): ["eventrecycling"],
             ("control.bias", True): ["bias"],
         }
@@ -1079,6 +1081,18 @@ class Config(BaseModel):
                                 field_path, condition_value, missing_fields
                             )
                         )
+        return self
+
+    @model_validator(mode="after")
+    def check_event_search_active_volume(self) -> "Config":
+        """The event search active volume radius ``rmov + rbuff`` must exceed ``rcut``."""
+        es = self.eventsearch
+        rcut = self.atomicenvironment.rcut
+        if es.active_volume and rcut is not None and es.rmov + es.rbuff <= rcut:
+            raise ValueError(
+                "Active Volume radius (rmov + rbuff) is smaller than cutoff radius. "
+                "Please increase rmov or rbuff, or decrease rcut"
+            )
         return self
 
     @model_validator(mode="after")

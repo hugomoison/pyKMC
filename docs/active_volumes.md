@@ -1,24 +1,25 @@
 # Active Volumes
 
-Active Volume (AV) settings are defined in the `[ActiveVolume]` section of the input file.
-The required parameters are ract and rmov for the total radius of the AV and the movable core radius, 
-respectively
-You must also enable AV mode in the `[Control]` section.
+Active Volumes (AV) are used by the event searches and refinements when the two parameters `rmov` and `rbuff`
+are set in the `[EventSearch]` section of the input file:
+
+- `rmov`: radius (Angstrom) of the movable atoms around the central atom,
+- `rbuff`: thickness (Angstrom) of the fixed buffer around the movable atoms.
+
+The total radius of the AV is `rmov + rbuff`. Both parameters must be set together: if only one of them is
+given, the input file is refused. If none is given (default), no AV is used.
 
 Example:
 
 ```INI
-[Control]
-...
-active_volume = True
-...
-
-[ActiveVolume]
-ract = 21
+[EventSearch]
+style = partn
+nsearch = 50
 rmov = 15
+rbuff = 6
 ```
 
-*Note: ract must be larger than or equal to rmov to work. The difference between the two is the buffer region of the AV i.e. `ract`-`rmov`=buffer*
+*Note: the AV radius `rmov + rbuff` must be larger than `rcut` (`[AtomicEnvironment]`), otherwise the input file is refused.*
 
 ---
 
@@ -26,10 +27,10 @@ rmov = 15
 
 In very large systems with many defects, it can become memory intensive and slow to run event searches on the entire system. 
 AV's define a region around a defect where searches and refinements will be performed without needing to use the entire system.
-The AV has two parameters, the active radius `ract` and the movable radius `rmov`. The active radius encompasses all the atoms 
-that are included in the AV, and captures the state of the overall system. The movable radius is where atoms are allowed to 
-be moved during event searches and refinement. A frozen buffer region is made on the exterior of the AV in order to accurately model
-the forces between atoms near the boundary.
+The AV has two parameters, the movable radius `rmov` and the buffer thickness `rbuff`. The movable radius is where atoms
+are allowed to be moved during event searches and refinement. Around it, a frozen buffer of thickness `rbuff` is kept in
+order to accurately model the forces between atoms near the boundary. All the atoms within `rmov + rbuff` of the central
+atom are included in the AV.
 
 <p align="center">
   <img src="images/activevolume.png" width="400"/>
@@ -55,12 +56,9 @@ saved in the local atomic environment, then the system is refined. The refined a
 
 
 If the movable radius `rmov` is less than the cut-off radius `rcut` for the local atomic environment, the refinements 
-will fail. Similarly, if the active volume radius `ract` is less than `rcut`, the Event Searches will fail.
+will fail. Similarly, if the active volume radius `rmov + rbuff` is less than `rcut`, the Event Searches will fail: this
+case is refused when the input file is read.
 
-A debug mode to check if the AV is large enough can be toggled in `[ActiveVolume]` by setting `AV_debug = True`. This
-will minimize the AV during refinement before the event is applied, and compare the energy before and after. The system 
-being sent for refinement is already minimized, so there should be no difference after minimization within the AV, 
-within 10e-3 eV. If there is a difference, it means the settings for the AV need to be adjusted. This is caused by
-the buffer region being less than the cutoff of the potential being used, leading to movable atoms next to the buffer to
-experience improper forces. This can be fixed by either increasing `ract` or decreasing `rmov`
+The buffer thickness `rbuff` should be at least the cutoff of the potential. Otherwise, the movable atoms next to the
+buffer do not see all their neighbors and experience improper forces. This can be fixed by increasing `rbuff`.
 

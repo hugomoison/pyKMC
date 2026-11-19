@@ -14,7 +14,6 @@ The bracket parser is shared with ``nperp_limitation`` and
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -150,6 +149,9 @@ class _Recorder:
     def command(self, cmd: str) -> None:
         self.commands.append(cmd)
 
+    def create_atoms(self, *args, **kwargs) -> None:
+        self.commands.append("create_atoms")
+
     def close(self) -> None:
         pass
 
@@ -194,14 +196,17 @@ def test_engine_initialize_potential(cfg, expected) -> None:
     "cfg, expected", [(_HYBRID, _HYBRID_COMMANDS), (_SINGLE, _SINGLE_COMMANDS)]
 )
 def test_active_volume_reset_loads_potential_through_engine(cfg, expected) -> None:
-    """The active-volume ``reset()`` ends with the engine's own potential commands."""
+    """The active-volume ``reset()`` loads the potential through the engine's own commands."""
     pytest.importorskip("pypARTn")
     from pykmc.activevolume import active_volume as av
 
     engine = _recording_engine(cfg)
-    _, map_type = engine.map_types(["Ni"])
-    av.reset(engine, np.diag([20.0, 20.0, 20.0]), map_type)
-    assert engine.lmp.commands[-len(expected) :] == expected
+    av.reset(
+        engine, np.zeros((1, 3)), ["Ni"], np.diag([20.0, 20.0, 20.0]), species=["Ni"]
+    )
+    commands = engine.lmp.commands
+    i_style = commands.index(expected[0])
+    assert commands[i_style : i_style + len(expected)] == expected
     assert sum(c.startswith("pair_style") for c in engine.lmp.commands) == 1
 
 
@@ -254,21 +259,6 @@ def test_hybrid_overlay_energy() -> None:
     assert e_hybrid == pytest.approx(e_lj + e_zbl, rel=1e-12, abs=1e-10)
 
 
-@dataclass
-class _AVCfg:
-    ract: float = 6.0
-    rmov: float = 3.0
-    AV_debug: bool = False
-
-
-@dataclass
-class _SearchCfg:
-    """Config shim for ``partn_search_AV``."""
-
-    lammps: LammpsConfig
-    activevolume: _AVCfg = field(default_factory=_AVCfg)
-
-
 def _active_volume_energy(cfg: LammpsConfig) -> float:
     """Energy of the active-volume crop that ``partn_search_AV`` builds in a 256-atom Ni cell."""
     pytest.importorskip("pypARTn")
@@ -281,11 +271,12 @@ def _active_volume_energy(cfg: LammpsConfig) -> float:
     try:
         av.partn_search_AV(
             engine,
-            _SearchCfg(lammps=cfg),
             0,
             atoms.get_positions(),
             np.array(atoms.get_cell()),
             atoms.get_chemical_symbols(),
+            rmov=3.0,
+            rbuff=3.0,
         )
         engine.lmp.command("run 0")
         return engine.lmp.get_thermo("pe")
